@@ -1,31 +1,27 @@
 <div align="center">
 
-# 🌌 Goby (Sistem Penjelajah Batas Gödel)
-### *Universal Meta-Cognitive Engine & Multitask Orchestrator for Autonomous AI Agents*
+# Goby
+### *Framework Eksekusi & Validasi Agen AI*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://python.org)
 [![LLM Support](https://img.shields.io/badge/LLM-Gemini%20%7C%20Claude%20%7C%20OpenAI%20%7C%20Cursor-orange.svg)](#universal-adapters)
 [![Build Status](https://img.shields.io/badge/Build-Passing-success.svg)](#verification--testing)
-[![Zero Hallucination](https://img.shields.io/badge/Policy-Zero--Hallucination-purple.svg)](#core-architecture)
 
-**Goby** adalah framework agentic meta-kognitif universal yang menggabungkan kedisiplinan proses *Superpowers* dengan kekuatan **Gödel Boundary Bypass Engine**. Terlepas dari model AI yang Anda gunakan, Goby menjamin eksekusi yang seimbang, aman, bebas halusinasi, dan mampu memecahkan *logic loop* secara mandiri.
+**Goby** adalah pustaka Python sederhana dan modular yang membantu agen AI mengeksekusi tugas secara paralel, memvalidasi hasil sebelum output dikirim, serta menghentikan perulangan kesalahan secara otomatis.
 
 </div>
 
 ---
 
-## 🎯 Masalah Dunia Nyata yang Dijawab Oleh "Goby"
+## 🎯 Fitur & Solusi Utama
 
-Mengapa agen AI biasa sering gagal saat menangani proyek kompleks skala produksi?
-1. **Siklus Kegagalan Kompilasi Tanpa Henti (*Infinite Compiler Loop*):**
-   Agen AI konvensional terus meregenerasi baris kode yang salah berulang-kali karena mereka tidak menyadari bahwa kesalahan tersebut berada di luar ruang representasi sintaksis awal mereka. **Goby** memotong siklus ini pada percobaan ke-3 menggunakan *Loop Detection Engine (LDE)* dan memaksa agen melakukan *Meta-Systemic Leap*.
-2. **Kesesakan Kognitif & Kebocoran Biaya Token (*Context Rot & Token Waste*):**
-   Iterasi perbaikan yang sia-sia menghabiskan puluhan ribu token. Dengan deteksi Dini Goby, **80% pemborosan token berhasil dihemat**.
-3. **Penyelesaian Palsu (*Placebo & Superficial Patches*):**
-   AI sering berpura-pura menyelesaikan masalah dengan membungkus kode dalam `try-except` kosong atau me-return nilai dummy. Goby mewajibkan *Grounded Compiler Arbitrage (GCA)* — bukti empiris berupa perintah terminal berstatus Exit Code 0.
-4. **Bottleneck Eksekusi Tunggal (*Single-Thread Bottleneck*):**
-   AI konvensional menyelesaikan tugas besar secara berurutan (*sequential*). Goby menyediakan *Multitask Orchestrator Engine* yang mengeksekusi tugas-tugas independen secara **paralel & terisolasi**, meningkatkan kecepatan hingga **3.87x lebih cepat**.
+Goby menyediakan modul-modul ringan untuk meningkatkan keandalan eksekusi AI:
+1. **Validasi Sinyal Pre-Output (CCR):** Memeriksa sintaks, scope variabel, import, serta struktur teks/kode sebelum disajikan ke pengguna.
+2. **Penghentian Perulangan Error (LDE):** Mendeteksi ketika AI mencoba memperbaiki kesalahan yang sama berulang kali dan menghentikannya.
+3. **Verifikasi Terminal Empiris (GCA):** Memastikan perbaikan kode terbukti sukses melalui hasil eksekusi terminal (Exit Code 0).
+4. **Eksekusi Tugas Paralel (Orchestrator):** Mengeksekusi beberapa sub-tugas independen secara bersamaan.
+
 
 ---
 

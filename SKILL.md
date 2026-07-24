@@ -1,20 +1,21 @@
 ---
 name: goby-universal
-description: Goby Universal Meta-Cognitive Engine v1.1.0. Combines Cognitive Control Room (CCR 8-Neuron Signal Validation), Superpowers FSM Process, Gödel Boundary Bypass, Multitask Orchestration, and Grounded Compiler Arbitrage across LLM platforms.
+description: Goby Agent Execution & Validation Framework. Provides Cognitive Control Room (CCR pre-output validation), Loop Detection Engine (LDE), Multitask Orchestrator, and Grounded Compiler Arbitrage (GCA).
 ---
 
-# **Goby (Sistem Penjelajah Batas Gödel - Universal Edition v1.1.0)**
+# **Goby (Framework Eksekusi & Validasi Agen AI v1.1.0)**
 
-## 🛡️ **Overview & Core Philosophy**
+## 🛡️ **Overview & Filosofi Utama**
 
-Goby is an open-source, universal meta-cognitive framework designed to elevate AI agent performance beyond static boundaries. It solves the fundamental limitations of Large Language Models: **logic loops**, **compiler deadlock cycles**, **context rot**, **superficial symptom patches**, and **uncalibrated pre-output hallucinations**.
+Goby adalah pustaka Python modular untuk membantu agen AI mengeksekusi tugas secara paralel, memvalidasi hasil sebelum dikirim, serta memutus perulangan kesalahan secara otomatis.
 
-### **Key Pillars:**
-1. **Cognitive Control Room (CCR):** Pre-output 8-neuron signal validation (Hard Gates for Syntax/Scope/Imports/GCA, Soft Signals for Density/Consistency/Similarity).
-2. **Gatekeeping & Pre-Execution Verification:** Intercepts agent actions *before* any tool call to enforce 4-tier Triage & Context Assessment.
-3. **Gödel Boundary Bypass (MSLP Protocol):** Detects loops and expands the state-space via dynamic temporal variables and axiom injection.
-4. **Multitask Orchestration:** Executes independent sub-tasks concurrently while maintaining state locking and dependency safety.
-5. **Grounded Compiler Arbitrage (GCA):** Prohibits unverified claims; requires empirical terminal proof (Exit Code 0) before declaring completion.
+### **Pilar Utama:**
+1. **Cognitive Control Room (CCR):** Validasi sinyal pre-output (Hard Gates untuk Syntax, Scope, Import, GCA; Soft Signals untuk Density & Consistency).
+2. **Context Gate & Triage:** Menilai kecukupan konteks dan tingkat review yang diperlukan sebelum memproses tugas.
+3. **Loop Detection Engine (LDE):** Mendeteksi dan memutus perulangan kesalahan yang berulang.
+4. **Multitask Orchestrator:** Mengeksekusi sub-tugas independen secara paralel.
+5. **Grounded Compiler Arbitrage (GCA):** Verifikasi hasil melalui bukti eksekusi terminal (Exit Code 0).
+
 
 ---
 
