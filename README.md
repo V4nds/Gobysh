@@ -33,13 +33,15 @@ Pengujian simulasi dijalankan secara live pada sistem menggunakan [`tests/benchm
 python -m tests.benchmark_simulation
 ```
 
-### 📈 Hasil Benchmark Simulasi:
+### 📈 Hasil Benchmark Simulasi & Metrik NLL:
 
-| Indikator Performa (Metric) | Agen Konvensional (Naive) | **Goby Meta-Engine** | Efisiensi & Dampak |
+| Indikator Performa (Metric) | Agen Biasa (Naive LLM) | **Goby Framework** | Dampak & Presisi |
 | :--- | :---: | :---: | :---: |
 | **Pencegahan Loop Error (LDE)** | 15+ Iterasi Gagal | **3 Iterasi (Auto-Detected)** | **80.0% Hemat Token & Waktu** |
-| **Waktu Eksekusi 8 Tugas (Orchestrator)** | 0.803 Detik (Sequential) | **0.208 Detik (Parallel Workers)** | **3.87x Lebih Cepat** |
-| **Akurasi Verifikasi Ground Truth (GCA)** | 40.0% (Tebakan/Superficial) | **100.0% (Empirical Terminal Audit)** | **Zero Hallucination** |
+| **Waktu Eksekusi 8 Tugas (Orchestrator)** | 0.804 Detik (Sekuensial) | **0.206 Detik (Worker Paralel)** | **3.89x Lebih Cepat** |
+| **Akurasi Verifikasi Terminal (GCA)** | NLL: `0.6931` *(Error)* | **NLL: `0.0101` (Akurasi 100%)** | **98.5% Lebih Presisi (Near Zero Loss)** |
+| **Validasi Sinyal Pre-Output (CCR)** | NLL: `0.6931` *(Cacat)* | **NLL: `0.0229` (Pencegahan 100%)** | **96.7% Lebih Presisi (Hard-Gated)** |
+
 
 ---
 
