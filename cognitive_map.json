@@ -1,13 +1,13 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "framework": "Goby Agent Framework",
-  "last_updated": "2026-07-24T15:45:00Z",
+  "last_updated": "2026-07-25T14:10:00Z",
   "active_context": {
-    "last_completed_task": "Build & Verification of Goby Core Framework (CCR, LDE, GCA, Multitask Orchestrator, Crash Recovery, Session Briefing Engine)",
-    "current_in_progress": "CCR Feature Release Complete & Verified",
-    "next_action": "Deploy to production, push to public GitHub repository, or create additional neuron modules as needed.",
-    "current_state": "PAUSED_SAVED",
-    "snapshot_timestamp": "2026-07-24 15:31:00 local"
+    "last_completed_task": "Goby v1.2.0 Phase 1: Polyglot GCA Parsers, Cross-Session Failure Memory & Learning LDE",
+    "current_in_progress": "v1.2.0 Core Release Complete & 100% Verified (87 Unit Tests Passed)",
+    "next_action": "Deploy to production, push to public GitHub repository, or implement Phase 2 (JS/TS Neurons & Closed-Loop Pipeline).",
+    "current_state": "IDLE",
+    "snapshot_timestamp": "2026-07-25 14:10:00 local"
   },
   "concepts": {
     "godel_bypass": {
@@ -23,12 +23,22 @@
     "grounded_compiler_arbitrage": {
       "path": "core/gca_runner.py",
       "activation_weight": 1.0,
-      "description": "Empirical ground-truth verification engine executing isolated sub-processes."
+      "description": "Empirical ground-truth verification engine with polyglot test suite runners and JS execution support."
     },
     "cognitive_control_room": {
       "path": "core/ccr_engine.py",
       "activation_weight": 1.0,
       "description": "Internal cognitive control room - 8-neuron signal validation toolkit for AI pre-output verification."
+    },
+    "output_parsers": {
+      "path": "core/output_parsers.py",
+      "activation_weight": 1.0,
+      "description": "Polyglot test output parsers for pytest, jest, and generic CLI tools."
+    },
+    "failure_memory": {
+      "path": "core/failure_memory.py",
+      "activation_weight": 1.0,
+      "description": "Cross-session failure pattern store with Levenshtein similarity matching for preemptive loop bypass."
     }
   },
   "temporal_state": {},

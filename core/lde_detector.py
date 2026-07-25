@@ -5,8 +5,8 @@ Detects logic loops, compiler failure cycles, and paradoxical oscillations.
 
 import hashlib
 import re
-from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from dataclasses import dataclass, field
+from typing import Any, List, Optional, Tuple
 
 
 def levenshtein_distance(s1: str, s2: str) -> int:
@@ -40,10 +40,11 @@ def similarity_ratio(s1: str, s2: str) -> float:
 @dataclass
 class LoopAnalysisResult:
     is_loop_detected: bool
-    loop_type: Optional[str]  # 'COMPILER_LOOP', 'PARADOXICAL_OSCILLATION', 'STATIC_OVER_OPTIMIZATION'
+    loop_type: Optional[str]  # 'COMPILER_LOOP', 'PARADOXICAL_OSCILLATION', 'STATIC_OVER_OPTIMIZATION', 'PREEMPTIVE_KNOWN_PATTERN'
     confidence: float
     message: str
     suggested_action: str
+    known_pattern: Optional[Any] = None  # FailureFingerprint when preemptive match found
 
 
 class LoopDetectionEngine:
@@ -51,10 +52,11 @@ class LoopDetectionEngine:
     Monitors execution history and detects structural or semantic repetitions.
     """
 
-    def __init__(self, threshold_similarity: float = 0.85, max_history_size: int = 10):
+    def __init__(self, threshold_similarity: float = 0.85, max_history_size: int = 10, failure_store=None):
         self.threshold_similarity = threshold_similarity
         self.max_history_size = max_history_size
         self.history: List[Tuple[str, str]] = []  # List of (code_hash, output_str)
+        self.failure_store = failure_store  # Optional FailurePatternStore for cross-session memory
 
     def _normalize_output(self, output: str) -> str:
         """Strip dynamic timestamps and memory addresses for deterministic hashing."""
@@ -136,4 +138,58 @@ class LoopDetectionEngine:
             confidence=0.0,
             message="No loop detected.",
             suggested_action="PROCEED_NORMAL"
+        )
+
+    # -------------------------------------------------------------------
+    # Learning LDE: Cross-Session Preemptive Bypass (v1.2.0)
+    # -------------------------------------------------------------------
+
+    def check_preemptive(self, error_output: str) -> Optional[LoopAnalysisResult]:
+        """
+        Check if error matches a known failure pattern from past sessions.
+        Returns a LoopAnalysisResult with PREEMPTIVE_KNOWN_PATTERN if matched.
+        Returns None if no match or no failure store is configured.
+        """
+        if self.failure_store is None:
+            return None
+
+        match = self.failure_store.match_known_pattern(error_output)
+        if match is None:
+            return None
+
+        return LoopAnalysisResult(
+            is_loop_detected=True,
+            loop_type="PREEMPTIVE_KNOWN_PATTERN",
+            confidence=0.90,
+            message=(
+                f"Known failure pattern recognized from past session. "
+                f"Error type: {match.error_type}. "
+                f"Root cause: {match.root_cause}. "
+                f"Previous solution: {match.solution_taken}"
+            ),
+            suggested_action="APPLY_KNOWN_SOLUTION",
+            known_pattern=match,
+        )
+
+    def record_resolution(
+        self,
+        error_output: str,
+        error_type: str,
+        root_cause: str,
+        solution: str,
+        language: str = "python",
+    ) -> None:
+        """
+        Record a successfully resolved error into the failure pattern store
+        for future preemptive detection.
+        """
+        if self.failure_store is None:
+            return
+
+        self.failure_store.record_failure(
+            error_output=error_output,
+            error_type=error_type,
+            root_cause=root_cause,
+            solution=solution,
+            language=language,
         )

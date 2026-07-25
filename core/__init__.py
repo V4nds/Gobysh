@@ -19,8 +19,19 @@ from .ccr_engine import (
     TriageLevel,
     ContextTier,
 )
+from .output_parsers import (
+    StructuredTestResult,
+    TestFailureDetail,
+    BaseOutputParser,
+    PytestParser,
+    JestParser,
+    GenericParser,
+    detect_runner,
+    get_parser,
+)
+from .failure_memory import FailurePatternStore, FailureFingerprint
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __all__ = [
     "LoopDetectionEngine",
     "LoopAnalysisResult",
@@ -38,4 +49,14 @@ __all__ = [
     "GateType",
     "TriageLevel",
     "ContextTier",
+    "StructuredTestResult",
+    "TestFailureDetail",
+    "BaseOutputParser",
+    "PytestParser",
+    "JestParser",
+    "GenericParser",
+    "detect_runner",
+    "get_parser",
+    "FailurePatternStore",
+    "FailureFingerprint",
 ]
