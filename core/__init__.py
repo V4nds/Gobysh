@@ -31,6 +31,7 @@ from .output_parsers import (
 )
 from .failure_memory import FailurePatternStore, FailureFingerprint
 from .refinement_loop import CCRRefinementLoop, RefinementResult
+from . import cli
 
 __version__ = "1.3.0"
 __all__ = [
