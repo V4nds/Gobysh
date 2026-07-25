@@ -21,14 +21,14 @@ def main():
     cmd = args[0].lower()
 
     if cmd == "audit":
-        print("🔍 Running Goby Empirical Verification Audit...")
+        print("[AUDIT] Running Goby Empirical Verification Audit...")
         suite = unittest.defaultTestLoader.discover("tests")
         runner = unittest.TextTestRunner(verbosity=2)
         result = runner.run(suite)
         sys.exit(0 if result.wasSuccessful() else 1)
 
     elif cmd == "benchmark":
-        print("📈 Running Goby Benchmark Simulation...")
+        print("[BENCHMARK] Running Goby Benchmark Simulation...")
         from tests import benchmark_simulation
         benchmark_simulation.run_all_benchmarks()
         sys.exit(0)

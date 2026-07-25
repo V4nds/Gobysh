@@ -57,3 +57,4 @@ cover/
 *~
 .DS_Store
 *.tmp
+failure_patterns.json
