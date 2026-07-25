@@ -1069,10 +1069,12 @@ class CognitiveControlRoom:
                 if filename.endswith(".py"):
                     filepath = os.path.join(dirpath, filename)
                     rel_path = os.path.relpath(filepath, root)
-                    # Convert file path to module notation
-                    module_name = rel_path.replace(os.sep, ".").removesuffix(".py")
+                    # Convert file path to module notation (Python 3.8+ compatible)
+                    module_name = rel_path.replace(os.sep, ".")
+                    if module_name.endswith(".py"):
+                        module_name = module_name[:-3]
                     if module_name.endswith(".__init__"):
-                        module_name = module_name.removesuffix(".__init__")
+                        module_name = module_name[:-9]
 
                     modules[module_name] = {
                         "path": rel_path,
