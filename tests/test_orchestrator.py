@@ -65,5 +65,41 @@ class TestMultitaskOrchestrator(unittest.TestCase):
         self.assertEqual(results["dep_t"].status, TaskStatus.CANCELLED)
 
 
+    def test_task_retries(self):
+        attempts = 0
+
+        def flaky_func():
+            nonlocal attempts
+            attempts += 1
+            if attempts < 2:
+                raise ValueError("Temporary failure")
+            return "success"
+
+        self.orchestrator.add_task("retry_task", "Flaky Task", flaky_func, max_retries=2)
+        results = self.orchestrator.execute_all()
+        self.assertEqual(results["retry_task"].status, TaskStatus.SUCCESS)
+        self.assertEqual(attempts, 2)
+        self.assertEqual(results["retry_task"].retries_taken, 1)
+
+    def test_event_callbacks(self):
+        events = []
+
+        def on_start(task):
+            events.append(f"start:{task.task_id}")
+
+        def on_success(task):
+            events.append(f"success:{task.task_id}")
+
+        orchestrator = MultitaskOrchestrator(
+            on_task_start=on_start, on_task_success=on_success
+        )
+        orchestrator.add_task("t1", "Task 1", lambda: "ok")
+        orchestrator.execute_all()
+
+        self.assertIn("start:t1", events)
+        self.assertIn("success:t1", events)
+
+
 if __name__ == "__main__":
     unittest.main()
+

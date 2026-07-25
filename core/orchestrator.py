@@ -1,6 +1,7 @@
 """
 Multitask Orchestrator Engine for Goby Framework.
-Provides concurrent task dispatching, dependency tracking, worker pooling, and balanced execution.
+Provides concurrent task dispatching, dependency tracking, worker pooling,
+retry policies, event callback hooks, and balanced execution.
 """
 
 import concurrent.futures
@@ -27,6 +28,9 @@ class TaskSpec:
     kwargs: dict = field(default_factory=dict)
     depends_on: List[str] = field(default_factory=list)
     priority: int = 1  # 1 = Highest, 10 = Lowest
+    max_retries: int = 0
+    retry_delay: float = 0.0
+    retries_taken: int = 0
     status: TaskStatus = TaskStatus.PENDING
     result: Any = None
     error: Optional[Exception] = None
@@ -35,11 +39,21 @@ class TaskSpec:
 
 class MultitaskOrchestrator:
     """
-    Concurrent Task Orchestrator managing parallel worker pools and dependency trees.
+    Concurrent Task Orchestrator managing parallel worker pools, dependency trees,
+    retries, and execution callbacks.
     """
 
-    def __init__(self, max_workers: int = 4):
+    def __init__(
+        self,
+        max_workers: int = 4,
+        on_task_start: Optional[Callable[[TaskSpec], None]] = None,
+        on_task_success: Optional[Callable[[TaskSpec], None]] = None,
+        on_task_failed: Optional[Callable[[TaskSpec], None]] = None,
+    ):
         self.max_workers = max_workers
+        self.on_task_start = on_task_start
+        self.on_task_success = on_task_success
+        self.on_task_failed = on_task_failed
         self.tasks: Dict[str, TaskSpec] = {}
         self.completed_tasks: Dict[str, TaskSpec] = {}
 
@@ -51,7 +65,9 @@ class MultitaskOrchestrator:
         args: tuple = (),
         kwargs: Optional[dict] = None,
         depends_on: Optional[List[str]] = None,
-        priority: int = 1
+        priority: int = 1,
+        max_retries: int = 0,
+        retry_delay: float = 0.0,
     ) -> TaskSpec:
         """Registers a task in the orchestrator queue."""
         task = TaskSpec(
@@ -61,26 +77,54 @@ class MultitaskOrchestrator:
             args=args,
             kwargs=kwargs or {},
             depends_on=depends_on or [],
-            priority=priority
+            priority=priority,
+            max_retries=max_retries,
+            retry_delay=retry_delay,
         )
         self.tasks[task_id] = task
         return task
 
     def _execute_single_task(self, task: TaskSpec) -> TaskSpec:
-        """Executes a single task, timing its execution and handling exceptions."""
+        """Executes a single task with retries and timing."""
         task.status = TaskStatus.RUNNING
+        if self.on_task_start:
+            try:
+                self.on_task_start(task)
+            except Exception:
+                pass
+
         start_time = time.time()
+        attempt = 0
 
-        try:
-            res = task.func(*task.args, **task.kwargs)
-            task.result = res
-            task.status = TaskStatus.SUCCESS
-        except Exception as e:
-            task.error = e
-            task.status = TaskStatus.FAILED
-        finally:
-            task.duration = round(time.time() - start_time, 3)
+        while attempt <= task.max_retries:
+            try:
+                res = task.func(*task.args, **task.kwargs)
+                task.result = res
+                task.status = TaskStatus.SUCCESS
+                task.error = None
+                task.retries_taken = attempt
+                if self.on_task_success:
+                    try:
+                        self.on_task_success(task)
+                    except Exception:
+                        pass
+                break
+            except Exception as e:
+                task.error = e
+                attempt += 1
+                if attempt <= task.max_retries:
+                    if task.retry_delay > 0:
+                        time.sleep(task.retry_delay)
+                else:
+                    task.retries_taken = attempt - 1
+                    task.status = TaskStatus.FAILED
+                    if self.on_task_failed:
+                        try:
+                            self.on_task_failed(task)
+                        except Exception:
+                            pass
 
+        task.duration = round(time.time() - start_time, 3)
         return task
 
     def execute_all(self) -> Dict[str, TaskSpec]:
@@ -88,7 +132,7 @@ class MultitaskOrchestrator:
         Executes all queued tasks concurrently while respecting dependencies and priority ordering.
         """
         remaining_tasks = dict(self.tasks)
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             while remaining_tasks:
                 # Find tasks whose dependencies are fully resolved and successful
@@ -98,10 +142,10 @@ class MultitaskOrchestrator:
                         dep_id in self.completed_tasks and self.completed_tasks[dep_id].status == TaskStatus.SUCCESS
                         for dep_id in task.depends_on
                     )
-                    
-                    # Check if any dependency failed
+
+                    # Check if any dependency failed or cancelled
                     dep_failed = any(
-                        dep_id in self.completed_tasks and self.completed_tasks[dep_id].status == TaskStatus.FAILED
+                        dep_id in self.completed_tasks and self.completed_tasks[dep_id].status in (TaskStatus.FAILED, TaskStatus.CANCELLED)
                         for dep_id in task.depends_on
                     )
 
