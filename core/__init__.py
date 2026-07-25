@@ -2,7 +2,7 @@
 Goby Core Module: Meta-Cognitive Engine for Autonomous AI Agents.
 Provides Loop Detection Engine (LDE), Grounded Compiler Arbitrage (GCA),
 Persistent State Memory, Multitasking Agent Orchestration,
-and Cognitive Control Room (CCR) for pre-output validation.
+Cognitive Control Room (CCR), and Closed-Loop Refinement Engine.
 """
 
 from .lde_detector import LoopDetectionEngine, LoopAnalysisResult
@@ -30,8 +30,9 @@ from .output_parsers import (
     get_parser,
 )
 from .failure_memory import FailurePatternStore, FailureFingerprint
+from .refinement_loop import CCRRefinementLoop, RefinementResult
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __all__ = [
     "LoopDetectionEngine",
     "LoopAnalysisResult",
@@ -59,4 +60,6 @@ __all__ = [
     "get_parser",
     "FailurePatternStore",
     "FailureFingerprint",
+    "CCRRefinementLoop",
+    "RefinementResult",
 ]
