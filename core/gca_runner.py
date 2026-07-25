@@ -110,3 +110,70 @@ class GroundedCompilerArbitrage:
                     os.remove(temp_path)
                 except OSError:
                     pass
+
+    # -------------------------------------------------------------------
+    # Polyglot Extensions (v1.2.0)
+    # -------------------------------------------------------------------
+
+    def is_node_available(self) -> bool:
+        """Check if Node.js is available in PATH."""
+        node_path = getattr(self, "_node_path", "node")
+        try:
+            result = subprocess.run(
+                [node_path, "--version"],
+                capture_output=True,
+                text=True,
+                timeout=5.0,
+            )
+            return result.returncode == 0
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+            return False
+
+    def run_js_snippet(self, code_snippet: str, timeout: Optional[float] = None) -> ExecutionResult:
+        """
+        Creates a temporary .js file, executes it using Node.js,
+        and cleans up afterwards. Returns graceful fallback if Node is unavailable.
+        """
+        node_path = getattr(self, "_node_path", "node")
+        if not self.is_node_available():
+            return ExecutionResult(
+                command=f"{node_path} <snippet>",
+                exit_code=-3,
+                stdout="",
+                stderr=f"Node.js is not available at '{node_path}'. Install Node.js or set _node_path.",
+                duration_seconds=0.0,
+                is_success=False,
+            )
+
+        with tempfile.NamedTemporaryFile(suffix=".js", mode="w", delete=False, encoding="utf-8") as temp_file:
+            temp_file.write(code_snippet)
+            temp_path = temp_file.name
+
+        try:
+            cmd = f'"{node_path}" "{temp_path}"'
+            result = self.run_command(cmd, timeout=timeout)
+            return result
+        finally:
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except OSError:
+                    pass
+
+    def run_test_suite(self, command: str, runner: str = "auto"):
+        """
+        Execute a test command and return structured, parsed results.
+        Auto-detects the test runner from the command string if runner='auto'.
+
+        Returns:
+            StructuredTestResult from core.output_parsers
+        """
+        from .output_parsers import detect_runner, get_parser
+
+        if runner == "auto":
+            runner = detect_runner(command)
+
+        raw_result = self.run_command(command)
+        parser = get_parser(runner)
+        structured = parser.parse(raw_result.stdout, raw_result.stderr, raw_result.exit_code)
+        return structured
