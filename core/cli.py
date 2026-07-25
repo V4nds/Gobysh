@@ -30,7 +30,7 @@ def main():
     elif cmd == "benchmark":
         print("[BENCHMARK] Running Goby Benchmark Simulation...")
         from tests import benchmark_simulation
-        benchmark_simulation.run_all_benchmarks()
+        benchmark_simulation.main()
         sys.exit(0)
 
     elif cmd == "check":
