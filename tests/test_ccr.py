@@ -389,5 +389,25 @@ class TestDesignQuestionnaire(unittest.TestCase):
         self.assertIn("Interaction", categories)
 
 
+class TestNeuronJSSyntax(unittest.TestCase):
+    """Tests for JavaScript/TypeScript syntax check neuron."""
+
+    def setUp(self):
+        self.ccr = CognitiveControlRoom()
+
+    def test_valid_js_syntax(self):
+        sig = self.ccr.neuron_js_syntax_check("const x = 10; console.log(x);")
+        self.assertEqual(sig.neuron_name, "JS_SYNTAX")
+        self.assertTrue(sig.passed or sig.evidence.get("node_available") is False)
+
+    def test_invalid_js_syntax(self):
+        sig = self.ccr.neuron_js_syntax_check("const x = ;")
+        self.assertEqual(sig.neuron_name, "JS_SYNTAX")
+        if sig.evidence.get("node_available"):
+            self.assertFalse(sig.passed)
+            self.assertEqual(sig.gate_type, GateType.HARD)
+
+
 if __name__ == "__main__":
     unittest.main()
+

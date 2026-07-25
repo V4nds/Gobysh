@@ -9,6 +9,7 @@ Neurons measure and report. AI decides and acts.
 
 import ast
 import enum
+import json
 import os
 import re
 import time
@@ -277,6 +278,53 @@ class CognitiveControlRoom:
                 },
                 suggestion=f"Fix syntax error at line {e.lineno}: {e.msg}",
             )
+
+    # -----------------------------------------------------------------------
+    # Neuron 1b: JavaScript/TypeScript Syntax Check (HARD GATE)
+    # -----------------------------------------------------------------------
+
+    def neuron_js_syntax_check(self, code: str) -> NeuronSignal:
+        """
+        Signal: Is this JavaScript/TypeScript snippet syntactically valid?
+        Mechanism: Node.js evaluation via GCA.
+
+        HARD GATE when Node.js is available.
+        """
+        if not self.gca.is_node_available():
+            return NeuronSignal(
+                neuron_name="JS_SYNTAX",
+                gate_type=GateType.SOFT,
+                passed=True,
+                confidence=0.5,
+                message="Node.js is not available in PATH — JS syntax check skipped.",
+                evidence={"node_available": False},
+                suggestion="Install Node.js to enable hard-gate JS/TS syntax checking.",
+            )
+
+        js_wrapper = f"try {{ new Function({json.dumps(code)}); }} catch(e) {{ console.error(e.message); process.exit(1); }}"
+        res = self.gca.run_js_snippet(js_wrapper)
+
+        if res.is_success:
+            return NeuronSignal(
+                neuron_name="JS_SYNTAX",
+                gate_type=GateType.HARD,
+                passed=True,
+                confidence=1.0,
+                message="JavaScript syntax is valid.",
+                evidence={"node_available": True, "valid": True},
+                suggestion="",
+            )
+        else:
+            return NeuronSignal(
+                neuron_name="JS_SYNTAX",
+                gate_type=GateType.HARD,
+                passed=False,
+                confidence=1.0,
+                message=f"JS SyntaxError: {res.stderr.strip()}",
+                evidence={"node_available": True, "error": res.stderr.strip()},
+                suggestion="Fix JavaScript syntax error before delivery.",
+            )
+
 
     # -----------------------------------------------------------------------
     # Neuron 2: Scope Integrity Check (HARD GATE)
