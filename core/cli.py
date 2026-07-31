@@ -11,14 +11,28 @@ from .ccr_engine import CognitiveControlRoom
 def main():
     args = sys.argv[1:]
     if not args or args[0] in ("-h", "--help"):
-        print("Goby Framework CLI v1.3.0")
+        print("Goby Framework CLI v4.0.0 (Omni-Synthesis)")
         print("Usage:")
         print("  goby audit        Run full test suite verification")
         print("  goby benchmark    Run empirical benchmark simulation")
+        print("  goby evolve       Run autonomous self-evolution cycle (BFM metric)")
         print("  goby check <code> Validate python snippet via CCR")
         sys.exit(0)
 
     cmd = args[0].lower()
+
+    if cmd == "evolve":
+        print("[EVOLUTION] Running Goby v4.0 Omni-Synthesis Evolution Benchmark...")
+        from .evolution_loop import SelfEvolutionEngine
+        engine = SelfEvolutionEngine()
+        result = engine.run_evolution_cycle()
+        print(f"  -> Total Benchmarks: {result['total_benchmarks']}")
+        print(f"  -> Caught Apriori:   {result['caught_apriori']}")
+        print(f"  -> Bypasses Needed:  {result['bypasses_needed']}")
+        print(f"  -> BFM Metric:       {result['bypass_frequency_metric']}")
+        print(f"  -> Status:           {result['status']}")
+        sys.exit(0 if result['status'] == "ZERO_BYPASS_ACHIEVED" else 1)
+
 
     if cmd == "audit":
         print("[AUDIT] Running Goby Empirical Verification Audit...")

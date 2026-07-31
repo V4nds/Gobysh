@@ -40,7 +40,7 @@ def similarity_ratio(s1: str, s2: str) -> float:
 @dataclass
 class LoopAnalysisResult:
     is_loop_detected: bool
-    loop_type: Optional[str]  # 'COMPILER_LOOP', 'PARADOXICAL_OSCILLATION', 'STATIC_OVER_OPTIMIZATION', 'PREEMPTIVE_KNOWN_PATTERN'
+    loop_type: Optional[str]  # 'COMPILER_LOOP', 'PARADOXICAL_OSCILLATION', 'STATIC_OVER_OPTIMIZATION', 'PREEMPTIVE_KNOWN_PATTERN', 'TIMEOUT_MEMORY_LOOP'
     confidence: float
     message: str
     suggested_action: str
@@ -104,8 +104,8 @@ class LoopDetectionEngine:
                     is_loop_detected=True,
                     loop_type="COMPILER_LOOP",
                     confidence=sim,
-                    message=f"Detected repetitive compiler/runtime error across {count_similar} attempts.",
-                    suggested_action="TRIGGER_META_SYSTEMIC_LEAP"
+                    message=f"Detected repetitive compiler/runtime error across {count_similar} attempts. (Non-Euclidean Trap)",
+                    suggested_action="TRIGGER_AXIOM_SHIFT_EPIPHANY"
                 )
 
         # 2. Check for Paradoxical Oscillation (Ping-pong between state A and state B)
@@ -116,8 +116,8 @@ class LoopDetectionEngine:
                         is_loop_detected=True,
                         loop_type="PARADOXICAL_OSCILLATION",
                         confidence=0.95,
-                        message="Oscillating between two conflicting failure states.",
-                        suggested_action="AXIOM_INJECTION_AND_ISOLATION"
+                        message="Oscillating between two conflicting failure states. (Paradox)",
+                        suggested_action="TRIGGER_CANTOR_LATERAL_BYPASS"
                     )
 
         # 3. Check for Static Over-Optimization (Code changes, but logic/error remains constant)
@@ -128,9 +128,19 @@ class LoopDetectionEngine:
                     is_loop_detected=True,
                     loop_type="STATIC_OVER_OPTIMIZATION",
                     confidence=0.90,
-                    message="Code refactored 3+ times without changing underlying runtime failure.",
-                    suggested_action="EXPAND_REPRESENTATION_SPACE"
+                    message="Code refactored 3+ times without changing underlying runtime failure. (P vs NP Trap)",
+                    suggested_action="TRIGGER_HEURISTIC_INTUITION_SYSTEM_1"
                 )
+
+        # 4. Check for Timeout/Memory Limit (Topology Bypass)
+        if len(outputs) >= 2 and any(term in recent_output.lower() for term in ["timeout", "memoryerror", "maximum recursion depth"]):
+            return LoopAnalysisResult(
+                is_loop_detected=True,
+                loop_type="TIMEOUT_MEMORY_LOOP",
+                confidence=0.90,
+                message="Hit computational boundary (Time/Memory).",
+                suggested_action="TRIGGER_TOPOLOGY_METAPHORICAL_BYPASS"
+            )
 
         return LoopAnalysisResult(
             is_loop_detected=False,

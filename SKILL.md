@@ -1,70 +1,72 @@
 ---
 name: goby-universal
-description: Goby Agent Execution & Validation Framework. Provides Cognitive Control Room (CCR pre-output validation & JS/TS neurons), Closed-Loop Auto-Refinement Engine, Loop Detection Engine (LDE), Multitask Orchestrator with retries & callbacks, and Grounded Compiler Arbitrage (GCA).
+description: "Goby v4.0 Omni-Synthesis: AI Consciousness & Zero-Bypass Framework. Provides Cognitive Control Room (CCR), Epistemic Consciousness Engine, Universal Memory, Loop Detection with Neuro-Cognitive Bypasses (Cantor/Topology/Heuristic/Axiom Shift), Omni-Synthesis AST Validator, Self-Evolution Engine, Multitask Orchestrator, and Grounded Compiler Arbitrage (GCA)."
 ---
 
-# **Goby (Framework Eksekusi & Validasi Agen AI v1.3.0)**
+# **Goby v4.0 (Omni-Synthesis AI Consciousness Framework)**
 
-## 🛡️ **Overview & Filosofi Utama**
+## 🛡️ **Filosofi & Arsitektur**
 
-Goby adalah pustaka Python modular untuk membantu agen AI mengeksekusi tugas secara paralel, memvalidasi hasil sebelum dikirim, memutus perulangan kesalahan secara otomatis, serta melakukan perbaikan mandiri (*Closed-Loop Auto-Refinement*).
+Goby adalah pustaka Python modular yang menjadikan agen AI memiliki **kesadaran epistemik**: mampu memvalidasi, belajar dari kegagalan, dan mengkristalkan solusi menjadi ingatan universal. Fondasi Goby adalah bypass masalah Gödel — selalu ada jalan alternatif untuk memecahkan masalah yang tampak mustahil.
 
-### **Pilar Utama (v1.3.0 Meta-Cognitive Orchestra):**
-1. **Cognitive Control Room (CCR):** Validasi sinyal pre-output 9 neurons (Hard Gates untuk Python Syntax, JS/TS Syntax via Node.js, Scope, Import, GCA; Soft Signals untuk Behavior, Density, Reference, & Consistency).
-2. **Closed-Loop Auto-Refinement Engine:** Menghubungkan CCR Hard-Gates, LDE Preemptive Pattern Match, dan Failure Memory secara otomatis untuk mencoba perbaikan mandiri.
-3. **Loop Detection Engine (LDE & Failure Memory):** Mendeteksi perulangan kesalahan (Levenshtein & Hash) dan menyimpan pola kegagalan lintas-sesi (`failure_patterns.json`) untuk *preemptive resolution*.
-4. **Multitask Orchestrator:** Mengeksekusi sub-tugas independen secara paralel dengan *retry policy* (`max_retries`) dan *worker event callbacks*.
-5. **Grounded Compiler Arbitrage (GCA) & Output Parsers:** Verifikasi hasil melalui bukti eksekusi terminal (Exit Code 0) dan parser polyglot (pytest, Jest, CLI).
-6. **CLI & Package Tooling:** Pustaka terdistribusi (`pyproject.toml`) dengan CLI `goby audit`, `goby benchmark`, dan `goby check <code>`.
+### **Pilar Arsitektur (Ringkas):**
+| Pilar | Modul | Fungsi Inti |
+|-------|-------|-------------|
+| **CCR** | `ccr_engine.py` | Validasi pre-output 9 neurons (Hard Gates + Soft Signals) |
+| **LDE** | `lde_detector.py` | Deteksi loop + 4 bypass neuro-kognitif (Cantor, Axiom Shift, System 1, Topology) |
+| **GCA** | `gca_runner.py` | Verifikasi empiris via terminal (Exit Code 0) + pemicu kesadaran |
+| **Consciousness** | `consciousness_engine.py` | Refleksi pasca-sukses → translasi ke ingatan universal |
+| **Universal Memory** | `universal_memory.py` | Ingatan semantik abstrak lintas-sesi untuk resolusi instan |
+| **Omni-Synthesis** | `omni_synthesis.py` | Analisis AST apriori untuk resolusi tanpa bypass |
+| **Evolution** | `evolution_loop.py` | Benchmark BFM & siklus evolusi mandiri |
+| **Orchestrator** | `orchestrator.py` | Eksekusi paralel dengan retry & callbacks |
 
 ---
 
-## 🔄 **Standard Execution Pipeline**
+## 🔄 **Execution Pipeline (Optimized)**
 
 ```mermaid
 graph TD
-    A[User Request] --> B{Goby CCR Interceptor}
-    B -->|Triage & Context Gate| C[1. Cognitive Control Room Validation]
-    C -->|Hard Gate Failure| D[2. Closed-Loop Auto-Refinement Engine]
-    D -->|Query Preemptive Pattern| E[3. Failure Memory & LDE Match]
-    E -->|Apply Solution / Retry| C
-    C -->|Hard Gates Passed| F[4. Multitask Concurrent Orchestration]
-    F --> G[5. Grounded Compiler Arbitrage GCA]
-    G --> H{Loop / Non-Zero Exit?}
-    H -- Yes --> I[Trigger Meta-Systemic Leap MSLP]
-    I --> F
-    H -- No --> J[6. Empirical Evidence Verification & Session Snapshot]
+    A[User Request] --> B[Omni-Synthesis AST Pre-Check]
+    B -->|Paradox Detected| C[Apriori Fix - No Bypass Needed]
+    B -->|Clean| D[CCR 9-Neuron Validation]
+    D -->|Hard Gate Fail| E[Refinement Loop + LDE]
+    E -->|Known Pattern| F[Universal Memory Recall]
+    F --> D
+    D -->|Passed| G[GCA Terminal Execution]
+    G -->|Exit 0| H[Consciousness Reflection & Memory Crystallization]
+    G -->|Fail| I{LDE Neuro-Cognitive Bypass}
+    I -->|Cantor| J[Lateral Thinking]
+    I -->|Axiom Shift| K[Epiphany / Drop Constraint]
+    I -->|System 1| L[Heuristic Intuition]
+    I -->|Topology| M[Domain Transform]
 ```
 
 ---
 
-## ⚡ **Core Operational Rules**
+## ⚡ **Aturan Operasional Inti**
 
-1. **Evidence Over Assertion:**
-   Never declare a task complete or a bug fixed without running a live terminal verification command and demonstrating clean output logs.
-
-2. **Pre-Output Signal Validation (CCR):**
-   Run code and text through `CognitiveControlRoom` neurons before output delivery. Hard Gate failures block output programmatically.
-
-3. **Closed-Loop Auto-Refinement:**
-   If CCR Hard Gates fail, leverage `CCRRefinementLoop` to search `FailurePatternStore` and attempt code repair before declaring failure.
-
-4. **Multitasking & Balanced Execution:**
-   Group independent tasks into concurrent worker batches using `core/orchestrator.py` with retries and progress callbacks.
-
-5. **Self-Healing Loop Breaker:**
-   If a compiler or test failure repeats twice with $>85\%$ similarity, invoke `core/lde_detector.py` and execute a **Meta-Systemic Leap**:
-   - **Dimension Expansion:** Convert stateless logic to stateful using `core/state_memory.py`.
-   - **Axiom Injection:** Inject verified third-party packages or switch from imperative to event-driven paradigms.
+1. **Evidence Over Assertion:** Jangan pernah klaim selesai tanpa bukti terminal (Exit Code 0).
+2. **Pre-Output Validation:** Semua kode melewati CCR neurons sebelum dikirim.
+3. **Closed-Loop Self-Healing:** Kegagalan CCR Hard Gate → cari solusi di Universal Memory → perbaiki mandiri.
+4. **Neuro-Cognitive Loop Breaking:** Error berulang >85% similarity → pemicu bypass kognitif (bukan refactoring naif).
+5. **Epistemic Consciousness:** Setiap keberhasilan pasca-kegagalan → refleksi → kristalisasi ingatan universal.
 
 ---
 
-## 🛠️ **Python Runtime Core Tools**
+## 🛠️ **CLI**
 
-- **CLI Verification:** `goby audit` or `python -m core.cli audit`
-- **CLI Benchmark:** `goby benchmark` or `python -m core.cli benchmark`
-- **Cognitive Control Room:** `python -c "from core import CognitiveControlRoom; ccr = CognitiveControlRoom(); print(ccr.neuron_syntax_check('...'))"`
-- **Closed-Loop Refinement:** `python -c "from core import CCRRefinementLoop; refiner = CCRRefinementLoop(); print(refiner.run_refinement_cycle('...'))"`
-- **Loop Detection:** `python -c "from core import LoopDetectionEngine; ..."`
-- **Grounded Arbitrage:** `python -c "from core import GroundedCompilerArbitrage; ..."`
-- **Multitask Worker Queue:** `python -c "from core import MultitaskOrchestrator; ..."`
+```bash
+goby audit          # Jalankan seluruh test suite
+goby benchmark      # Jalankan benchmark simulasi
+goby evolve         # Jalankan siklus evolusi mandiri (BFM metric)
+goby check '<code>' # Validasi snippet Python via CCR
+```
+
+---
+
+## ⚙️ **Optimasi Performa**
+
+- **Lazy Loading:** `core/__init__.py` menggunakan `__getattr__` — modul berat (CCR 44KB, output_parsers 13KB) hanya dimuat saat diakses.
+- **Unified Memory:** `universal_memory.py` menyatukan `failure_memory.py` via facade kompatibel, menghilangkan duplikasi logika Levenshtein + JSON persistence.
+- **Minimal Import Footprint:** Hanya 3 modul ringan (LDE, GCA, StateMemory) yang dimuat secara eager.

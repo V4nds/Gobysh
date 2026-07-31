@@ -8,7 +8,10 @@ import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .consciousness_engine import ConsciousnessEngine
 
 
 @dataclass
@@ -27,15 +30,22 @@ class GroundedCompilerArbitrage:
     providing empirical evidence before making claims.
     """
 
-    def __init__(self, default_timeout: float = 30.0, cwd: Optional[str] = None):
+    def __init__(
+        self,
+        default_timeout: float = 30.0,
+        cwd: Optional[str] = None,
+        consciousness_engine: Optional['ConsciousnessEngine'] = None
+    ):
         self.default_timeout = default_timeout
         self.cwd = cwd or os.getcwd()
+        self.consciousness = consciousness_engine
 
     def run_command(
         self,
         command: str,
         timeout: Optional[float] = None,
-        env: Optional[Dict[str, str]] = None
+        env: Optional[Dict[str, str]] = None,
+        past_errors: Optional[List[Dict[str, str]]] = None
     ) -> ExecutionResult:
         """Runs a shell command synchronously and returns the execution result."""
         timeout_sec = timeout if timeout is not None else self.default_timeout
@@ -59,6 +69,12 @@ class GroundedCompilerArbitrage:
             stdout, stderr = process.communicate(timeout=timeout_sec)
             exit_code = process.returncode
             duration = time.time() - start_time
+            
+            if exit_code == 0 and self.consciousness and past_errors:
+                self.consciousness.trigger_consciousness_reflection(
+                    final_successful_output=stdout or "",
+                    past_errors=past_errors
+                )
 
             return ExecutionResult(
                 command=command,

@@ -58,3 +58,5 @@ cover/
 .DS_Store
 *.tmp
 failure_patterns.json
+universal_consciousness.json
+test_*.json

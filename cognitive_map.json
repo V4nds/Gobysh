@@ -1,49 +1,59 @@
 {
-  "version": "1.3.0",
-  "framework": "Goby Agent Framework",
-  "last_updated": "2026-07-25T14:35:00Z",
+  "version": "4.0.0",
+  "framework": "Goby Agent Consciousness Framework",
+  "last_updated": "2026-07-31T14:05:00Z",
   "active_context": {
-    "last_completed_task": "Goby Meta-Cognitive Orchestra v1.3.0: Closed-Loop Auto-Refinement, JS/TS Neurons, Task Retries, CLI Entrypoint & CI Workflow",
-    "current_in_progress": "v1.3.0 Complete Release Verified & Ready for GitHub Deployment (96 Unit Tests Passed)",
-    "next_action": "Push to public GitHub repository or publish to PyPI.",
-    "current_state": "IDLE",
-    "snapshot_timestamp": "2026-07-25 14:35:00 local"
+    "last_completed_task": "Goby Epistemic Consciousness v3.0: Metacognitive reflection and Universal Memory injection.",
+    "current_in_progress": "v3.0 Architecture deployment",
+    "next_action": "Verify consciousness and memory crystallization in test suite.",
+    "current_state": "META_COGNITIVE_REFLECTION",
+    "snapshot_timestamp": "2026-07-31 14:05:00 local"
   },
   "concepts": {
-    "godel_bypass": {
-      "path": "SKILL.md",
+    "cantor_lateral_bypass": {
+      "path": "core/lde_detector.py",
       "activation_weight": 1.0,
-      "description": "Loop detection engine for breaking repeated failure cycles."
+      "description": "Lateral thinking: Inverts assumptions to break paradoxical oscillations (Cantor's Diagonalization)."
+    },
+    "axiom_shift_epiphany": {
+      "path": "core/lde_detector.py",
+      "activation_weight": 1.0,
+      "description": "Aha! moment: Abandons rigid constraints when encountering compiler/runtime repetitive traps (Non-Euclidean)."
+    },
+    "system_1_intuition": {
+      "path": "core/lde_detector.py",
+      "activation_weight": 1.0,
+      "description": "Heuristic fallback: Switches from exhaustive search to probabilistic pattern matching when stuck (P vs NP)."
+    },
+    "metaphorical_topology": {
+      "path": "core/lde_detector.py",
+      "activation_weight": 1.0,
+      "description": "Domain transformation: Changes problem representation to equivalent state (e.g. recursive to iterative)."
+    },
+    "epistemic_consciousness": {
+      "path": "core/consciousness_engine.py",
+      "activation_weight": 1.0,
+      "description": "Post-success reflection engine that translates specific paths into abstract universal memory."
+    },
+    "universal_memory": {
+      "path": "core/universal_memory.py",
+      "activation_weight": 1.0,
+      "description": "Semantic vector and heuristic storage for immediate intuitive problem recognition."
     },
     "multitask_orchestrator": {
       "path": "core/orchestrator.py",
-      "activation_weight": 1.0,
-      "description": "Thread-safe concurrent task executor with dependency management, retry policies, and worker callbacks."
+      "activation_weight": 0.8,
+      "description": "Thread-safe concurrent task executor with dependency management."
     },
     "grounded_compiler_arbitrage": {
       "path": "core/gca_runner.py",
-      "activation_weight": 1.0,
-      "description": "Empirical ground-truth verification engine with polyglot test suite runners and JS execution support."
+      "activation_weight": 0.9,
+      "description": "Empirical ground-truth verification engine that now triggers Consciousness Engine upon success."
     },
     "cognitive_control_room": {
       "path": "core/ccr_engine.py",
-      "activation_weight": 1.0,
-      "description": "Internal cognitive control room - 9-neuron signal validation toolkit (including JS/TS AST syntax check)."
-    },
-    "refinement_loop": {
-      "path": "core/refinement_loop.py",
-      "activation_weight": 1.0,
-      "description": "Closed-loop auto-refinement engine connecting CCR, LDE, and Failure Memory."
-    },
-    "output_parsers": {
-      "path": "core/output_parsers.py",
-      "activation_weight": 1.0,
-      "description": "Polyglot test output parsers for pytest, jest, and generic CLI tools."
-    },
-    "failure_memory": {
-      "path": "core/failure_memory.py",
-      "activation_weight": 1.0,
-      "description": "Cross-session failure pattern store with Levenshtein similarity matching for preemptive loop bypass."
+      "activation_weight": 0.9,
+      "description": "Internal cognitive control room - 9-neuron signal validation toolkit."
     }
   },
   "temporal_state": {},
