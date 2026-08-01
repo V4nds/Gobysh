@@ -5,7 +5,7 @@ It acts as the Meta-Cognitive brain, capturing the journey, "translating" it int
 and saving it to the Universal Memory Store.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 from .universal_memory import UniversalMemoryStore
 
 
@@ -69,7 +69,7 @@ class ConsciousnessEngine:
         # For simplicity, just take the last error before success.
         return past_errors[-1]
 
-    def _simulate_llm_translation(self, error_type: str, error_output: str) -> tuple[str, str]:
+    def _simulate_llm_translation(self, error_type: str, error_output: str) -> Tuple[str, str]:
         """
         Simulates an LLM taking specific code errors and turning them into Universal Heuristics.
         """
