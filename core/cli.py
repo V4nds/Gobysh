@@ -53,9 +53,25 @@ def main():
             sys.exit(1)
         code = args[1]
         ccr = CognitiveControlRoom()
-        sig = ccr.neuron_syntax_check(code)
-        print(f"Neuron SYNTAX: passed={sig.passed}, msg='{sig.message}'")
-        sys.exit(0 if sig.passed else 1)
+        
+        signals = []
+        syn = ccr.neuron_syntax_check(code)
+        signals.append(syn)
+        if syn.passed:
+            signals.append(ccr.neuron_scope_check(code))
+            signals.append(ccr.neuron_taste_design_check(code))
+            
+        res = ccr.evaluate_signals(signals)
+        
+        for sig in signals:
+            print(f"[{sig.neuron_name}] {'PASS' if sig.passed else 'FAIL'} (Gate: {sig.gate_type.value}) - {sig.message}")
+            
+        if res["blocked"]:
+            print(f"\n[BLOCKED] {res['summary']}")
+            sys.exit(1)
+        else:
+            print("\n[SUCCESS] Code passed all hard gates.")
+            sys.exit(0)
 
     else:
         print(f"Unknown command: '{cmd}'. Run 'goby --help' for usage.")

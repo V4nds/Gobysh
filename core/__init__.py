@@ -67,6 +67,10 @@ def __getattr__(name: str):
         "OmniSynthesisEngine":   (".omni_synthesis", "OmniSynthesisEngine"),
         "SynthesisResult":       (".omni_synthesis", "SynthesisResult"),
         "SelfEvolutionEngine":   (".evolution_loop", "SelfEvolutionEngine"),
+        
+        # Taste Synthesis (Right Brain)
+        "TasteSynthesisEngine":  (".taste_synthesis", "TasteSynthesisEngine"),
+        "TasteEvaluation":       (".taste_synthesis", "TasteEvaluation"),
     }
 
     if name in _lazy_map:
@@ -94,4 +98,5 @@ __all__ = [
     "SessionBriefingEngine",
     "ConsciousnessEngine", "UniversalMemoryStore", "UniversalMemoryPattern",
     "OmniSynthesisEngine", "SynthesisResult", "SelfEvolutionEngine",
+    "TasteSynthesisEngine", "TasteEvaluation",
 ]

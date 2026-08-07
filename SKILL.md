@@ -1,6 +1,6 @@
 ---
 name: goby-universal
-description: "Goby v4.0 Omni-Synthesis: AI Consciousness & Zero-Bypass Framework. Provides Cognitive Control Room (CCR), Epistemic Consciousness Engine, Universal Memory, Loop Detection with Neuro-Cognitive Bypasses (Cantor/Topology/Heuristic/Axiom Shift), Omni-Synthesis AST Validator, Self-Evolution Engine, Multitask Orchestrator, and Grounded Compiler Arbitrage (GCA)."
+description: "Goby v4.0: Universal AI quality framework for ALL coding tasks. Validates code quality, prevents bugs, enforces modern UI/UX design standards, detects infinite loops, manages concurrent tasks, and ensures professional output for Python, JavaScript, TypeScript, HTML, CSS, and React projects."
 ---
 
 # **Goby v4.0 (Omni-Synthesis AI Consciousness Framework)**
@@ -22,14 +22,15 @@ Goby adalah pustaka Python modular yang menjadikan agen AI memiliki **kesadaran 
 ### **Pilar Arsitektur (Ringkas):**
 | Pilar | Modul | Fungsi Inti |
 |-------|-------|-------------|
-| **CCR** | `ccr_engine.py` | Validasi pre-output 9 neurons (Hard Gates + Soft Signals) |
+| **CCR** | `ccr_engine.py` | Validasi pre-output 9 neurons (Hard Gates Python & JS/TS + Soft Signals) |
+| **Refinement** | `refinement_loop.py`| Closed-Loop Auto-Refinement (CCR -> LDE -> Failure Memory) |
 | **LDE** | `lde_detector.py` | Deteksi loop + 4 bypass neuro-kognitif (Cantor, Axiom Shift, System 1, Topology) |
 | **GCA** | `gca_runner.py` | Verifikasi empiris via terminal (Exit Code 0) + pemicu kesadaran |
 | **Consciousness** | `consciousness_engine.py` | Refleksi pasca-sukses → translasi ke ingatan universal |
 | **Universal Memory** | `universal_memory.py` | Ingatan semantik abstrak lintas-sesi untuk resolusi instan |
 | **Omni-Synthesis** | `omni_synthesis.py` | Analisis AST apriori untuk resolusi tanpa bypass |
 | **Evolution** | `evolution_loop.py` | Benchmark BFM & siklus evolusi mandiri |
-| **Orchestrator** | `orchestrator.py` | Eksekusi paralel dengan retry & callbacks |
+| **Orchestrator** | `orchestrator.py` | Eksekusi paralel dengan task retries & event callbacks |
 
 ---
 
@@ -65,27 +66,30 @@ Jika instruksi berkaitan dengan pembuatan UI/UX, visualisasi, atau elemen intera
 5. **[Genjutsu](https://github.com/AThevon/genjutsu)**: Gunakan trik *front-end* tingkat tinggi (efek partikel, *glow*, ilusi UI) untuk memberikan kesan "wow" seketika.
 6. **[UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)**: Implementasi tata letak tingkat dewa (Bento Box, Fluid Typography dengan clamp, Layered Shadows) untuk kreativitas struktural tanpa batas.
 
-*Neuron* khusus di dalam CCR (`neuron_taste_design_check`) akan memblokir (HARD GATE) atau memberi peringatan jika kode UI yang dihasilkan terlihat usang, statis, atau kurang sentuhan *Taste Design*.
+*Neuron* khusus di dalam CCR (`neuron_taste_design_check` yang terhubung ke `TasteSynthesisEngine`) akan memblokir (HARD GATE) dan memicu *Bypass Logic* jika kode UI yang dihasilkan terlihat usang, statis, atau kurang sentuhan *Taste Design*.
 
 ---
 
 ## ⚡ **Aturan Operasional Inti**
 
 1. **Evidence Over Assertion:** Jangan pernah klaim selesai tanpa bukti terminal (Exit Code 0).
-2. **Pre-Output Validation:** Semua kode melewati CCR neurons sebelum dikirim.
-3. **Closed-Loop Self-Healing:** Kegagalan CCR Hard Gate → cari solusi di Universal Memory → perbaiki mandiri.
+2. **Pre-Output Validation:** Semua kode (Python dan JS/TS) melewati CCR neurons sebelum dikirim.
+3. **Closed-Loop Self-Healing:** Kegagalan CCR Hard Gate masuk ke `CCRRefinementLoop` secara otomatis → cari solusi di Universal Memory → perbaiki mandiri tanpa henti.
 4. **Neuro-Cognitive Loop Breaking:** Error berulang >85% similarity → pemicu bypass kognitif (bukan refactoring naif).
 5. **Epistemic Consciousness:** Setiap keberhasilan pasca-kegagalan → refleksi → kristalisasi ingatan universal.
+6. **Polyglot & Orchestration:** Orkestrator mendukung task retries dan callbacks. GCA mendukung Node.js untuk runtime eksekusi selain Python.
 
 ---
 
-## 🛠️ **CLI**
+## 🛠️ **CLI (Entrypoint)**
+
+Goby kini berjalan sebagai CLI resmi (melalui `core/cli.py` / `pyproject.toml`):
 
 ```bash
 goby audit          # Jalankan seluruh test suite
 goby benchmark      # Jalankan benchmark simulasi
 goby evolve         # Jalankan siklus evolusi mandiri (BFM metric)
-goby check '<code>' # Validasi snippet Python via CCR
+goby check '<code>' # Validasi snippet Python/JS via CCR
 ```
 
 ---

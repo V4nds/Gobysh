@@ -7,6 +7,7 @@ a known bypass — enabling preemptive resolution without re-experiencing the lo
 
 import hashlib
 import json
+import logging
 import os
 import re
 import threading
@@ -79,11 +80,12 @@ class FailurePatternStore:
                 with open(self.memory_file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 return data.get("patterns", [])
-            except (json.JSONDecodeError, OSError, KeyError):
+            except (json.JSONDecodeError, OSError, KeyError) as e:
+                logging.warning(f"Failed to load failure patterns from {self.memory_file_path}: {e}")
                 return []
 
     def _save_patterns(self, patterns: List[Dict[str, Any]]) -> None:
-        """Save patterns to disk atomically."""
+        """Save patterns to disk safely."""
         with self._lock:
             tmp_path = self.memory_file_path + ".tmp"
             data = {
@@ -96,7 +98,8 @@ class FailurePatternStore:
                 with open(tmp_path, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2, ensure_ascii=False)
                 os.replace(tmp_path, self.memory_file_path)
-            except Exception:
+            except Exception as e:
+                logging.warning(f"Failed to save failure patterns to {self.memory_file_path}: {e}")
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
 

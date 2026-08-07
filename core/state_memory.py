@@ -7,6 +7,7 @@ import json
 import os
 import threading
 import time
+import logging
 from typing import Dict, Any, List, Optional
 
 
@@ -51,7 +52,8 @@ class StateMemoryManager:
             try:
                 with open(self.memory_file_path, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, OSError):
+            except (json.JSONDecodeError, OSError) as e:
+                logging.warning(f"Failed to load state memory from {self.memory_file_path}: {e}")
                 return {
                     "version": "1.0.0",
                     "error": "Corrupted memory state re-initialized",
@@ -69,7 +71,8 @@ class StateMemoryManager:
                     json.dump(state_data, f, indent=2, ensure_ascii=False)
                 os.replace(tmp_path, self.memory_file_path)
                 return True
-            except Exception:
+            except Exception as e:
+                logging.warning(f"Failed to save state memory to {self.memory_file_path}: {e}")
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
                 return False

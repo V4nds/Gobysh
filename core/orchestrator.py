@@ -9,6 +9,7 @@ import enum
 import time
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Any
+from .state_memory import StateMemoryManager
 
 
 class TaskStatus(enum.Enum):
@@ -49,13 +50,36 @@ class MultitaskOrchestrator:
         on_task_start: Optional[Callable[[TaskSpec], None]] = None,
         on_task_success: Optional[Callable[[TaskSpec], None]] = None,
         on_task_failed: Optional[Callable[[TaskSpec], None]] = None,
+        memory_mgr: Optional[StateMemoryManager] = None,
     ):
         self.max_workers = max_workers
         self.on_task_start = on_task_start
         self.on_task_success = on_task_success
         self.on_task_failed = on_task_failed
+        self.memory_mgr = memory_mgr
         self.tasks: Dict[str, TaskSpec] = {}
         self.completed_tasks: Dict[str, TaskSpec] = {}
+
+    def _update_memory_state(self, task: TaskSpec, state: str):
+        """Updates the cognitive map active context."""
+        if not self.memory_mgr:
+            return
+        mem_state = self.memory_mgr.load_state()
+        if "active_context" not in mem_state:
+            mem_state["active_context"] = {}
+            
+        mem_state["active_context"]["task_id"] = task.task_id
+        if state == "START":
+            mem_state["active_context"]["current_in_progress"] = f"Task: {task.name}"
+            mem_state["active_context"]["current_state"] = "RUNNING"
+        elif state == "SUCCESS":
+            mem_state["active_context"]["last_completed_task"] = f"Task: {task.name}"
+            mem_state["active_context"]["current_state"] = "IDLE"
+        elif state == "FAILED":
+            mem_state["active_context"]["current_state"] = "FAILED"
+            mem_state["active_context"]["error_count"] = mem_state["active_context"].get("error_count", 0) + 1
+            
+        self.memory_mgr.save_state(mem_state)
 
     def add_task(
         self,
@@ -87,6 +111,8 @@ class MultitaskOrchestrator:
     def _execute_single_task(self, task: TaskSpec) -> TaskSpec:
         """Executes a single task with retries and timing."""
         task.status = TaskStatus.RUNNING
+        self._update_memory_state(task, "START")
+        
         if self.on_task_start:
             try:
                 self.on_task_start(task)
@@ -103,6 +129,8 @@ class MultitaskOrchestrator:
                 task.status = TaskStatus.SUCCESS
                 task.error = None
                 task.retries_taken = attempt
+                self._update_memory_state(task, "SUCCESS")
+                
                 if self.on_task_success:
                     try:
                         self.on_task_success(task)
@@ -118,6 +146,8 @@ class MultitaskOrchestrator:
                 else:
                     task.retries_taken = attempt - 1
                     task.status = TaskStatus.FAILED
+                    self._update_memory_state(task, "FAILED")
+                    
                     if self.on_task_failed:
                         try:
                             self.on_task_failed(task)

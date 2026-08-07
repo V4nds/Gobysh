@@ -11,6 +11,7 @@ import os
 import re
 import threading
 import time
+import logging
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional
 
@@ -82,7 +83,8 @@ class UniversalMemoryStore:
                 with open(self.memory_file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 return data.get("memories", [])
-            except (json.JSONDecodeError, OSError, KeyError):
+            except (json.JSONDecodeError, OSError, KeyError) as e:
+                logging.warning(f"Failed to load universal memory from {self.memory_file_path}: {e}")
                 return []
 
     def _save_patterns(self, patterns: List[Dict[str, Any]]) -> None:
@@ -99,7 +101,8 @@ class UniversalMemoryStore:
                 with open(tmp_path, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2, ensure_ascii=False)
                 os.replace(tmp_path, self.memory_file_path)
-            except Exception:
+            except Exception as e:
+                logging.warning(f"Failed to save universal memory to {self.memory_file_path}: {e}")
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
 

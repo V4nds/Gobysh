@@ -373,7 +373,9 @@ class CognitiveControlRoom:
             message="Modern Taste Design detected.",
             evidence={"scores": evaluation.__dict__},
             suggestion=evaluation.bypass_suggestion if evaluation.bypass_suggestion else None,
-        )    # -----------------------------------------------------------------------
+        )
+
+    # -----------------------------------------------------------------------
     # Neuron 2: Scope Integrity Check (HARD GATE)
     # -----------------------------------------------------------------------
 

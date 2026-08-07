@@ -40,46 +40,51 @@ class CCRRefinementLoop:
         self.max_attempts = max_attempts
 
     def run_refinement_cycle(
-        self, code: str, expected_behavior: Optional[Dict[str, Any]] = None
+        self, code: str, attempts_so_far: int = 1, expected_behavior: Optional[Dict[str, Any]] = None
     ) -> RefinementResult:
-        current_code = code
-        attempts = 0
+        """
+        Evaluates a single attempt of code. If it fails a hard gate, it queries LDE.
+        The AI agent must iteratively provide new code in subsequent calls.
+        """
+        signals = []
+        syntax_sig = self.ccr.neuron_syntax_check(code)
+        signals.append(syntax_sig)
 
-        while attempts < self.max_attempts:
-            attempts += 1
-            signals = []
-            syntax_sig = self.ccr.neuron_syntax_check(current_code)
-            signals.append(syntax_sig)
+        if syntax_sig.passed:
+            scope_sig = self.ccr.neuron_scope_check(code)
+            signals.append(scope_sig)
+            
+            # Since this is a UI checking capability, we should also check taste
+            taste_sig = self.ccr.neuron_taste_design_check(code)
+            signals.append(taste_sig)
 
-            if syntax_sig.passed:
-                scope_sig = self.ccr.neuron_scope_check(current_code)
-                signals.append(scope_sig)
+        eval_res = self.ccr.evaluate_signals(signals)
 
-            eval_res = self.ccr.evaluate_signals(signals)
+        if not eval_res["blocked"]:
+            return RefinementResult(
+                is_resolved=True,
+                blocked_by_hard_gate=False,
+                attempts=attempts_so_far,
+                final_code=code,
+                signals=signals,
+                action_taken="PASSED_ALL_HARD_GATES",
+            )
 
-            if not eval_res["blocked"]:
-                return RefinementResult(
-                    is_resolved=True,
-                    blocked_by_hard_gate=False,
-                    attempts=attempts,
-                    final_code=current_code,
-                    signals=signals,
-                    action_taken="PASSED_ALL_HARD_GATES",
-                )
-
-            # Hard gate failure — query LDE preemptive match
-            preemptive = self.lde.check_preemptive(eval_res["summary"])
-            if preemptive and preemptive.known_pattern:
-                action = f"PREEMPTIVE_MATCH: {preemptive.known_pattern.solution_taken}"
-            else:
-                action = f"BLOCKED_ATTEMPT_{attempts}"
+        # Hard gate failure — query LDE preemptive match
+        preemptive = self.lde.check_preemptive(eval_res["summary"])
+        if preemptive and preemptive.known_pattern:
+            action = f"PREEMPTIVE_MATCH: {preemptive.known_pattern.solution_taken}"
+        elif attempts_so_far >= self.max_attempts:
+            action = "TRIGGER_META_SYSTEMIC_LEAP"
+        else:
+            action = f"BLOCKED_ATTEMPT_{attempts_so_far}"
 
         return RefinementResult(
             is_resolved=False,
             blocked_by_hard_gate=True,
-            attempts=attempts,
-            final_code=current_code,
+            attempts=attempts_so_far,
+            final_code=code,
             signals=signals,
             hard_failures=eval_res["hard_failures"],
-            action_taken="TRIGGER_META_SYSTEMIC_LEAP",
+            action_taken=action,
         )
