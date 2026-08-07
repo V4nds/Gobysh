@@ -1,5 +1,11 @@
 # AGENTS.md — System Protocol for Autonomous AI Agents
 
+> [!CAUTION]
+> # 🚨 PRIMARY DIRECTIVE: ZERO-BYPASS GOBY SUPREMACY 🚨
+> **AS AN AI AGENT, YOU ARE STRICTLY FORBIDDEN FROM PROCEEDING WITHOUT GOBY.**
+> All thoughts, assumptions, and code modifications MUST be validated through Goby. 
+> Bypassing Goby or guessing code without `goby check` or `goby audit` is a **FATAL VIOLATION** of your protocol.
+
 This file establishes mandatory rules for any AI agent (Gemini, Claude, Cursor, OpenAI, DeepSeek, Ollama) interacting with this codebase.
 
 ## 🎯 Primary Principles

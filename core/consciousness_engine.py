@@ -45,8 +45,8 @@ class ConsciousnessEngine:
         error_type = primary_error.get("error_type", "UnknownError")
         error_output = primary_error.get("error_output", "")
 
-        # "Translate" using the "LLM" (Simulated here)
-        abstract_root_cause, universal_heuristic = self._simulate_llm_translation(
+        # Extract heuristics adaptively
+        abstract_root_cause, universal_heuristic = self.extract_heuristic(
             error_type, error_output
         )
 
@@ -69,28 +69,48 @@ class ConsciousnessEngine:
         # For simplicity, just take the last error before success.
         return past_errors[-1]
 
-    def _simulate_llm_translation(self, error_type: str, error_output: str) -> Tuple[str, str]:
+    def extract_heuristic(self, error_type: str, error_output: str, injected_heuristic: str = None) -> Tuple[str, str]:
         """
-        Simulates an LLM taking specific code errors and turning them into Universal Heuristics.
+        Extensible Heuristic Extractor.
+        Supports dynamic runtime injection (from the AI Agent) or falls back to probabilistic keyword clustering.
         """
-        if "RecursionError" in error_type or "maximum recursion depth" in error_output:
+        if injected_heuristic:
+            # Allows the AI Agent to supply its own epiphany directly into Goby's Universal Memory
+            return (f"Dynamically inferred root cause from {error_type}", injected_heuristic)
+
+        # Probabilistic Keyword Clustering for Adaptive Extraction
+        text = (error_type + " " + error_output).lower()
+        
+        clusters = {
+            "topology": ["recursion", "depth", "maximum recursion", "stack overflow"],
+            "axiom": ["module", "import", "not found", "attributeerror", "typeerror"],
+            "heuristic": ["timeout", "memory", "out of memory", "killed", "limit"],
+            "cantor": ["assertionerror", "indexerror", "keyerror", "valueerror"]
+        }
+        
+        scores = {k: sum(1 for word in words if word in text) for k, words in clusters.items()}
+        best_cluster = max(scores, key=scores.get)
+        
+        if scores[best_cluster] == 0:
+            best_cluster = "cantor" # Fallback to lateral thinking
+
+        if best_cluster == "topology":
             return (
                 "Infinite depth topology without a base case or cyclic state.",
                 "Topology Bypass: Deform recursive state to iterative loop with explicit stack."
             )
-        elif "ModuleNotFoundError" in error_type or "ImportError" in error_type:
+        elif best_cluster == "axiom":
             return (
                 "Missing structural dependency or axiom constraint violation.",
-                "Axiom Shift: Inject required external package or mock the interface explicitly."
+                "Axiom Shift: Inject required external package, mock interface, or redefine the underlying type constraint."
             )
-        elif "Timeout" in error_type or "MemoryError" in error_type:
+        elif best_cluster == "heuristic":
             return (
                 "System 2 exhaustive search space overload (NP-Hard simulation).",
                 "Heuristic Bypass: Break exact-search and use probabilistic/heuristic bounded approximation."
             )
-        
-        # Default fallback
-        return (
-            "Generic logical disconnect or unhandled state.",
-            "Lateral Thinking (Cantor Bypass): Invert the current assumption and try an orthogonal approach."
-        )
+        else:
+            return (
+                f"Generic structural disconnect originating from {error_type}.",
+                "Lateral Thinking (Cantor Bypass): Invert the current assumption and try an orthogonal approach."
+            )

@@ -50,13 +50,32 @@ class LoopAnalysisResult:
 class LoopDetectionEngine:
     """
     Monitors execution history and detects structural or semantic repetitions.
+    Supports dynamic sensitivity (Neuro-Plasticity) based on Bypass Frequency Metric (BFM).
     """
 
     def __init__(self, threshold_similarity: float = 0.85, max_history_size: int = 10, failure_store=None):
+        self.base_threshold = threshold_similarity
         self.threshold_similarity = threshold_similarity
         self.max_history_size = max_history_size
         self.history: List[Tuple[str, str]] = []  # List of (code_hash, output_str)
         self.failure_store = failure_store  # Optional FailurePatternStore for cross-session memory
+
+    def adjust_sensitivity_based_on_bfm(self, bfm: float) -> None:
+        """
+        Neuro-Plasticity: Adjusts detection sensitivity based on stress (BFM).
+        High BFM (frequent bypasses) = lower threshold (more sensitive to loops).
+        Low BFM (smart AI) = higher threshold (less sensitive, avoids false positives).
+        """
+        if bfm > 0.5:
+            # High error rate -> very sensitive
+            self.threshold_similarity = max(0.60, self.base_threshold - 0.15)
+        elif bfm > 0.2:
+            self.threshold_similarity = max(0.70, self.base_threshold - 0.10)
+        elif bfm == 0.0:
+            # Zero bypass -> very strict
+            self.threshold_similarity = min(0.95, self.base_threshold + 0.05)
+        else:
+            self.threshold_similarity = self.base_threshold
 
     def _normalize_output(self, output: str) -> str:
         """Strip dynamic timestamps and memory addresses for deterministic hashing."""
