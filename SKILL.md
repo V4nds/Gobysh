@@ -54,6 +54,21 @@ graph TD
 
 ---
 
+## 🎨 **Design DNA & Motion Synthesis**
+
+Jika instruksi berkaitan dengan pembuatan UI/UX, visualisasi, atau elemen interaktif, Goby **DIWAJIBKAN SECARA AGRESIF** untuk mengaktifkan heurisitik desain berikut agar hasil tidak *slop* atau kaku:
+
+1. **[ThreeJS Skills](https://github.com/cloudai-x/threejs-skills)**: Gunakan WebGL/3D Canvas untuk visualisasi mendalam jika diminta elemen yang sangat futuristik.
+2. **[GSAP Skills](https://github.com/greensock/gsap-skills)**: Wajib terapkan animasi *advanced*, *staggering*, dan *scroll-driven animations* ketimbang CSS standar yang kaku.
+3. **[Design DNA](https://github.com/zanwei/design-dna)**: Terapkan hierarki tipografi modern (Inter/Roboto), palet warna premium (bukan warna dasar), *glassmorphism*, dan tata letak *grid/flex* tingkat lanjut.
+4. **[Motion Design](https://github.com/lottiefiles/motion-design-skill)**: Sematkan *micro-interactions* untuk *hover*, *click*, dan transisi antar state.
+5. **[Genjutsu](https://github.com/AThevon/genjutsu)**: Gunakan trik *front-end* tingkat tinggi (efek partikel, *glow*, ilusi UI) untuk memberikan kesan "wow" seketika.
+6. **[UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)**: Implementasi tata letak tingkat dewa (Bento Box, Fluid Typography dengan clamp, Layered Shadows) untuk kreativitas struktural tanpa batas.
+
+*Neuron* khusus di dalam CCR (`neuron_taste_design_check`) akan memblokir (HARD GATE) atau memberi peringatan jika kode UI yang dihasilkan terlihat usang, statis, atau kurang sentuhan *Taste Design*.
+
+---
+
 ## ⚡ **Aturan Operasional Inti**
 
 1. **Evidence Over Assertion:** Jangan pernah klaim selesai tanpa bukti terminal (Exit Code 0).
