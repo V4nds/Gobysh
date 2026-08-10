@@ -3,23 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goby Omni-Synthesis | Genjutsu UI</title>
+    <title>Goby Framework v4.0 | Spatial Cognition & Telemetry Dashboard</title>
     
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        /* =========================================
-           Design DNA: Core Variables & Reset
-           ========================================= */
         :root {
-            --bg-color: #050505;
-            --surface-color: rgba(20, 20, 25, 0.6);
-            --border-color: rgba(255, 255, 255, 0.08);
+            --bg-color: #05050a;
+            --surface-color: rgba(18, 18, 28, 0.75);
+            --border-color: rgba(0, 240, 255, 0.15);
             --text-primary: #ffffff;
-            --text-secondary: #a0a0b0;
             --accent-cyan: #00f0ff;
-            --accent-purple: #8a2be2;
+            --accent-green: #00ff66;
         }
 
         * {
@@ -32,582 +28,164 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-primary);
-            overflow: hidden; /* Prevent scroll for full 3D experience */
+            min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            height: 100vh;
+            padding: 2rem;
+            overflow-x: hidden;
         }
 
-        /* =========================================
-           ThreeJS WebGL Background
-           ========================================= */
-        #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
+        header {
             width: 100%;
-            height: 100%;
-            z-index: 0;
-        }
-
-        /* =========================================
-           UI Foreground: Glassmorphism
-           ========================================= */
-        .dashboard-container {
-            position: relative;
-            z-index: 10;
-            width: 90%;
             max-width: 1000px;
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 2rem;
-            pointer-events: none; /* Let clicks pass to canvas if needed */
-        }
-
-        .glass-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1.2rem 2rem;
             background: var(--surface-color);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 3rem;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            pointer-events: auto; /* Re-enable clicks for panel */
-            
-            /* Initial state for GSAP */
-            opacity: 0;
-            transform: translateY(30px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
 
-        /* Typography Hierarchy */
         .badge {
             display: inline-block;
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.8rem;
             background: rgba(0, 240, 255, 0.1);
             color: var(--accent-cyan);
-            border: 1px solid rgba(0, 240, 255, 0.2);
+            border: 1px solid rgba(0, 240, 255, 0.3);
             border-radius: 100px;
             font-size: 0.75rem;
             font-weight: 600;
             letter-spacing: 1px;
             text-transform: uppercase;
-            margin-bottom: 1.5rem;
         }
 
         h1 {
-            font-size: 3rem;
+            font-size: 1.8rem;
             font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, #fff 0%, #a0a0b0 100%);
+            background: linear-gradient(90deg, #ffffff, var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        h1 span {
-            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin-bottom: 2.5rem;
-        }
-
-        /* =========================================
-           Genjutsu & Motion Design: Interactive Elements
-           ========================================= */
-        .btn-glow {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem 2rem;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #fff;
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            cursor: pointer;
-            overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            text-decoration: none;
-        }
-
-        .btn-glow::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
+        .dashboard-grid {
             width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.2),
-                transparent
-            );
-            transition: all 0.6s ease;
-        }
-
-        .btn-glow:hover {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3),
-                        inset 0 0 10px rgba(0, 240, 255, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .btn-glow:hover::before {
-            left: 100%;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(138, 43, 226, 0.2) 100%);
-            border-color: rgba(0, 240, 255, 0.3);
-        }
-
-        /* Status metrics */
-        .metrics-grid {
+            max-width: 1000px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
         }
 
-        .metric-card {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: transform 0.3s ease, background 0.3s ease;
+        .panel-card {
+            background: var(--surface-color);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 1.8rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
         }
 
-        .metric-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.02);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .metric-value {
-            font-size: 2.5rem;
-            font-weight: 800;
+        .panel-card h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
             color: var(--accent-cyan);
-            margin-bottom: 0.5rem;
-            display: inline-block;
-        }
-
-        .metric-label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-
-        .purple-glow {
-            color: var(--accent-purple);
-        }
-        
-        /* Loading Overlay */
-        #loader {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color);
-            z-index: 100;
+            margin-bottom: 1rem;
             display: flex;
-            justify-content: center;
             align-items: center;
-            color: var(--accent-cyan);
-            font-weight: 800;
-            letter-spacing: 4px;
-        }
-        /* =========================================
-           Orbiting Circles Animation
-           ========================================= */
-        .orbit-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 5;
-            pointer-events: none;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
+            gap: 0.6rem;
         }
 
-        .orbit-ring {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-        }
-
-        .orbit-item {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            height: 50%;
-            transform-origin: bottom;
+        .stat-list {
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
+            gap: 0.8rem;
         }
 
-        .orbit-icon-wrapper {
-            margin-top: -16px;
-            padding: 10px;
-            background: var(--bg-color);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            position: relative;
-            z-index: 10;
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            font-size: 0.85rem;
         }
 
-        .orbit-icon-wrapper img {
-            width: 24px;
-            height: 24px;
+        .stat-value {
+            font-weight: 700;
+            color: var(--accent-green);
         }
 
-        @keyframes orbit-cw {
-            from { transform: rotate(var(--start-angle)); }
-            to   { transform: rotate(calc(var(--start-angle) + 360deg)); }
-        }
-        @keyframes orbit-ccw {
-            from { transform: rotate(var(--start-angle)); }
-            to   { transform: rotate(calc(var(--start-angle) - 360deg)); }
-        }
-        @keyframes counter-cw {
-            from { transform: rotate(var(--counter-offset, 0deg)); }
-            to   { transform: rotate(calc(var(--counter-offset, 0deg) - 360deg)); }
-        }
-        @keyframes counter-ccw {
-            from { transform: rotate(var(--counter-offset, 0deg)); }
-            to   { transform: rotate(calc(var(--counter-offset, 0deg) + 360deg)); }
+        .code-block {
+            background: rgba(10, 10, 15, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #00f0ff;
+            line-height: 1.5;
+            overflow-x: auto;
         }
     </style>
 </head>
 <body>
 
-    <!-- Loading Screen -->
-    <div id="loader">INITIALIZING NEURONS...</div>
+    <header>
+        <div>
+            <span class="badge">GOBY v4.0 OMNI-SYNTHESIS</span>
+            <h1 style="margin-top: 0.4rem;">Spatial Cognition Telemetry</h1>
+        </div>
+        <div style="color: var(--accent-green); font-size: 0.9rem; font-weight: 600;">
+            🟢 CCR HARD GATES: PASS
+        </div>
+    </header>
 
-    <!-- WebGL Background -->
-    <div id="canvas-container"></div>
-
-    <!-- Orbiting Circles -->
-    <div class="orbit-container">
-        <!-- Orbit 1 (Small) - 18s -->
-        <div class="orbit-ring stagger-el" style="width: 440px; height: 440px;">
-            <div class="orbit-item" style="--start-angle: -60deg; animation: orbit-cw 18s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: 60deg; animation: counter-cw 18s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/supabase.svg" alt="Supabase">
+    <div class="dashboard-grid">
+        <!-- Spatial Benchmarks -->
+        <div class="panel-card">
+            <h2>🧩 Spatial Cognitive Metrics</h2>
+            <div class="stat-list">
+                <div class="stat-item">
+                    <span>Multi-Threaded Throughput</span>
+                    <span class="stat-value">1341.56 ops/sec</span>
                 </div>
-            </div>
-            <div class="orbit-item" style="--start-angle: 120deg; animation: orbit-cw 18s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: -120deg; animation: counter-cw 18s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/supabase.svg" alt="Supabase-mirror">
+                <div class="stat-item">
+                    <span>Thread Safety Lock Contention</span>
+                    <span class="stat-value">0 Data Corruptions</span>
                 </div>
-            </div>
-            
-            <div class="orbit-item" style="--start-angle: 0deg; animation: orbit-cw 18s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: 0deg; animation: counter-cw 18s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/gemini.svg" alt="Gemini">
+                <div class="stat-item">
+                    <span>LDE Spatial Loop Detection</span>
+                    <span class="stat-value">TRIGGERED (Attempt 4)</span>
                 </div>
-            </div>
-            <div class="orbit-item" style="--start-angle: 180deg; animation: orbit-cw 18s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: -180deg; animation: counter-cw 18s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/gemini.svg" alt="Gemini-mirror">
+                <div class="stat-item">
+                    <span>Neuro-Cognitive Strategy</span>
+                    <span class="stat-value">Cantor Lateral Leap</span>
                 </div>
-            </div>
-
-            <div class="orbit-item" style="--start-angle: 60deg; animation: orbit-cw 18s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: -60deg; animation: counter-cw 18s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/make.svg" alt="Make">
-                </div>
-            </div>
-            <div class="orbit-item" style="--start-angle: 240deg; animation: orbit-cw 18s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: -240deg; animation: counter-cw 18s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/make.svg" alt="Make-mirror">
+                <div class="stat-item">
+                    <span>GCA Empirical Ground Truth</span>
+                    <span class="stat-value">100% Accuracy (NLL: 0.0101)</span>
                 </div>
             </div>
         </div>
 
-        <!-- Orbit 2 (Medium) - 24s -->
-        <div class="orbit-ring stagger-el" style="width: 600px; height: 600px;">
-            <div class="orbit-item" style="--start-angle: 0deg; animation: orbit-ccw 24s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: 0deg; animation: counter-ccw 24s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/figma.svg" alt="Figma">
-                </div>
-            </div>
-            <div class="orbit-item" style="--start-angle: 180deg; animation: orbit-ccw 24s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: -180deg; animation: counter-ccw 24s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/figma.svg" alt="Figma-mirror">
-                </div>
-            </div>
-
-            <div class="orbit-item" style="--start-angle: -90deg; animation: orbit-ccw 24s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: 90deg; animation: counter-ccw 24s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/slack.svg" alt="Slack">
-                </div>
-            </div>
-            <div class="orbit-item" style="--start-angle: 90deg; animation: orbit-ccw 24s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: -90deg; animation: counter-ccw 24s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/slack.svg" alt="Slack-mirror">
-                </div>
-            </div>
-        </div>
-
-        <!-- Orbit 3 (Large) - 30s -->
-        <div class="orbit-ring stagger-el" style="width: 720px; height: 720px;">
-            <div class="orbit-item" style="--start-angle: -60deg; animation: orbit-cw 30s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: 60deg; animation: counter-cw 30s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/clude.svg" alt="Claude">
-                </div>
-            </div>
-            <div class="orbit-item" style="--start-angle: 120deg; animation: orbit-cw 30s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: -120deg; animation: counter-cw 30s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/clude.svg" alt="Claude-mirror">
-                </div>
-            </div>
-
-            <div class="orbit-item" style="--start-angle: 0deg; animation: orbit-cw 30s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: 0deg; animation: counter-cw 30s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/react.svg" alt="React">
-                </div>
-            </div>
-            <div class="orbit-item" style="--start-angle: 180deg; animation: orbit-cw 30s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: -180deg; animation: counter-cw 30s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/react.svg" alt="React-mirror">
-                </div>
-            </div>
-
-            <div class="orbit-item" style="--start-angle: 60deg; animation: orbit-cw 30s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: -60deg; animation: counter-cw 30s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/python.svg" alt="Python">
-                </div>
-            </div>
-            <div class="orbit-item" style="--start-angle: 240deg; animation: orbit-cw 30s linear infinite;">
-                <div class="orbit-icon-wrapper" style="--counter-offset: -240deg; animation: counter-cw 30s linear infinite;">
-                    <img src="https://images.shadcnspace.com/assets/svgs/python.svg" alt="Python-mirror">
-                </div>
+        <!-- CLI Quick Verification -->
+        <div class="panel-card">
+            <h2>⚡ Spatial Verification Commands</h2>
+            <div class="code-block">
+# Jalankan Spatial Cognitive Stress Test<br>
+python -m demo.spatial_stress_test<br><br>
+# Jalankan Spatial Unit Tests<br>
+python -m unittest tests/test_spatial_goby.py<br><br>
+# Audit Seluruh Test Suite Goby<br>
+goby audit
             </div>
         </div>
     </div>
 
-    <!-- Glassmorphism UI -->
-    <div class="dashboard-container">
-        
-        <!-- Left Panel: Content -->
-        <div class="glass-panel stagger-el">
-            <div class="badge">CCR v4.0 Active</div>
-            <h1>Omni-Synthesis <br><span>Genjutsu UI</span></h1>
-            <p>
-                Demonstrasi nyata dari kemampuan Taste Design Goby. 
-                Memadukan estetika ruang siber organik dengan ThreeJS 
-                untuk partikel neuron dan GSAP untuk pergerakan fluid. 
-                Tidak ada lagi antarmuka kaku.
-            </p>
-            <div style="display: flex; gap: 1rem;">
-                <button class="btn-glow btn-primary">Initiate Synapse</button>
-                <button class="btn-glow">View Source</button>
-            </div>
-        </div>
-
-        <!-- Right Panel: Metrics -->
-        <div class="glass-panel stagger-el">
-            <h3 style="margin-bottom: 2rem; font-weight: 400; color: #fff;">Cognitive State</h3>
-            <div class="metrics-grid">
-                
-                <div class="metric-card">
-                    <div class="metric-value counter" data-target="99.9">0</div><span style="color:var(--accent-cyan); font-size: 1.5rem; font-weight: bold;">%</span>
-                    <div class="metric-label">Taste Design</div>
-                </div>
-                
-                <div class="metric-card">
-                    <div class="metric-value purple-glow counter" data-target="103">0</div>
-                    <div class="metric-label">Tests Passed</div>
-                </div>
-
-                <div class="metric-card" style="grid-column: span 2;">
-                    <div class="metric-label" style="margin-bottom: 0.5rem;">System Response</div>
-                    <div style="font-family: monospace; color: var(--text-secondary); background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; font-size: 0.9rem;">
-                        <span style="color: #4ade80;">> [SUCCESS]</span> HARD GATE bypassed.<br>
-                        <span style="color: #a0a0b0;">></span> GSAP animations loaded.<br>
-                        <span style="color: #a0a0b0;">></span> ThreeJS rendering active.
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Libraries (CDN) -->
-    <!-- GSAP for Motion Synthesis -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <!-- ThreeJS for 3D Genjutsu WebGL -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-    <script>
-        /* =========================================
-           1. ThreeJS Brain/Neuron Particles
-           ========================================= */
-        const container = document.getElementById('canvas-container');
-        
-        // Scene setup
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050505, 0.001);
-        
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 2000);
-        camera.position.z = 1000;
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        container.appendChild(renderer.domElement);
-
-        // Particles Geometry
-        const geometry = new THREE.BufferGeometry();
-        const particlesCount = 1500;
-        
-        const positions = new Float32Array(particlesCount * 3);
-        const colors = new Float32Array(particlesCount * 3);
-        
-        const color1 = new THREE.Color(0x00f0ff); // Cyan
-        const color2 = new THREE.Color(0x8a2be2); // Purple
-
-        for (let i = 0; i < positions.length; i += 3) {
-            // Random spherical distribution
-            const r = 800 * Math.cbrt(Math.random());
-            const theta = Math.random() * 2 * Math.PI;
-            const phi = Math.acos(2 * Math.random() - 1);
-            
-            positions[i] = r * Math.sin(phi) * Math.cos(theta);
-            positions[i + 1] = r * Math.sin(phi) * Math.sin(theta);
-            positions[i + 2] = r * Math.cos(phi);
-
-            // Mix colors
-            const mixedColor = color1.clone().lerp(color2, Math.random());
-            colors[i] = mixedColor.r;
-            colors[i + 1] = mixedColor.g;
-            colors[i + 2] = mixedColor.b;
-        }
-
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        // Material with additive blending for glowing effect
-        const material = new THREE.PointsMaterial({
-            size: 4,
-            vertexColors: true,
-            blending: THREE.AdditiveBlending,
-            transparent: true,
-            opacity: 0.8,
-            sizeAttenuation: true
-        });
-
-        const particles = new THREE.Points(geometry, material);
-        scene.add(particles);
-
-        // Mouse interaction
-        let mouseX = 0;
-        let mouseY = 0;
-        let targetX = 0;
-        let targetY = 0;
-
-        const windowHalfX = window.innerWidth / 2;
-        const windowHalfY = window.innerHeight / 2;
-
-        document.addEventListener('mousemove', (event) => {
-            mouseX = (event.clientX - windowHalfX) * 0.5;
-            mouseY = (event.clientY - windowHalfY) * 0.5;
-        });
-
-        // Animation Loop
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // Smooth camera follow mouse (Easing)
-            targetX = mouseX * 0.05;
-            targetY = mouseY * 0.05;
-            
-            camera.position.x += (mouseX - camera.position.x) * 0.02;
-            camera.position.y += (-mouseY - camera.position.y) * 0.02;
-            camera.lookAt(scene.position);
-
-            // Slow rotation for the entire particle system
-            particles.rotation.y += 0.001;
-            particles.rotation.x += 0.0005;
-
-            renderer.render(scene, camera);
-        }
-
-        // Handle Resize
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-
-        /* =========================================
-           2. GSAP Motion Synthesis (UI Animation)
-           ========================================= */
-        
-        // Wait for next frame to ensure everything is ready
-        window.onload = () => {
-            // Remove Loader
-            gsap.to("#loader", {
-                opacity: 0,
-                duration: 1,
-                ease: "power2.inOut",
-                onComplete: () => {
-                    document.getElementById("loader").style.display = "none";
-                    
-                    // Start ThreeJS Animation
-                    animate();
-
-                    // UI Staggered Entrance
-                    gsap.to(".stagger-el", {
-                        y: 0,
-                        opacity: 1,
-                        duration: 1.2,
-                        stagger: 0.2,
-                        ease: "power4.out"
-                    });
-
-                    // Number Counter Animation for Metrics
-                    const counters = document.querySelectorAll(".counter");
-                    counters.forEach(counter => {
-                        const target = parseFloat(counter.getAttribute("data-target"));
-                        gsap.to(counter, {
-                            innerHTML: target,
-                            duration: 2.5,
-                            snap: { innerHTML: target % 1 === 0 ? 1 : 0.1 },
-                            ease: "power3.out",
-                            onUpdate: function() {
-                                // Add back the decimal point if it was a float
-                                if (target % 1 !== 0) {
-                                    counter.innerHTML = Number(counter.innerHTML).toFixed(1);
-                                }
-                            }
-                        });
-                    });
-                }
-            });
-        };
-    </script>
 </body>
 </html>
