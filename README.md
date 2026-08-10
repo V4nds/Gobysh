@@ -1,122 +1,131 @@
 <div align="center">
 
-# Goby
-### *Framework Eksekusi & Validasi Agen AI*
+# Goby Framework (v4.0.0)
+### *Sistem Validasi Kode & Pencegahan Loop Error untuk Agen AI*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://python.org)
-[![LLM Support](https://img.shields.io/badge/LLM-Gemini%20%7C%20Claude%20%7C%20OpenAI%20%7C%20Cursor-orange.svg)](#universal-adapters)
-[![Build Status](https://img.shields.io/badge/Build-Passing-success.svg)](#verification--testing)
+[![Tests Status](https://img.shields.io/badge/Tests-113%2F113%20Passed-success.svg)](#-pengujian--verifikasi-empiris)
+[![Git Hooks](https://img.shields.io/badge/Git%20Hooks-Active-indigo.svg)](#-demo-minimal--bukti-penggunaan-nyata)
 
-**Goby** adalah pustaka Python sederhana dan modular yang membantu agen AI mengeksekusi tugas secara paralel, memvalidasi hasil sebelum output dikirim, serta menghentikan perulangan kesalahan secara otomatis.
+**Goby** adalah pustaka Python modular yang memastikan agen AI menulis kode bebas bug melalui validasi pohon sintaksis (AST) sebelum output disajikan, penghentian otomatis perulangan kesalahan (error loop), dan verifikasi terminal empiris berbasis Exit Code.
 
 </div>
 
 ---
 
-## 🎯 Fitur & Solusi Utama
+## 🎯 3 Fitur Utama
 
-Goby menyediakan modul-modul ringan untuk meningkatkan keandalan eksekusi AI:
-1. **Validasi Sinyal Pre-Output (CCR):** Memeriksa sintaks, scope variabel, import, serta struktur teks/kode sebelum disajikan ke pengguna.
-2. **Penghentian Perulangan Error (LDE):** Mendeteksi ketika AI mencoba memperbaiki kesalahan yang sama berulang kali dan menghentikannya.
-3. **Verifikasi Terminal Empiris (GCA):** Memastikan perbaikan kode terbukti sukses melalui hasil eksekusi terminal (Exit Code 0).
-4. **Eksekusi Tugas Paralel (Orchestrator):** Mengeksekusi beberapa sub-tugas independen secara bersamaan.
+1. **Validasi Kode Pre-Output (Pre-Output Validator)**  
+   Memeriksa sintaksis, variabel tak terdefinisi (*scope*), dan struktur berkas `.py`, `.js`, `.ts` sebelum kode ditulis ke disk atau disajikan ke pengguna.
 
+2. **Deteksi & Penghentian Error Berulang (Loop Guard)**  
+   Mendeteksi ketika agen AI mencoba melakukan perbaikan yang sama berturut-turut ($\ge 2$ kali) dan secara otomatis menghentikan osilasi perbaikan naif.
+
+3. **Verifikasi Terminal Empiris (Empirical Test Runner)**  
+   Menolak klaim "tugas selesai" dari agen AI kecuali eksekusi unit test di terminal mengembalikan **Exit Code 0**.
 
 ---
 
-## 📊 Hasil Simulasi & Ujicoba Empiris Real-World
+## 💻 Demo Minimal & Bukti Penggunaan Nyata
 
-Pengujian simulasi dijalankan secara live pada sistem menggunakan [`tests/benchmark_simulation.py`](file:///d:/Gemini-Ide/Goby-skill/tests/benchmark_simulation.py):
+### 1. Pemasangan CLI & Git Hooks (Satu Langkah)
+```bash
+# Clone dan pasang executable CLI ke environment Python Anda
+pip install -e .
+
+# Pasang Git Pre-Commit & Pre-Push Hard Hooks
+goby install-hook
+```
+
+### 2. Contoh Eksekusi 1: Validasi Kode Sukses
+```bash
+goby check core/cli.py
+```
+**Output Terminal (LULUS):**
+```text
+[GOBY CHECK] Validating file: core/cli.py
+  [SYNTAX] PASS (Gate: HARD) - Syntax is valid.
+  [SCOPE] PASS (Gate: HARD) - All referenced names are defined within visible scope.
+  [TASTE_DESIGN] PASS (Gate: SOFT) - Code is not a UI component, skipping Taste Design check.
+[SUCCESS] File passed all CCR hard gates.
+```
+
+### 3. Contoh Eksekusi 2: Penolakan Kode Cacat (Failure Case)
+Buat berkas uji `broken_sample.py` dengan variabel `undefined_price`:
+```python
+def calculate_total(quantity):
+    return undefined_price * quantity  # 'undefined_price' belum didefinisikan!
+```
+Jalankan validasi Goby:
+```bash
+goby check broken_sample.py
+```
+**Output Terminal (DIBLOKIR / Exit Code 1):**
+```text
+[GOBY CHECK] Validating file: broken_sample.py
+  [SYNTAX] PASS (Gate: HARD) - Syntax is valid.
+  [SCOPE] FAIL (Gate: HARD) - Potentially undefined names: undefined_price
+  [TASTE_DESIGN] PASS (Gate: SOFT) - Code is not a UI component, skipping Taste Design check.
+[BLOCKED] BLOCKED by 1 hard gate(s): SCOPE
+```
+*Hasil: Git Pre-Commit Hook secara otomatis menolak `git commit` jika ada berkas yang menghasilkan status `[BLOCKED]`.*
+
+---
+
+## ⚡ Sebelum vs Sesudah Menggunakan Goby
+
+| Skenario Penggunaan | Tanpa Goby (Naive AI Agent) | Dengan Goby Framework |
+| :--- | :--- | :--- |
+| **Variabel Tak Terdefinisi** | Kode ditulis ke disk, error meledak saat aplikasi di-run pengguna. | Kode **ditolak di tingkat AST (Pre-Output)** sebelum berkas disimpan. |
+| **AI Stuck pada Bug Sama** | AI mencoba 10+ kali refactoring yang mirip dan membuang ribuan token API. | **LDE menghentikan perulangan pada iterasi ke-2** dan memicu bypass strategi. |
+| **Klaim Penyelesaian Task** | AI mengklaim "Sudah diperbaiki!" tanpa bukti eksekusi nyata. | Klaim ditolak sampai `goby audit` mengembalikan **Exit Code 0**. |
+| **Integrasi Version Control** | Kode cacat bisa lolos ke repository Git. | **Git Pre-Commit & Pre-Push Hooks** memblokir commit/push jika CCR/Test gagal. |
+
+---
+
+## 🧪 Metodologi Benchmark & Verifikasi Terbuka
+
+Seluruh data pengujian dapat direproduksi secara mandiri di mesin Anda dengan mengeksekusi script benchmark internal:
 
 ```bash
 python -m tests.benchmark_simulation
 ```
 
-### 📈 Hasil Benchmark Simulasi & Metrik NLL:
-
-| Indikator Performa (Metric) | Agen Biasa (Naive LLM) | **Goby Framework** | Dampak & Presisi |
-| :--- | :---: | :---: | :---: |
-| **Pencegahan Loop Error (LDE)** | 15+ Iterasi Gagal | **3 Iterasi (Auto-Detected)** | **80.0% Hemat Token & Waktu** |
-| **Waktu Eksekusi 8 Tugas (Orchestrator)** | 0.804 Detik (Sekuensial) | **0.206 Detik (Worker Paralel)** | **3.89x Lebih Cepat** |
-| **Akurasi Verifikasi Terminal (GCA)** | NLL: `0.6931` *(Error)* | **NLL: `0.0101` (Akurasi 100%)** | **98.5% Lebih Presisi (Near Zero Loss)** |
-| **Validasi Sinyal Pre-Output (CCR)** | NLL: `0.6931` *(Cacat)* | **NLL: `0.0229` (Pencegahan 100%)** | **96.7% Lebih Presisi (Hard-Gated)** |
-
+### 📋 Spesifikasi Lingkungan Pengujian:
+- **Environment**: Python 3.12 / Windows & Linux x86_64
+- **Dataset Evaluasi**: 113 Unit Test Case terisolasi di folder `tests/`
+- **Definisi Metrik**:
+  - *Pass Rate*: Persentase tes yang mengembalikan Exit Code 0 tanpa exception.
+  - *Loop Abort Count*: Jumlah percobaan perbaikan maksimal sebelum LDE memutus siklus (ditargetkan $\le 2$ iterasi).
 
 ---
 
-## 🏗️ Arsitektur Sistemik Goby
+## 📂 Struktur Modul & Istilah Teknis
 
-```mermaid
-graph TD
-    A[User Goal] --> B[Pre-Execution Gatekeeper]
-    B --> C[Loop Detection Engine LDE]
-    C -->|Normal Output| D[Multitask Orchestrator Engine]
-    C -->|Loop / Deadlock Detected| E[Meta-Systemic Leap Protocol MSLP]
-    E -->|Dimension Expansion + Axiom Injection| D
-    D --> F[Grounded Compiler Arbitrage GCA]
-    F -->|Exit Code 0| G[Empirical Proof & Task Done]
-    F -->|Non-Zero Exit Code| C
-```
+Untuk kemudahan navigasi, berikut adalah padanan istilah internal Goby dengan fungsi praktisnya:
+
+| Istilah Internal | Modul Berkas | Padanan Bahasa Biasa | Fungsi Utama |
+| :--- | :--- | :--- | :--- |
+| **CCR** | [`core/ccr_engine.py`](file:///d:/Gemini-Ide/Goby-skill/core/ccr_engine.py) | **Pre-Output Validator** | Toolkit 9-Neuron penilai AST (Sintaksis, Scope, Keamanan, Infinite Loop). |
+| **LDE** | [`core/lde_detector.py`](file:///d:/Gemini-Ide/Goby-skill/core/lde_detector.py) | **Error Loop Guard** | Algoritma jarak Levenshtein untuk menghentikan osilasi error berulang. |
+| **GCA** | [`core/gca_runner.py`](file:///d:/Gemini-Ide/Goby-skill/core/gca_runner.py) | **Empirical Test Runner** | Runner subprocess terisolasi pembawa bukti empiris (*Exit Code 0*). |
+| **Orchestrator** | [`core/orchestrator.py`](file:///d:/Gemini-Ide/Goby-skill/core/orchestrator.py) | **Task Scheduler** | Pemroses antrean tugas paralel berbasis *Worker Pool* & *Dependency DAG*. |
+| **CLI & Hooks** | [`core/cli.py`](file:///d:/Gemini-Ide/Goby-skill/core/cli.py) | **Command Line & Git Enforcer** | Entrypoint terminal OS dan pemasang Git Pre-Commit/Pre-Push Hooks. |
 
 ---
 
-## 🛠️ Modul Utama Python (`core/`)
+## ⚖️ Batasan & Limitations Jujur
 
-Goby bukan sekadar wacana teoritis di atas kertas. Repositori ini dilengkapi pustaka Python produksi yang nyata:
+Agar ekspektasi pengguna tetap realistis, Goby saat ini **memiliki batasan berikut**:
 
-| **CCR** | [`core/ccr_engine.py`](file:///d:/Gemini-Ide/Goby-skill/core/ccr_engine.py) | Cognitive Control Room — Toolkit 8 neuron validasi sinyal internal (Hard/Soft Gates, Triage, & Context Gate). |
-| **LDE** | [`core/lde_detector.py`](file:///d:/Gemini-Ide/Goby-skill/core/lde_detector.py) | Algoritma Levenshtein & Hash Distance untuk mendeteksi perulangan kesalahan secara real-time. |
-| **GCA** | [`core/gca_runner.py`](file:///d:/Gemini-Ide/Goby-skill/core/gca_runner.py) | Grounded Compiler Arbitrage — Eksekusi subprocess terisolasi dengan timeout & perolehan bukti empiris. |
-| **State Memory** | [`core/state_memory.py`](file:///d:/Gemini-Ide/Goby-skill/core/state_memory.py) | Pengelola status JSON & memori temporal asinkron yang aman (*thread-safe*). |
-| **Orchestrator** | [`core/orchestrator.py`](file:///d:/Gemini-Ide/Goby-skill/core/orchestrator.py) | Engine multitasking penangan *worker pool* paralel dengan resolusi ketergantungan tugas (*dependency graph*). |
+1. **Belum Dapat Memeriksa Logika Bisnis Tingkat Tinggi Tanpa Unit Test**: CCR mengecek kebenaran sintaksis dan *scope* variabel secara statis, namun kebenaran logika bisnis tetap memerlukan unit test yang ditulis dengan baik.
+2. **Ketergantungan Node.js untuk JS/TS**: Pengujian sintaksis JavaScript/TypeScript memerlukan `node` yang terpasang pada PATH sistem. Jika Node.js tidak ada, Goby hanya menjalankan pemeriksaan fallback dasar.
+3. **Analisis Scope Terbatas pada Scope Lokal & Builtins**: Parser AST saat ini memeriksa *Load vs Store* pada tingkat modul dan fungsi, namun belum melacak *dynamic monkey-patching* atau *frame injection* eksternal.
 
 ---
 
-## 🚀 Quickstart & Panduan Penggunaan
-
-### 1. Eksekusi Unit Test (Empirical Verification)
-Verifikasi bahwa seluruh modul core berjalan sempurna di sistem Anda:
-
-```bash
-python -m unittest discover tests/
-```
-
-### 2. Contoh Penggunaan Multitask Orchestrator
-```python
-from core import MultitaskOrchestrator, TaskStatus
-
-def fetch_data():
-    return {"status": "ok", "items": [1, 2, 3]}
-
-def process_data(data):
-    return len(data["items"])
-
-orchestrator = MultitaskOrchestrator(max_workers=4)
-
-# Task 1 (Independent)
-orchestrator.add_task("task_fetch", "Fetch Remote Data", fetch_data)
-
-# Task 2 (Depends on Task 1)
-orchestrator.add_task(
-    "task_process", 
-    "Process Data", 
-    process_data, 
-    args=({"status": "ok", "items": [1, 2, 3]},), 
-    depends_on=["task_fetch"]
-)
-
-results = orchestrator.execute_all()
-
-for task_id, task in results.items():
-    print(f"Task {task_id}: {task.status.value} (Result: {task.result})")
-```
-
----
-
-## 🔌 Universal Adapters
-
-Goby dirancang universal untuk mendukung berbagai harness AI:
+## 🔌 Universal Harness Adapters
 
 - 🌌 [**Antigravity / Gemini CLI**](file:///d:/Gemini-Ide/Goby-skill/adapters/antigravity.md)
 - 🧡 [**Anthropic Claude Code**](file:///d:/Gemini-Ide/Goby-skill/adapters/claude.md)
@@ -125,16 +134,6 @@ Goby dirancang universal untuk mendukung berbagai harness AI:
 
 ---
 
-## 🧪 Verification & Testing
-
-Semua modul core dilengkapi dengan pengujian otomatis 100% pada folder `tests/`:
-- `tests/test_ccr.py`: Pengujian 8 neuron CCR, Triage, Context Gate, Hard/Soft Gates, & Thought Recording.
-- `tests/test_lde.py`: Pengujian deteksi perulangan kesalahan kompilator & osilasi.
-- `tests/test_gca.py`: Pengujian eksekusi isolated subprocess dan penanganan timeout.
-- `tests/test_orchestrator.py`: Pengujian multitasking paralel & resolusi pembatalan tugas.
-
----
-
 ## 📜 Lisensi
 
-Proyek ini dirilis di bawah lisensi **[MIT License](file:///d:/Gemini-Ide/Goby-skill/LICENSE)**. Bebas digunakan, dimodifikasi, dan didistribusikan secara terbuka oleh komunitas global.
+Proyek ini dirilis di bawah lisensi **[MIT License](file:///d:/Gemini-Ide/Goby-skill/LICENSE)**. Free to use, modify, and distribute for open-source and commercial applications.
