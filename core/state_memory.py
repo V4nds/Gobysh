@@ -70,39 +70,39 @@ class StateMemoryManager:
 
     def save_state(self, state_data: Dict[str, Any]) -> bool:
         """Saves JSON state in a thread-safe manner."""
-        # Work on a copy to prevent mutation during serialization
-        state_copy = copy.deepcopy(state_data)
-        state_copy["last_updated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-        tmp_path = f"{self.memory_file_path}.{threading.get_ident()}.tmp"
-        try:
-            with open(tmp_path, "w", encoding="utf-8") as f:
-                json.dump(state_copy, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            logging.warning(f"Failed to serialize state memory to {self.memory_file_path}: {e}")
-            if os.path.exists(tmp_path):
-                try:
-                    os.remove(tmp_path)
-                except OSError:
-                    pass
-            return False
+        with self._lock:
+            # Work on a copy to prevent mutation during serialization
+            state_copy = copy.deepcopy(state_data)
+            state_copy["last_updated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            tmp_path = f"{self.memory_file_path}.{threading.get_ident()}.tmp"
+            try:
+                with open(tmp_path, "w", encoding="utf-8") as f:
+                    json.dump(state_copy, f, indent=2, ensure_ascii=False)
+            except Exception as e:
+                logging.warning(f"Failed to serialize state memory to {self.memory_file_path}: {e}")
+                if os.path.exists(tmp_path):
+                    try:
+                        os.remove(tmp_path)
+                    except OSError:
+                        pass
+                return False
 
-        for _attempt in range(5):
-            with self._lock:
+            for _attempt in range(5):
                 try:
                     os.replace(tmp_path, self.memory_file_path)
                     self._cached_state = copy.deepcopy(state_copy)
                     return True
                 except (PermissionError, OSError):
                     pass
-            time.sleep(0.005)
+                time.sleep(0.005)
 
-        logging.warning(f"Failed to save state memory after multiple retries to {self.memory_file_path}")
-        if os.path.exists(tmp_path):
-            try:
-                os.remove(tmp_path)
-            except OSError:
-                pass
-        return False
+            logging.warning(f"Failed to save state memory after multiple retries to {self.memory_file_path}")
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
+            return False
 
     def record_error(self, error_type: str, details: str, code_context: Optional[str] = None) -> Dict[str, Any]:
         """Records an error event into persistent state memory."""

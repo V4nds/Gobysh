@@ -182,12 +182,14 @@ def show_status():
 def main():
     args = sys.argv[1:]
     if not args or args[0] in ("-h", "--help"):
-        print("Goby Framework CLI v4.0.0 (Omni-Synthesis)")
+        print("Goby Framework CLI v4.1.0 (Verification & Evidence Engine)")
         print("Usage:")
         print("  goby audit         Run full test suite verification")
         print("  goby benchmark     Run empirical benchmark simulation")
         print("  goby evolve        Run autonomous self-evolution cycle (BFM metric)")
         print("  goby check <code|filepath> Validate python/JS snippet or file via CCR")
+        print("  goby verify <code_string>   Genuine Pre-Output In-Memory Code Verification")
+        print("  goby evidence <claim> <file> Generate Machine-Verifiable Evidence Contract")
         print("  goby install-hook  Install Git pre-commit & pre-push hard-gate hooks")
         print("  goby watch         Run active workspace CCR watcher")
         print("  goby status        Show framework installation & memory status")
@@ -198,6 +200,31 @@ def main():
     if cmd == "status":
         show_status()
         sys.exit(0)
+
+    elif cmd == "verify":
+        if len(args) < 2:
+            print("Error: Please provide code string to verify. Example: goby verify 'x = 10'")
+            sys.exit(1)
+        code = args[1]
+        ccr = CognitiveControlRoom()
+        res = ccr.verify_candidate(code)
+        print(f"[VERIFY] Verified: {res['verified']} | Blocked: {res['blocked']}")
+        for sig in res['signals']:
+            print(f"  [{sig['neuron']}] {'PASS' if sig['passed'] else 'FAIL'} (Gate: {sig['gate']}) - {sig['message']}")
+        sys.exit(0 if res['verified'] else 1)
+
+    elif cmd == "evidence":
+        if len(args) < 3:
+            print("Error: Usage: goby evidence '<claim>' '<file|code>' [optional_test_command]")
+            sys.exit(1)
+        claim = args[1]
+        target = args[2]
+        test_cmd = args[3] if len(args) > 3 else None
+        ccr = CognitiveControlRoom()
+        contract = ccr.create_evidence_contract(claim, target, test_command=test_cmd)
+        import json
+        print(json.dumps(contract, indent=2))
+        sys.exit(0 if contract["status"] == "VERIFIED" else 1)
 
     elif cmd == "install-hook":
         install_git_hooks()

@@ -4,11 +4,13 @@ Executes code snippets or scripts in isolated subprocesses to gather empirical p
 """
 
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
+import time
 from dataclasses import dataclass
-from typing import Optional, List, Dict, TYPE_CHECKING
+from typing import Optional, List, Dict, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .consciousness_engine import ConsciousnessEngine
@@ -26,8 +28,8 @@ class ExecutionResult:
 
 class GroundedCompilerArbitrage:
     """
-    Executes commands or code scripts safely in a subprocess environment,
-    providing empirical evidence before making claims.
+    Executes commands or code scripts safely in an isolated subprocess with timeout enforcement,
+    providing empirical evidence (Exit Code) before making claims.
     """
 
     def __init__(
@@ -42,24 +44,37 @@ class GroundedCompilerArbitrage:
 
     def run_command(
         self,
-        command: str,
+        command: Union[str, List[str]],
         timeout: Optional[float] = None,
         env: Optional[Dict[str, str]] = None,
-        past_errors: Optional[List[Dict[str, str]]] = None
+        past_errors: Optional[List[Dict[str, str]]] = None,
+        use_shell: Optional[bool] = None
     ) -> ExecutionResult:
-        """Runs a shell command synchronously and returns the execution result."""
+        """
+        Runs a command synchronously in an isolated subprocess.
+        - If command is a List[str], shell=False is enforced.
+        - If command is a str and use_shell is None, shell=True is default for shell string compatibility.
+        """
         timeout_sec = timeout if timeout is not None else self.default_timeout
         current_env = os.environ.copy()
         if env:
             current_env.update(env)
 
-        import time
         start_time = time.time()
+
+        if isinstance(command, list):
+            cmd_args = command
+            cmd_str = " ".join(command)
+            shell_flag = False if use_shell is None else use_shell
+        else:
+            cmd_str = command
+            cmd_args = command
+            shell_flag = True if use_shell is None else use_shell
 
         try:
             process = subprocess.Popen(
-                command,
-                shell=True,
+                cmd_args,
+                shell=shell_flag,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -77,7 +92,7 @@ class GroundedCompilerArbitrage:
                 )
 
             return ExecutionResult(
-                command=command,
+                command=cmd_str,
                 exit_code=exit_code,
                 stdout=stdout or "",
                 stderr=stderr or "",
@@ -89,7 +104,7 @@ class GroundedCompilerArbitrage:
             stdout, stderr = process.communicate()
             duration = time.time() - start_time
             return ExecutionResult(
-                command=command,
+                command=cmd_str,
                 exit_code=-1,
                 stdout=stdout or "",
                 stderr=f"Execution timed out after {timeout_sec} seconds.\n" + (stderr or ""),
@@ -99,13 +114,22 @@ class GroundedCompilerArbitrage:
         except Exception as e:
             duration = time.time() - start_time
             return ExecutionResult(
-                command=command,
-                exit_code=-2,
+                command=cmd_str,
+                exit_code=-1,
                 stdout="",
-                stderr=f"Execution failed with exception: {str(e)}",
+                stderr=str(e),
                 duration_seconds=round(duration, 3),
                 is_success=False
             )
+
+    def run_command_args(
+        self,
+        args: List[str],
+        timeout: Optional[float] = None,
+        env: Optional[Dict[str, str]] = None
+    ) -> ExecutionResult:
+        """Explicitly runs argument list with shell=False for maximum security."""
+        return self.run_command(command=args, timeout=timeout, env=env, use_shell=False)
 
     def run_python_snippet(self, code_snippet: str, timeout: Optional[float] = None) -> ExecutionResult:
         """

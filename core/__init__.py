@@ -13,7 +13,21 @@ from .lde_detector import LoopDetectionEngine, LoopAnalysisResult, similarity_ra
 from .gca_runner import GroundedCompilerArbitrage, ExecutionResult
 from .state_memory import StateMemoryManager
 
-__version__ = "4.0.0"
+__version__ = "4.1.0"
+
+
+def verify(code: str, language: str = "python", context: dict = None):
+    """Top-level helper for Genuine Pre-Output In-Memory Verification."""
+    from .ccr_engine import CognitiveControlRoom
+    ccr = CognitiveControlRoom()
+    return ccr.verify_candidate(code, language=language, context=context)
+
+
+def create_evidence_contract(claim: str, code_or_file: str, language: str = "python", test_command: str = None):
+    """Top-level helper for machine-verifiable Evidence Contract generation."""
+    from .ccr_engine import CognitiveControlRoom
+    ccr = CognitiveControlRoom()
+    return ccr.create_evidence_contract(claim, code_or_file, language=language, test_command=test_command)
 
 
 # ---------------------------------------------------------------------------
