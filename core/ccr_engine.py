@@ -329,21 +329,40 @@ class CognitiveControlRoom:
 
     def neuron_ts_syntax_check(self, code: str) -> NeuronSignal:
         """
-        Signal: Does this TypeScript code conform to valid TS/JS syntax?
-        Mechanism: Strips TS interface/type definitions and validates JavaScript runtime syntax or tsc.
+        Signal: Does this TypeScript candidate code conform to valid TS/JS syntax?
+        Mechanism: Writes candidate to a temporary .ts file and validates via tsc or AST type-stripping.
         """
-        # If tsc compiler is available in PATH, try tsc check
-        tsc_res = self.gca.run_command("npx tsc --noEmit", timeout=10.0)
-        if tsc_res.is_success:
-            return NeuronSignal(
-                neuron_name="TS_SYNTAX",
-                gate_type=GateType.HARD,
-                passed=True,
-                confidence=1.0,
-                message="TypeScript syntax and types verified via tsc.",
-                evidence={"tsc_available": True},
-                suggestion="",
-            )
+        import shutil
+        import tempfile
+
+        # Write candidate to a temporary .ts file for accurate compiler validation
+        with tempfile.NamedTemporaryFile(suffix=".ts", mode="w", delete=False, encoding="utf-8") as temp_ts:
+            temp_ts.write(code)
+            temp_ts_path = temp_ts.name
+
+        try:
+            tsc_bin = shutil.which("tsc")
+            if tsc_bin:
+                tsc_res = self.gca.run_command([tsc_bin, "--noEmit", temp_ts_path], timeout=10.0)
+            else:
+                tsc_res = self.gca.run_command(f"npx tsc --noEmit \"{temp_ts_path}\"", timeout=10.0)
+
+            if tsc_res.is_success:
+                return NeuronSignal(
+                    neuron_name="TS_SYNTAX",
+                    gate_type=GateType.HARD,
+                    passed=True,
+                    confidence=1.0,
+                    message="TypeScript candidate syntax verified via tsc.",
+                    evidence={"tsc_available": True, "valid": True},
+                    suggestion="",
+                )
+        finally:
+            if os.path.exists(temp_ts_path):
+                try:
+                    os.remove(temp_ts_path)
+                except OSError:
+                    pass
 
         # Fallback: Strip TypeScript type annotations & interfaces using clean AST regex transformation
         clean_code = re.sub(r'interface\s+\w+\s*\{[^}]*\}', '', code)
@@ -1245,6 +1264,19 @@ class CognitiveControlRoom:
     # Evidence Engine: Machine-Verifiable Evidence Contract Generator
     # -----------------------------------------------------------------------
 
+    def resolve_source(self, target: str) -> tuple:
+        """
+        Deterministically resolves whether target is a file path or in-memory code string.
+        Returns (code_content, origin_type, resolved_path).
+        """
+        if os.path.isfile(target):
+            try:
+                with open(target, "r", encoding="utf-8") as f:
+                    return f.read(), "file", os.path.abspath(target)
+            except OSError:
+                pass
+        return target, "in_memory", "in_memory"
+
     def create_evidence_contract(
         self,
         claim: str,
@@ -1253,10 +1285,17 @@ class CognitiveControlRoom:
         test_command: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Generates a machine-verifiable Evidence Contract for an AI assertion.
-        Combines static AST verification signals and optional dynamic execution results.
+        Generates a machine-verifiable Evidence Contract with Evidence ID & cryptographic SHA-256 provenance.
+        Combines static AST verification signals and dynamic execution results.
         """
-        static_res = self.verify_candidate(code_or_file, language=language)
+        import hashlib
+
+        code_content, origin_type, resolved_path = self.resolve_source(code_or_file)
+        sha256_hash = hashlib.sha256(code_content.encode("utf-8")).hexdigest()
+        timestamp_str = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
+        evidence_id = f"EV-{timestamp_str}-{sha256_hash[:8]}"
+
+        static_res = self.verify_candidate(code_content, language=language)
         dynamic_res = None
 
         if test_command:
@@ -1274,9 +1313,16 @@ class CognitiveControlRoom:
 
         return {
             "contract_version": "1.0.0",
+            "evidence_id": evidence_id,
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "claim": claim,
             "status": "VERIFIED" if is_verified else "UNVERIFIED",
+            "source_provenance": {
+                "origin": origin_type,
+                "path": resolved_path,
+                "sha256": sha256_hash,
+                "language": language
+            },
             "evidence": {
                 "static_analysis": static_res,
                 "dynamic_execution": dynamic_res or {"status": "NOT_EXECUTED"}

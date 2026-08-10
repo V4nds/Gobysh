@@ -128,8 +128,17 @@ class GroundedCompilerArbitrage:
         timeout: Optional[float] = None,
         env: Optional[Dict[str, str]] = None
     ) -> ExecutionResult:
-        """Explicitly runs argument list with shell=False for maximum security."""
+        """Explicitly runs argument list with shell=False for bounded subprocess security."""
         return self.run_command(command=args, timeout=timeout, env=env, use_shell=False)
+
+    def run_shell_command(
+        self,
+        command: str,
+        timeout: Optional[float] = None,
+        env: Optional[Dict[str, str]] = None
+    ) -> ExecutionResult:
+        """Explicitly runs shell command pipeline with shell=True for raw shell operations."""
+        return self.run_command(command=command, timeout=timeout, env=env, use_shell=True)
 
     def run_python_snippet(self, code_snippet: str, timeout: Optional[float] = None) -> ExecutionResult:
         """

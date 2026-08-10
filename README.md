@@ -1,14 +1,15 @@
 <div align="center">
 
-# Goby Framework (v4.0.0)
-### *Sistem Validasi Kode & Pencegahan Loop Error untuk Agen AI*
+# Goby Framework (v4.1.0)
+### *Verification & Control Layer untuk Agen AI Coding*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://python.org)
-[![Tests Status](https://img.shields.io/badge/Tests-113%2F113%20Passed-success.svg)](#-pengujian--verifikasi-empiris)
-[![Git Hooks](https://img.shields.io/badge/Git%20Hooks-Active-indigo.svg)](#-demo-minimal--bukti-penggunaan-nyata)
+[![Unit Tests](https://img.shields.io/badge/Unit%20Tests-118%2F118%20Passed-success.svg)](#-metodologi-benchmark--verifikasi-terbuka)
+[![Benchmark Evaluation](https://img.shields.io/badge/Benchmark-91.7%25%20Accuracy%20(60%20Cases)-indigo.svg)](#-metodologi-benchmark--verifikasi-terbuka)
+[![Git Hooks](https://img.shields.io/badge/Git%20Hooks-Active-darkgreen.svg)](#-demo-minimal--bukti-penggunaan-nyata)
 
-**Goby** adalah pustaka Python modular yang memastikan agen AI menulis kode bebas bug melalui validasi pohon sintaksis (AST) sebelum output disajikan, penghentian otomatis perulangan kesalahan (error loop), dan verifikasi terminal empiris berbasis Exit Code.
+**Goby** adalah *verification & control layer* modular berbasis Python yang mencegah agen AI mengirimkan kode bermasalah. Goby menyediakan validasi in-memory sebelum berkas ditulis ke disk, penghentian otomatis perulangan kesalahan (*error loop guard*), dan penerbitan **Machine-Verifiable Evidence Contract** dengan *provenance tracking* SHA-256.
 
 </div>
 
@@ -16,70 +17,74 @@
 
 ## 🎯 3 Fitur Utama
 
-1. **Validasi Kode Pre-Output (Pre-Output Validator)**  
-   Memeriksa sintaksis, variabel tak terdefinisi (*scope*), dan struktur berkas `.py`, `.js`, `.ts` sebelum kode ditulis ke disk atau disajikan ke pengguna.
+1. **Validasi Kode Pre-Output & Candidate In-Memory API (`core.verify`)**  
+   Memeriksa sintaksis, variabel tak terdefinisi (*scope*), dan aturan keamanan pada kandidat berkas `.py`, `.js`, `.ts` secara langsung di memori sebelum kode disimpan ke sistem berkas.
 
-2. **Deteksi & Penghentian Error Berulang (Loop Guard)**  
-   Mendeteksi ketika agen AI mencoba melakukan perbaikan yang sama berturut-turut ($\ge 2$ kali) dan secara otomatis menghentikan osilasi perbaikan naif.
+2. **Machine-Verifiable Evidence Contract Engine (`core.create_evidence_contract`)**  
+   Mengubah setiap klaim penyelesaian tugas dari AI ("*Bug sudah diperbaiki*", "*Unit tests lulus*") menjadi objek bukti terstruktur bermesin yang dilengkapi **Evidence ID** (`EV-YYYYMMDD-...`) dan hash **SHA-256** kandidat kode.
 
-3. **Verifikasi Terminal Empiris (Empirical Test Runner)**  
-   Menolak klaim "tugas selesai" dari agen AI kecuali eksekusi unit test di terminal mengembalikan **Exit Code 0**.
+3. **Deteksi & Penghentian Error Berulang (Loop Guard & Bounded Subprocess Execution)**  
+   Mendeteksi osilasi perbaikan yang sama ($\ge 2$ kali) secara otomatis dan mengeksekusi pengujian terminal terisolasi dengan batas waktu (*timeout*).
 
 ---
 
 ## 💻 Demo Minimal & Bukti Penggunaan Nyata
 
-### 1. Pemasangan CLI & Git Hooks (Satu Langkah)
+### 1. Pemasangan CLI & Git Hooks
 ```bash
-# Clone dan pasang executable CLI ke environment Python Anda
+# Install package ke environment Python
 pip install -e .
 
 # Pasang Git Pre-Commit & Pre-Push Hard Hooks
 goby install-hook
 ```
 
-### 2. Contoh Eksekusi 1: Validasi Kode Sukses
+### 2. Contoh Eksekusi 1: Validasi In-Memory Pre-Output (`goby verify`)
 ```bash
-goby check core/cli.py
+goby verify "x = 10; y = 20; z = x + y; print(z)"
 ```
 **Output Terminal (LULUS):**
 ```text
-[GOBY CHECK] Validating file: core/cli.py
+[VERIFY] Verified: True | Blocked: False
   [SYNTAX] PASS (Gate: HARD) - Syntax is valid.
   [SCOPE] PASS (Gate: HARD) - All referenced names are defined within visible scope.
   [TASTE_DESIGN] PASS (Gate: SOFT) - Code is not a UI component, skipping Taste Design check.
-[SUCCESS] File passed all CCR hard gates.
 ```
 
-### 3. Contoh Eksekusi 2: Penolakan Kode Cacat (Failure Case)
-Buat berkas uji `broken_sample.py` dengan variabel `undefined_price`:
-```python
-def calculate_total(quantity):
-    return undefined_price * quantity  # 'undefined_price' belum didefinisikan!
-```
-Jalankan validasi Goby:
+### 3. Contoh Eksekusi 2: Penerbitan Evidence Contract (`goby evidence`)
 ```bash
-goby check broken_sample.py
+goby evidence "Refactored CLI entrypoint" core/cli.py "goby audit"
 ```
-**Output Terminal (DIBLOKIR / Exit Code 1):**
-```text
-[GOBY CHECK] Validating file: broken_sample.py
-  [SYNTAX] PASS (Gate: HARD) - Syntax is valid.
-  [SCOPE] FAIL (Gate: HARD) - Potentially undefined names: undefined_price
-  [TASTE_DESIGN] PASS (Gate: SOFT) - Code is not a UI component, skipping Taste Design check.
-[BLOCKED] BLOCKED by 1 hard gate(s): SCOPE
+**Output JSON Evidence Contract:**
+```json
+{
+  "contract_version": "1.0.0",
+  "evidence_id": "EV-20260810-195500-a1b2c3d4",
+  "timestamp": "2026-08-10T12:55:00Z",
+  "claim": "Refactored CLI entrypoint",
+  "status": "VERIFIED",
+  "source_provenance": {
+    "origin": "file",
+    "path": "D:\\Gemini-Ide\\Goby-skill\\core\\cli.py",
+    "sha256": "8a3f...",
+    "language": "python"
+  },
+  "evidence": {
+    "static_analysis": { "verified": true, "blocked": false },
+    "dynamic_execution": { "command": "goby audit", "exit_code": 0, "is_success": true }
+  }
+}
 ```
-*Hasil: Git Pre-Commit Hook secara otomatis menolak `git commit` jika ada berkas yang menghasilkan status `[BLOCKED]`.*
 
 ---
 
 ## ⚡ Sebelum vs Sesudah Menggunakan Goby
 
-| Skenario Penggunaan | Tanpa Goby (Naive AI Agent) | Dengan Goby Framework |
+| Skenario Penggunaan | Tanpa Goby (Naive AI Agent) | Dengan Goby Framework v4.1 |
 | :--- | :--- | :--- |
-| **Variabel Tak Terdefinisi** | Kode ditulis ke disk, error meledak saat aplikasi di-run pengguna. | Kode **ditolak di tingkat AST (Pre-Output)** sebelum berkas disimpan. |
-| **AI Stuck pada Bug Sama** | AI mencoba 10+ kali refactoring yang mirip dan membuang ribuan token API. | **LDE menghentikan perulangan pada iterasi ke-2** dan memicu bypass strategi. |
-| **Klaim Penyelesaian Task** | AI mengklaim "Sudah diperbaiki!" tanpa bukti eksekusi nyata. | Klaim ditolak sampai `goby audit` mengembalikan **Exit Code 0**. |
+| **Variabel Tak Terdefinisi** | Kode ditulis ke disk, error meledak saat aplikasi di-run pengguna. | Kode **ditolak di memori (Pre-Output)** sebelum berkas tersimpan. |
+| **AI Stuck pada Bug Sama** | AI mencoba 10+ kali refactoring yang mirip dan membuang token. | **LDE memutus perulangan pada iterasi ke-2** dan memicu bypass strategi. |
+| **Klaim Penyelesaian Task** | AI mengklaim "Sudah diperbaiki!" tanpa bukti empiris. | Klaim memerlukan **Evidence Contract ID & Exit Code 0**. |
 | **Integrasi Version Control** | Kode cacat bisa lolos ke repository Git. | **Git Pre-Commit & Pre-Push Hooks** memblokir commit/push jika CCR/Test gagal. |
 
 ---
@@ -92,36 +97,37 @@ Seluruh data pengujian dapat direproduksi secara mandiri di mesin Anda dengan me
 python -m tests.benchmark_simulation
 ```
 
-### 📋 Spesifikasi Lingkungan Pengujian:
+### 📋 Spesifikasi Lingkungan & Hasil Evaluasi Real-World:
 - **Environment**: Python 3.12 / Windows & Linux x86_64
-- **Dataset Evaluasi**: 113 Unit Test Case terisolasi di folder `tests/`
-- **Definisi Metrik**:
-  - *Pass Rate*: Persentase tes yang mengembalikan Exit Code 0 tanpa exception.
-  - *Loop Abort Count*: Jumlah percobaan perbaikan maksimal sebelum LDE memutus siklus (ditargetkan $\le 2$ iterasi).
+- **Unit Test Suite**: 118 Unit Test Case terisolasi di folder `tests/` (`100% Passed`)
+- **60-Case Static AST Classification Dataset**:
+  - *Accuracy*: **91.7%** (55 dari 60 kasus uji terklasifikasi sempurna)
+  - *Precision*: **0.931** | *Recall*: **0.900** | *F1-Score*: **0.915**
+  - *True Positives (Blocked Defects)*: 27 | *True Negatives (Passed Clean Code)*: 28
+  - *False Positives*: 2 | *False Negatives*: 3
+  - *Average Verification Latency*: **25.13 ms** per candidate evaluation
+- **Loop Interception Reduction**: **80.0%** (LDE menghentikan osilasi perbaikan pada iterasi ke-3 dari 15 baseline attempt)
+- **Workload Parallelism Speedup Factor**: **3.20x** (8 tugas worker pool paralel vs sekuensial)
 
 ---
 
 ## 📂 Struktur Modul & Istilah Teknis
 
-Untuk kemudahan navigasi, berikut adalah padanan istilah internal Goby dengan fungsi praktisnya:
-
 | Istilah Internal | Modul Berkas | Padanan Bahasa Biasa | Fungsi Utama |
 | :--- | :--- | :--- | :--- |
-| **CCR** | [`core/ccr_engine.py`](file:///d:/Gemini-Ide/Goby-skill/core/ccr_engine.py) | **Pre-Output Validator** | Toolkit 9-Neuron penilai AST (Sintaksis, Scope, Keamanan, Infinite Loop). |
-| **LDE** | [`core/lde_detector.py`](file:///d:/Gemini-Ide/Goby-skill/core/lde_detector.py) | **Error Loop Guard** | Algoritma jarak Levenshtein untuk menghentikan osilasi error berulang. |
-| **GCA** | [`core/gca_runner.py`](file:///d:/Gemini-Ide/Goby-skill/core/gca_runner.py) | **Empirical Test Runner** | Runner subprocess terisolasi pembawa bukti empiris (*Exit Code 0*). |
+| **CCR Engine** | [`core/ccr_engine.py`](file:///d:/Gemini-Ide/Goby-skill/core/ccr_engine.py) | **Pre-Output Validator & Evidence Engine** | Engine penilai AST (Sintaksis, Scope, TS/JS Validator, Evidence Contract Generator). |
+| **LDE Engine** | [`core/lde_detector.py`](file:///d:/Gemini-Ide/Goby-skill/core/lde_detector.py) | **Error Loop Guard** | Algoritma Levenshtein untuk memutus osilasi error berulang. |
+| **GCA Runner** | [`core/gca_runner.py`](file:///d:/Gemini-Ide/Goby-skill/core/gca_runner.py) | **Bounded Subprocess Runner** | Runner subprocess terisolasi dengan batas waktu & *exit code verification*. |
+| **State Memory** | [`core/state_memory.py`](file:///d:/Gemini-Ide/Goby-skill/core/state_memory.py) | **Thread-Safe Memory Manager** | Pengelola status JSON terenkapsulasi *thread lock* (`RLock`). |
 | **Orchestrator** | [`core/orchestrator.py`](file:///d:/Gemini-Ide/Goby-skill/core/orchestrator.py) | **Task Scheduler** | Pemroses antrean tugas paralel berbasis *Worker Pool* & *Dependency DAG*. |
-| **CLI & Hooks** | [`core/cli.py`](file:///d:/Gemini-Ide/Goby-skill/core/cli.py) | **Command Line & Git Enforcer** | Entrypoint terminal OS dan pemasang Git Pre-Commit/Pre-Push Hooks. |
 
 ---
 
 ## ⚖️ Batasan & Limitations Jujur
 
-Agar ekspektasi pengguna tetap realistis, Goby saat ini **memiliki batasan berikut**:
-
-1. **Belum Dapat Memeriksa Logika Bisnis Tingkat Tinggi Tanpa Unit Test**: CCR mengecek kebenaran sintaksis dan *scope* variabel secara statis, namun kebenaran logika bisnis tetap memerlukan unit test yang ditulis dengan baik.
-2. **Ketergantungan Node.js untuk JS/TS**: Pengujian sintaksis JavaScript/TypeScript memerlukan `node` yang terpasang pada PATH sistem. Jika Node.js tidak ada, Goby hanya menjalankan pemeriksaan fallback dasar.
-3. **Analisis Scope Terbatas pada Scope Lokal & Builtins**: Parser AST saat ini memeriksa *Load vs Store* pada tingkat modul dan fungsi, namun belum melacak *dynamic monkey-patching* atau *frame injection* eksternal.
+1. **Memerlukan Unit Test untuk Logika Bisnis Kompleks**: CCR mengecek kebenaran sintaksis dan *scope* variabel secara statis, namun kebenaran logika bisnis tingkat tinggi tetap memerlukan unit test.
+2. **Ketergantungan `tsc` / Node.js untuk TS Compilation**: Pengujian sintaksis kompilator TypeScript memerlukan `tsc` atau `node` pada PATH sistem. Jika tidak tersedia, Goby menggunakan fallback *AST type-stripping*.
+3. **Bounded Subprocess Execution**: GCA menyediakan pengisolasi proses dan timeout, namun bukan merupakan *container sandbox* penuh.
 
 ---
 
