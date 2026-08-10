@@ -161,7 +161,7 @@ def validate_filepath(target_path: str, ccr: CognitiveControlRoom) -> bool:
 
 def show_status():
     print("==========================================================")
-    print("       GOBY META-COGNITIVE FRAMEWORK STATUS (v4.0.0)")
+    print("       GOBY META-COGNITIVE FRAMEWORK STATUS (v4.2.0)")
     print("==========================================================")
     print(f"Working Directory: {os.getcwd()}")
 
@@ -182,7 +182,7 @@ def show_status():
 def main():
     args = sys.argv[1:]
     if not args or args[0] in ("-h", "--help"):
-        print("Goby Framework CLI v4.1.0 (Verification & Evidence Engine)")
+        print("Goby Framework CLI v4.2.0 (Verification & Evidence Engine)")
         print("Usage:")
         print("  goby audit         Run full test suite verification")
         print("  goby benchmark     Run empirical benchmark simulation")

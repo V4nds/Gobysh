@@ -18,9 +18,9 @@ class TasteEvaluation:
 
 class TasteSynthesisEngine:
     """
-    Goby's Right Brain: The Artist.
-    Evaluates UI/UX code against modern design aesthetics to minimize slop and noise.
-    Uses multi-dimensional evaluation: Spatial (Pro Max), Motion (GSAP), Visual (Layering), and Genjutsu (WebGL).
+    Modern Design Keyword Presence Heuristics Engine.
+    Evaluates UI/UX code snippets against modern design vocabulary indicators (CSS Flex/Grid, Transitions, Backdrop Filters, WebGL Canvas).
+    Note: Evaluates keyword presence heuristics to encourage modern styling conventions over legacy inline defaults.
     """
 
     DIMENSIONS = {

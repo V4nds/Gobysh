@@ -1,5 +1,5 @@
 """
-Goby Core Module v4.0: Omni-Synthesis Cognitive Framework.
+Goby Core Module v4.2.0: Omni-Synthesis Cognitive Framework.
 
 Lazy-loading architecture: Only imports what is actually used.
 This prevents heavy modules (CCR with 9 neurons, output_parsers, etc.)
@@ -13,7 +13,7 @@ from .lde_detector import LoopDetectionEngine, LoopAnalysisResult, similarity_ra
 from .gca_runner import GroundedCompilerArbitrage, ExecutionResult
 from .state_memory import StateMemoryManager
 
-__version__ = "4.1.0"
+__version__ = "4.2.0"
 
 
 def verify(code: str, language: str = "python", context: dict = None):

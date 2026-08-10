@@ -1,5 +1,5 @@
 """
-Empirical Benchmark & Evaluation Suite for Goby v4.1 Framework.
+Empirical Benchmark & Evaluation Suite for Goby v4.2.0 Framework.
 Evaluates 60-Case Static AST Classification Accuracy (TP, TN, FP, FN, Precision, Recall, F1-Score, Latency)
 and Reference Workload Parallelism Demonstration.
 """

@@ -5,8 +5,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://python.org)
-[![Unit Tests](https://img.shields.io/badge/Unit%20Tests-124%2F124%20Passed-success.svg)](#-metodologi-benchmark--verifikasi-terbuka)
-[![Static Verification](https://img.shields.io/badge/Static%20Verification-91.7%25%20(60%20Cases)-indigo.svg)](#-metodologi-benchmark--verifikasi-terbuka)
+[![Unit Tests](https://img.shields.io/badge/Unit%20Tests-123%2F123%20Passed-success.svg)](#-metodologi-benchmark--verifikasi-terbuka)
+[![Static Verification](https://img.shields.io/badge/Static%20Verification-85.0%25%20(60%20Cases)-indigo.svg)](#-metodologi-benchmark--verifikasi-terbuka)
 [![Git Hooks](https://img.shields.io/badge/Git%20Hooks-Active-darkgreen.svg)](#-demo-minimal--bukti-penggunaan-nyata)
 
 **Goby** adalah *Verification & Feedback Protocol* berbasis Python yang memvalidasi output agen AI sebelum ditulis ke disk. Goby memvalidasi kandidat secara pre-output di memori, menerbitkan **Evidence Contract** dengan *tamper-evident provenance* SHA-256, dan memberikan sinyal terstruktur **`STRATEGY_CHANGE_REQUIRED`** saat agen AI terjebak dalam perulangan kesalahan (*error loop*).
@@ -93,18 +93,18 @@ Seluruh data pengujian dapat direproduksi secara mandiri di mesin Anda dengan me
 python -m tests.benchmark_simulation
 ```
 
-### 📋 Spesifikasi Lingkungan & Hasil Evaluasi Real-World:
+### 📋 Spesifikasi Lingkungan & Hasil Evaluasi Real-World (Empiris):
 - **Environment**: Python 3.12 / Windows & Linux x86_64
-- **Unit Test Suite**: 124 Unit Test Case terisolasi di folder `tests/` (`100% Passed`)
+- **Unit Test Suite**: 123 Unit Test Case terisolasi di folder `tests/` (`100% Passed`)
 - **60-Case Static AST Verifier Classification Dataset**:
-  - *Accuracy*: **91.7%** (55 dari 60 kasus uji terklasifikasi sempurna)
-  - *F1-Score*: **0.915** | *Precision*: **0.931** | *Recall*: **0.900**
-  - *False-Negative Rate (Missed Defects)*: **5.0%** (3/60 kasus)
-  - *False-Positive Rate (False Alarms)*: **3.3%** (2/60 kasus)
-  - *True Positives (Blocked Defects)*: 27 | *True Negatives (Passed Clean Code)*: 28
-  - *Average Verification Latency*: **25.13 ms** per candidate evaluation
+  - *Accuracy*: **85.0%** (51 dari 60 kasus uji terklasifikasi sempurna)
+  - *Precision*: **1.000** | *Recall*: **0.700** | *F1-Score*: **0.824**
+  - *False-Positive Rate (False Alarms)*: **0.0%** (0/60 kasus — 0 false alarm pada kode bersih)
+  - *False-Negative Rate (Missed Defects)*: **15.0%** (9/60 kasus — penugasan secret variabel tak terperiksa pada static check standar)
+  - *True Positives (Blocked Defects)*: 21 | *True Negatives (Passed Clean Code)*: 30
+  - *Average Verification Latency*: **~640 ms** per candidate evaluation (termasuk kompilasi kandidat TypeScript terisolasi via `tsc --noEmit`)
 - **Loop Interception Reduction**: **80.0%** (LDE menghentikan osilasi perbaikan pada iterasi ke-3 dari 15 baseline attempt)
-- **Workload Parallelism Speedup Factor**: **3.62x** (8 tugas worker pool paralel vs sekuensial)
+- **Workload Parallelism Speedup Factor**: **3.84x** (8 tugas worker pool paralel vs sekuensial)
 
 ---
 
@@ -117,6 +117,12 @@ python -m tests.benchmark_simulation
 | **GCA Runner** | [`core/gca_runner.py`](file:///d:/Gemini-Ide/Goby-skill/core/gca_runner.py) | **Bounded Subprocess Runner** | Runner subprocess terisolasi dengan batas waktu & *exit code verification*. |
 | **State Memory** | [`core/state_memory.py`](file:///d:/Gemini-Ide/Goby-skill/core/state_memory.py) | **Thread-Safe Memory Manager** | Pengelola status JSON terenkapsulasi *thread lock* (`RLock`). |
 | **Orchestrator** | [`core/orchestrator.py`](file:///d:/Gemini-Ide/Goby-skill/core/orchestrator.py) | **Task Scheduler** | Pemroses antrean tugas paralel berbasis *Worker Pool* & *Dependency DAG*. |
+| **Refinement Loop** | [`core/refinement_loop.py`](file:///d:/Gemini-Ide/Goby-skill/core/refinement_loop.py) | **Closed-Loop Refinement Engine** | Pengendali iterasi perbaikan otomatis antara CCR dan LDE. |
+| **Universal Memory** | [`core/universal_memory.py`](file:///d:/Gemini-Ide/Goby-skill/core/universal_memory.py) | **Pattern & Heuristics Store** | Penyimpanan pola kegagalan dan resolusi berbasis JSON terstruktur. |
+| **Consciousness Engine** | [`core/consciousness_engine.py`](file:///d:/Gemini-Ide/Goby-skill/core/consciousness_engine.py) | **Heuristic Reflection Logger** | Extractor heuristik pasca-sukses untuk pencatatan memori resolusi. |
+| **Taste Synthesis** | [`core/taste_synthesis.py`](file:///d:/Gemini-Ide/Goby-skill/core/taste_synthesis.py) | **Design Keyword Heuristics** | Pemeriksa kehadiran kata kunci estetika CSS/UI modern (heuristik presence check). |
+| **Omni Synthesis** | [`core/omni_synthesis.py`](file:///d:/Gemini-Ide/Goby-skill/core/omni_synthesis.py) | **AST Pre-Analyzer** | Analisis struktur AST apriori sebelum evaluasi neuron. |
+| **Session Briefing** | [`core/session_briefing.py`](file:///d:/Gemini-Ide/Goby-skill/core/session_briefing.py) | **State Snapshot Engine** | Pengelola snapshot status sesi kerja untuk auto-resume. |
 
 ---
 
