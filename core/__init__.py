@@ -30,6 +30,13 @@ def create_evidence_contract(claim: str, code_or_file: str, language: str = "pyt
     return ccr.create_evidence_contract(claim, code_or_file, language=language, test_command=test_command)
 
 
+def verify_with_feedback(code: str, language: str = "python", error_context: str = None, attempt: int = 1):
+    """Top-level helper for Agent Control Protocol rich feedback generation."""
+    from .ccr_engine import CognitiveControlRoom
+    ccr = CognitiveControlRoom()
+    return ccr.verify_candidate_with_feedback(code, language=language, error_context=error_context, attempt=attempt)
+
+
 # ---------------------------------------------------------------------------
 # Lazy accessors — heavy modules load on first access only
 # ---------------------------------------------------------------------------
@@ -39,6 +46,7 @@ def __getattr__(name: str):
     _lazy_map = {
         # CCR Engine (44KB, heaviest module)
         "CognitiveControlRoom": (".ccr_engine", "CognitiveControlRoom"),
+        "GobyFeedback":         (".ccr_engine", "GobyFeedback"),
         "NeuronSignal":         (".ccr_engine", "NeuronSignal"),
         "ThoughtRecord":        (".ccr_engine", "ThoughtRecord"),
         "ContextAssessment":    (".ccr_engine", "ContextAssessment"),

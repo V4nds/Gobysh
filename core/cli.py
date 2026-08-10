@@ -213,6 +213,18 @@ def main():
             print(f"  [{sig['neuron']}] {'PASS' if sig['passed'] else 'FAIL'} (Gate: {sig['gate']}) - {sig['message']}")
         sys.exit(0 if res['verified'] else 1)
 
+    elif cmd == "verify-feedback":
+        if len(args) < 2:
+            print("Error: Please provide code string. Example: goby verify-feedback 'x = 10'")
+            sys.exit(1)
+        code = args[1]
+        err_ctx = args[2] if len(args) > 2 else None
+        ccr = CognitiveControlRoom()
+        fb = ccr.verify_candidate_with_feedback(code, error_context=err_ctx)
+        import json
+        print(json.dumps(fb.to_dict(), indent=2))
+        sys.exit(0 if fb.verified else 1)
+
     elif cmd == "evidence":
         if len(args) < 3:
             print("Error: Usage: goby evidence '<claim>' '<file|code>' [optional_test_command]")

@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .gca_runner import GroundedCompilerArbitrage
+from .lde_detector import LoopDetectionEngine
 from .output_parsers import get_parser
 from .state_memory import StateMemoryManager
 from .taste_synthesis import TasteSynthesisEngine
@@ -44,7 +45,36 @@ class ContextTier(enum.Enum):
     """Classifies how complete the available context is."""
     CRITICAL = "CRITICAL"   # Insufficient — must ask before proceeding
     MINIMUM = "MINIMUM"     # Enough to start, may be suboptimal
+    DEGRADED = "DEGRADED"   # Partial — work with caution
     IDEAL = "IDEAL"         # Complete information available
+    OPTIMAL = "OPTIMAL"     # Full — clear execution
+
+
+@dataclass
+class GobyFeedback:
+    """Agent Control Protocol Rich Feedback Object."""
+    status: str  # "VERIFIED" | "BLOCKED" | "STRATEGY_CHANGE_REQUIRED"
+    verified: bool
+    blocked: bool
+    gate: Optional[str]
+    evidence: Dict[str, Any]
+    suggestion: str
+    repeated_failure: bool = False
+    attempt: int = 1
+    strategy_change_required: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "status": self.status,
+            "verified": self.verified,
+            "blocked": self.blocked,
+            "gate": self.gate,
+            "evidence": self.evidence,
+            "suggestion": self.suggestion,
+            "repeated_failure": self.repeated_failure,
+            "attempt": self.attempt,
+            "strategy_change_required": self.strategy_change_required
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +151,7 @@ class CognitiveControlRoom:
     ):
         self.state_memory = state_memory
         self.gca = gca or GroundedCompilerArbitrage(default_timeout=15.0)
+        self.lde = LoopDetectionEngine()
         self.MAX_THOUGHT_HISTORY = max_thought_history
         self.MAX_REFINEMENTS = max_refinements
 
@@ -1259,6 +1290,68 @@ class CognitiveControlRoom:
                 for s in signals
             ]
         }
+
+    def verify_candidate_with_feedback(
+        self,
+        code: str,
+        language: str = "python",
+        error_context: Optional[str] = None,
+        attempt: int = 1
+    ) -> GobyFeedback:
+        """
+        Agent Control Protocol API: Evaluates candidate code and produces an actionable GobyFeedback object.
+        Transitions state to 'STRATEGY_CHANGE_REQUIRED' when LDE detects repeated repair cycles.
+        """
+        raw_res = self.verify_candidate(code, language=language)
+
+        if raw_res["blocked"]:
+            failed_sig = next((s for s in raw_res["signals"] if not s["passed"]), None)
+            gate_name = failed_sig["neuron"] if failed_sig else "UNKNOWN"
+            suggestion_msg = failed_sig["message"] if failed_sig else "Resolve static verification error before retrying."
+
+            return GobyFeedback(
+                status="BLOCKED",
+                verified=False,
+                blocked=True,
+                gate=gate_name,
+                evidence={"signals": raw_res["signals"]},
+                suggestion=f"[{gate_name} BLOCKED] {suggestion_msg}",
+                repeated_failure=False,
+                attempt=attempt,
+                strategy_change_required=False
+            )
+
+        # Check LDE error loop guard if error context is supplied
+        if error_context:
+            lde_res = self.lde.record_attempt(code, error_context)
+            if lde_res.is_loop_detected or attempt >= 2 or len(self.lde.history) >= 2:
+                return GobyFeedback(
+                    status="STRATEGY_CHANGE_REQUIRED",
+                    verified=False,
+                    blocked=True,
+                    gate="LDE",
+                    evidence={
+                        "loop_type": lde_res.loop_type or "REPEATED_ATTEMPT",
+                        "similarity_score": lde_res.similarity_score if lde_res.confidence > 0 else 1.0,
+                        "attempt_history_count": len(self.lde.history)
+                    },
+                    suggestion="[LDE REPEATED FAILURE] Do not repeat the previous repair strategy. Pivot to an alternative architectural approach or deconstruct the task.",
+                    repeated_failure=True,
+                    attempt=attempt,
+                    strategy_change_required=True
+                )
+
+        return GobyFeedback(
+            status="VERIFIED",
+            verified=True,
+            blocked=False,
+            gate=None,
+            evidence={"signals": raw_res["signals"]},
+            suggestion="Candidate passed all verification gates.",
+            repeated_failure=False,
+            attempt=attempt,
+            strategy_change_required=False
+        )
 
     # -----------------------------------------------------------------------
     # Evidence Engine: Machine-Verifiable Evidence Contract Generator

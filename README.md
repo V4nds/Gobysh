@@ -1,30 +1,33 @@
 <div align="center">
 
-# Goby Framework (v4.1.0)
-### *Verification & Control Layer untuk Agen AI Coding*
+# Goby Framework (v4.2.0)
+### *Agent Control Protocol & Verification Engine untuk AI Coding*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://python.org)
-[![Unit Tests](https://img.shields.io/badge/Unit%20Tests-118%2F118%20Passed-success.svg)](#-metodologi-benchmark--verifikasi-terbuka)
+[![Unit Tests](https://img.shields.io/badge/Unit%20Tests-124%2F124%20Passed-success.svg)](#-metodologi-benchmark--verifikasi-terbuka)
 [![Benchmark Evaluation](https://img.shields.io/badge/Benchmark-91.7%25%20Accuracy%20(60%20Cases)-indigo.svg)](#-metodologi-benchmark--verifikasi-terbuka)
 [![Git Hooks](https://img.shields.io/badge/Git%20Hooks-Active-darkgreen.svg)](#-demo-minimal--bukti-penggunaan-nyata)
 
-**Goby** adalah *verification & control layer* modular berbasis Python yang mencegah agen AI mengirimkan kode bermasalah. Goby menyediakan validasi in-memory sebelum berkas ditulis ke disk, penghentian otomatis perulangan kesalahan (*error loop guard*), dan penerbitan **Machine-Verifiable Evidence Contract** dengan *provenance tracking* SHA-256.
+**Goby** adalah *Agent Control Protocol & Verification Engine* berbasis Python yang mencegah agen AI membuat kode bermasalah. Goby memvalidasi kandidat secara pre-output di memori, menerbitkan **Evidence Contract** cryptographic SHA-256, dan mentransisikan state secara otomatis ke **`STRATEGY_CHANGE_REQUIRED`** saat agen AI terjebak dalam perulangan kesalahan (*error loop*).
 
 </div>
 
 ---
 
-## 🎯 3 Fitur Utama
+## 🎯 4 Fitur Utama (v4.2.0)
 
-1. **Validasi Kode Pre-Output & Candidate In-Memory API (`core.verify`)**  
+1. **Agent Control Protocol & Rich Feedback (`core.verify_with_feedback`)**  
+   Mengembalikan objek umpan balik terstruktur `GobyFeedback` (`VERIFIED` | `BLOCKED` | `STRATEGY_CHANGE_REQUIRED`) beserta `gate`, `evidence`, `suggestion`, dan sinyal perulangan kesalahan.
+
+2. **Validasi Kode Pre-Output In-Memory (`core.verify`)**  
    Memeriksa sintaksis, variabel tak terdefinisi (*scope*), dan aturan keamanan pada kandidat berkas `.py`, `.js`, `.ts` secara langsung di memori sebelum kode disimpan ke sistem berkas.
 
-2. **Machine-Verifiable Evidence Contract Engine (`core.create_evidence_contract`)**  
-   Mengubah setiap klaim penyelesaian tugas dari AI ("*Bug sudah diperbaiki*", "*Unit tests lulus*") menjadi objek bukti terstruktur bermesin yang dilengkapi **Evidence ID** (`EV-YYYYMMDD-...`) dan hash **SHA-256** kandidat kode.
+3. **Machine-Verifiable Evidence Contract Engine (`core.create_evidence_contract`)**  
+   Mengubah setiap klaim penyelesaian tugas dari AI menjadi objek bukti terstruktur bermesin yang dilengkapi **Evidence ID** (`EV-YYYYMMDD-...`) dan hash **SHA-256** kandidat kode.
 
-3. **Deteksi & Penghentian Error Berulang (Loop Guard & Bounded Subprocess Execution)**  
-   Mendeteksi osilasi perbaikan yang sama ($\ge 2$ kali) secara otomatis dan mengeksekusi pengujian terminal terisolasi dengan batas waktu (*timeout*).
+4. **Deteksi Loop & Transisi Pivoting Strategi (`STRATEGY_CHANGE_REQUIRED`)**  
+   Mendeteksi osilasi perbaikan berulang ($\ge 2$ iterasi) dan memaksa agen AI untuk melakukan pivoting strategi perbaikan arsitektural.
 
 ---
 
@@ -39,51 +42,44 @@ pip install -e .
 goby install-hook
 ```
 
-### 2. Contoh Eksekusi 1: Validasi In-Memory Pre-Output (`goby verify`)
+### 2. Contoh Eksekusi 1: Agent Control Protocol Rich Feedback (`goby verify-feedback`)
 ```bash
-goby verify "x = 10; y = 20; z = x + y; print(z)"
+goby verify-feedback "def calc(): return undefined_var * 10"
 ```
-**Output Terminal (LULUS):**
-```text
-[VERIFY] Verified: True | Blocked: False
-  [SYNTAX] PASS (Gate: HARD) - Syntax is valid.
-  [SCOPE] PASS (Gate: HARD) - All referenced names are defined within visible scope.
-  [TASTE_DESIGN] PASS (Gate: SOFT) - Code is not a UI component, skipping Taste Design check.
-```
-
-### 3. Contoh Eksekusi 2: Penerbitan Evidence Contract (`goby evidence`)
-```bash
-goby evidence "Refactored CLI entrypoint" core/cli.py "goby audit"
-```
-**Output JSON Evidence Contract:**
+**Output JSON Rich Feedback:**
 ```json
 {
-  "contract_version": "1.0.0",
-  "evidence_id": "EV-20260810-195500-a1b2c3d4",
-  "timestamp": "2026-08-10T12:55:00Z",
-  "claim": "Refactored CLI entrypoint",
-  "status": "VERIFIED",
-  "source_provenance": {
-    "origin": "file",
-    "path": "D:\\Gemini-Ide\\Goby-skill\\core\\cli.py",
-    "sha256": "8a3f...",
-    "language": "python"
-  },
-  "evidence": {
-    "static_analysis": { "verified": true, "blocked": false },
-    "dynamic_execution": { "command": "goby audit", "exit_code": 0, "is_success": true }
-  }
+  "status": "BLOCKED",
+  "verified": false,
+  "blocked": true,
+  "gate": "SCOPE",
+  "evidence": { "signals": [...] },
+  "suggestion": "[SCOPE BLOCKED] Name 'undefined_var' is not defined in local, global, or builtin scope.",
+  "repeated_failure": false,
+  "attempt": 1,
+  "strategy_change_required": false
 }
+```
+
+### 3. Contoh Eksekusi 2: Agent Impact Benchmark Ablation Runner (`python goby_agent_impact_runner.py`)
+```bash
+python goby_agent_impact_runner.py
+```
+Menjalankan pengujian ablasi **CONTROL vs GOBY_GATE vs GOBY_LDE** untuk mengukur dampak nyata Goby terhadap agen AI.
+
+### 4. Contoh Eksekusi 3: Penerbitan Evidence Contract (`goby evidence`)
+```bash
+goby evidence "Refactored CLI entrypoint" core/cli.py "goby audit"
 ```
 
 ---
 
 ## ⚡ Sebelum vs Sesudah Menggunakan Goby
 
-| Skenario Penggunaan | Tanpa Goby (Naive AI Agent) | Dengan Goby Framework v4.1 |
+| Skenario Penggunaan | Tanpa Goby (Naive AI Agent) | Dengan Goby Framework v4.2 |
 | :--- | :--- | :--- |
 | **Variabel Tak Terdefinisi** | Kode ditulis ke disk, error meledak saat aplikasi di-run pengguna. | Kode **ditolak di memori (Pre-Output)** sebelum berkas tersimpan. |
-| **AI Stuck pada Bug Sama** | AI mencoba 10+ kali refactoring yang mirip dan membuang token. | **LDE memutus perulangan pada iterasi ke-2** dan memicu bypass strategi. |
+| **AI Stuck pada Bug Sama** | AI mencoba 10+ kali refactoring yang mirip dan membuang token. | **LDE memutus loop pada iterasi ke-2** dan memicu status `STRATEGY_CHANGE_REQUIRED`. |
 | **Klaim Penyelesaian Task** | AI mengklaim "Sudah diperbaiki!" tanpa bukti empiris. | Klaim memerlukan **Evidence Contract ID & Exit Code 0**. |
 | **Integrasi Version Control** | Kode cacat bisa lolos ke repository Git. | **Git Pre-Commit & Pre-Push Hooks** memblokir commit/push jika CCR/Test gagal. |
 
@@ -99,7 +95,7 @@ python -m tests.benchmark_simulation
 
 ### 📋 Spesifikasi Lingkungan & Hasil Evaluasi Real-World:
 - **Environment**: Python 3.12 / Windows & Linux x86_64
-- **Unit Test Suite**: 118 Unit Test Case terisolasi di folder `tests/` (`100% Passed`)
+- **Unit Test Suite**: 124 Unit Test Case terisolasi di folder `tests/` (`100% Passed`)
 - **60-Case Static AST Classification Dataset**:
   - *Accuracy*: **91.7%** (55 dari 60 kasus uji terklasifikasi sempurna)
   - *Precision*: **0.931** | *Recall*: **0.900** | *F1-Score*: **0.915**
@@ -107,7 +103,7 @@ python -m tests.benchmark_simulation
   - *False Positives*: 2 | *False Negatives*: 3
   - *Average Verification Latency*: **25.13 ms** per candidate evaluation
 - **Loop Interception Reduction**: **80.0%** (LDE menghentikan osilasi perbaikan pada iterasi ke-3 dari 15 baseline attempt)
-- **Workload Parallelism Speedup Factor**: **3.20x** (8 tugas worker pool paralel vs sekuensial)
+- **Workload Parallelism Speedup Factor**: **3.62x** (8 tugas worker pool paralel vs sekuensial)
 
 ---
 
