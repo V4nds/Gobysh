@@ -408,6 +408,26 @@ class TestNeuronJSSyntax(unittest.TestCase):
             self.assertEqual(sig.gate_type, GateType.HARD)
 
 
+class TestNeuronTasteDesign(unittest.TestCase):
+    """Regression: the full CCR -> neurons.taste -> ModernCSSKeywordHeuristic path
+    must run without NameError on UI code (import fix in core/neurons/taste.py)."""
+
+    def setUp(self):
+        self.ccr = CognitiveControlRoom()
+
+    def test_ui_code_returns_signal_not_error(self):
+        sig = self.ccr.neuron_taste_design_check("<div style='display: flex;'></div>")
+        self.assertEqual(sig.neuron_name, "TASTE_DESIGN")
+        self.assertIsInstance(sig.passed, bool)
+        self.assertIn("scores", sig.evidence)
+
+    def test_non_ui_code_skips_heuristic(self):
+        sig = self.ccr.neuron_taste_design_check("def calc():\n    return 1")
+        self.assertEqual(sig.neuron_name, "TASTE_DESIGN")
+        self.assertTrue(sig.passed)
+        self.assertEqual(sig.evidence, {})
+
+
 if __name__ == "__main__":
     unittest.main()
 

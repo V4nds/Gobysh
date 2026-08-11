@@ -1,14 +1,92 @@
 """
-CLI Entrypoint for Goby Framework v4.0.0.
+CLI Entrypoint for Goby Framework v4.2.0.
 Run using: goby audit | goby benchmark | goby check <code|filepath> | goby install-hook | goby watch | goby status
 """
 
+import hashlib
 import os
+import re
 import sys
 import time
 import unittest
 from pathlib import Path
 from .ccr_engine import CognitiveControlRoom
+from .state_memory import StateMemoryManager
+
+
+# ---------------------------------------------------------------------------
+# Triage & unified output helpers (single source of truth for `goby check`/`verify`)
+# ---------------------------------------------------------------------------
+
+_CODE_MARKERS = (
+    "def ", "class ", "import ", "from ", "return ", "if ", "elif ", "else:",
+    "for ", "while ", "lambda", "try:", "except", "with ", "async ", "yield",
+    "global ", "raise ", "assert ", "function ", "const ", "let ", "var ", "=>",
+    "console.", "window.", "document.", "print(", "int(", "str(", "list(",
+)
+
+_ALWAYS_CODE_EXTENSIONS = (".py", ".pyw", ".js", ".jsx", ".ts", ".tsx", ".css", ".html", ".json", ".yaml", ".yml", ".toml")
+
+
+def _looks_like_code(content: str) -> bool:
+    """Heuristic triage: is the content code or prose/documentation?"""
+    stripped = content.strip()
+    if not stripped:
+        return False
+
+    if any(marker in stripped for marker in _CODE_MARKERS):
+        return True
+
+    if any(ch in stripped for ch in "{};"):
+        return True
+
+    # Assignment pattern: identifier = value  (e.g. "x = 10")
+    if re.search(r"^\s*[A-Za-z_][A-Za-z0-9_]*\s*=\s*[^=]", stripped, re.MULTILINE):
+        return True
+
+    # Block header line ending with ':' (Python)
+    if any(
+        line.rstrip().endswith(":") and not line.strip().startswith(("#", "//"))
+        for line in content.splitlines()
+    ):
+        return True
+
+    return False
+
+
+def _neuron_location(sig) -> str:
+    line = None
+    if sig.evidence and isinstance(sig.evidence, dict):
+        line = sig.evidence.get("line") or sig.evidence.get("first_line")
+    if line:
+        return f" (line {line})"
+    return ""
+
+
+def _report_signals(ccr, signals, verbose: bool = False) -> bool:
+    """Print one consistent, non-contradictory verdict for a set of signals."""
+    res = ccr.evaluate_signals(signals)
+
+    def render(sig):
+        status = "PASS" if sig.passed else "FAIL"
+        print(f"  [{sig.neuron_name}] {status}{_neuron_location(sig)} - {sig.message}")
+        if not sig.passed and sig.suggestion:
+            print(f"     Hint: {sig.suggestion}")
+
+    if verbose:
+        for sig in signals:
+            render(sig)
+    else:
+        for sig in signals:
+            if not sig.passed:
+                render(sig)
+
+    if res["blocked"]:
+        print(f"[BLOCKED] {res['summary']}")
+        return False
+
+    print("[PASS] All gates passed.")
+    return True
 
 
 def install_git_hooks():
@@ -92,7 +170,7 @@ exit 0
     print("  -> .git/hooks/pre-push   (Full audit suite)")
 
 
-def run_watch_loop():
+def run_watch_loop(memory: StateMemoryManager = None):
     print("[GOBY WATCH] Starting Active CCR Workspace Watcher...")
     print("Monitoring .py, .js, .ts file modifications... (Press Ctrl+C to stop)")
     ccr = CognitiveControlRoom()
@@ -110,7 +188,7 @@ def run_watch_loop():
                         mtime = os.path.getmtime(filepath)
                         if filepath in file_mtimes and file_mtimes[filepath] != mtime:
                             file_mtimes[filepath] = mtime
-                            validate_filepath(filepath, ccr)
+                            validate_filepath(filepath, ccr, memory=memory)
                         elif filepath not in file_mtimes:
                             file_mtimes[filepath] = mtime
                     except Exception:
@@ -124,14 +202,19 @@ def run_watch_loop():
         print("\n[GOBY WATCH] Active Watcher stopped.")
 
 
-def validate_filepath(target_path: str, ccr: CognitiveControlRoom) -> bool:
-    print(f"\n[GOBY CHECK] Validating file: {target_path}")
+def validate_filepath(target_path: str, ccr: CognitiveControlRoom, memory: StateMemoryManager = None, verbose: bool = False) -> bool:
+    print(f"[GOBY CHECK] Validating file: {target_path}")
     try:
         with open(target_path, "r", encoding="utf-8") as f:
             code = f.read()
     except Exception as e:
         print(f"[ERROR] Could not read file {target_path}: {e}")
         return False
+
+    # Triage: skip non-code content (prose/documentation) entirely — no neurons.
+    if not _looks_like_code(code):
+        print("[GOBY] Content is prose / not code (triage SKIP) — verification skipped, no neurons executed.")
+        return True
 
     signals = []
     if target_path.endswith((".js", ".ts", ".jsx", ".tsx")):
@@ -146,17 +229,25 @@ def validate_filepath(target_path: str, ccr: CognitiveControlRoom) -> bool:
             signals.append(ccr.neuron_taste_design_check(code))
 
     res = ccr.evaluate_signals(signals)
+    passed = _report_signals(ccr, signals, verbose=verbose)
 
-    for sig in signals:
-        status_icon = "PASS" if sig.passed else "FAIL"
-        print(f"  [{sig.neuron_name}] {status_icon} (Gate: {sig.gate_type.value}) - {sig.message}")
+    if memory:
+        failed = next((s for s in signals if not s.passed), None)
+        memory.record_file_validation(
+            file_path=target_path,
+            passed=not res["blocked"],
+            blocked=res["blocked"],
+            gate=failed.neuron_name if failed else None,
+            summary=res["summary"],
+            signals=[
+                {"neuron": s.neuron_name, "passed": s.passed, "gate": s.gate_type.value, "message": s.message}
+                for s in signals
+            ],
+            error_message=failed.message if failed else "",
+            code_hash=hashlib.sha256(code.encode("utf-8")).hexdigest()[:16],
+        )
 
-    if res["blocked"]:
-        print(f"[BLOCKED] {res['summary']}")
-        return False
-    else:
-        print("[SUCCESS] File passed all CCR hard gates.")
-        return True
+    return passed
 
 
 def show_status():
@@ -176,6 +267,18 @@ def show_status():
     fail_file = Path("failure_patterns.json")
     print(f"Failure Memory:      {'PRESENT (' + str(fail_file.stat().st_size) + ' bytes)' if fail_file.exists() else 'NOT INITIALIZED'}")
 
+    # Unresolved file error ledger
+    try:
+        ledger_mgr = StateMemoryManager("cognitive_map.json")
+        unresolved = ledger_mgr.get_unresolved_errors()
+    except Exception:
+        unresolved = []
+    print(f"Unresolved File Errors: {len(unresolved)}")
+    for entry in unresolved[:10]:
+        print(f"  - {entry['file']} [{entry['gate']}] {entry['message']}")
+    if unresolved:
+        print("  -> Run `goby check <file>` until passing, then `goby gate` must exit 0.")
+
     print("==========================================================")
 
 
@@ -187,12 +290,13 @@ def main():
         print("  goby audit         Run full test suite verification")
         print("  goby benchmark     Run empirical benchmark simulation")
         print("  goby evolve        Run autonomous self-evolution cycle (BFM metric)")
-        print("  goby check <code|filepath> Validate python/JS snippet or file via CCR")
-        print("  goby verify <code_string>   Genuine Pre-Output In-Memory Code Verification")
+        print("  goby check <code|filepath> Validate python/JS snippet or file via CCR (add -v for verbose)")
+        print("  goby verify <code_string>   Genuine Pre-Output In-Memory Code Verification (add -v for verbose)")
         print("  goby evidence <claim> <file> Generate Machine-Verifiable Evidence Contract")
         print("  goby install-hook  Install Git pre-commit & pre-push hard-gate hooks")
         print("  goby watch         Run active workspace CCR watcher")
         print("  goby status        Show framework installation & memory status")
+        print("  goby gate          Check Unresolved Error Ledger (must exit 0 before claiming done)")
         sys.exit(0)
 
     cmd = args[0].lower()
@@ -202,16 +306,27 @@ def main():
         sys.exit(0)
 
     elif cmd == "verify":
-        if len(args) < 2:
+        verbose = "-v" in args or "--verbose" in args
+        verify_args = [a for a in args[1:] if a not in ("-v", "--verbose")]
+        if not verify_args:
             print("Error: Please provide code string to verify. Example: goby verify 'x = 10'")
             sys.exit(1)
-        code = args[1]
+        code = verify_args[0]
         ccr = CognitiveControlRoom()
-        res = ccr.verify_candidate(code)
-        print(f"[VERIFY] Verified: {res['verified']} | Blocked: {res['blocked']}")
-        for sig in res['signals']:
-            print(f"  [{sig['neuron']}] {'PASS' if sig['passed'] else 'FAIL'} (Gate: {sig['gate']}) - {sig['message']}")
-        sys.exit(0 if res['verified'] else 1)
+
+        if not _looks_like_code(code):
+            print("[GOBY] Input is prose / not code (triage SKIP) — verification skipped, no neurons executed.")
+            sys.exit(0)
+
+        signals = []
+        syn = ccr.neuron_syntax_check(code)
+        signals.append(syn)
+        if syn.passed:
+            signals.append(ccr.neuron_scope_check(code))
+            signals.append(ccr.neuron_taste_design_check(code))
+
+        print("[GOBY VERIFY] Verifying candidate...")
+        sys.exit(0 if _report_signals(ccr, signals, verbose=verbose) else 1)
 
     elif cmd == "verify-feedback":
         if len(args) < 2:
@@ -243,11 +358,25 @@ def main():
         sys.exit(0)
 
     elif cmd == "watch":
-        run_watch_loop()
+        memory = StateMemoryManager("cognitive_map.json")
+        run_watch_loop(memory=memory)
         sys.exit(0)
 
+    elif cmd == "gate":
+        memory = StateMemoryManager("cognitive_map.json")
+        unresolved = memory.get_unresolved_errors()
+        if not unresolved:
+            print("[GOBY GATE] Ledger clean: 0 unresolved file errors. Workspace ready.")
+            sys.exit(0)
+        print(f"[GOBY GATE] {len(unresolved)} unresolved file error(s):")
+        for entry in unresolved:
+            print(f"  - {entry['file']} [{entry['gate']}] {entry['message']}")
+            print(f"    Last checked: {entry.get('checked_at', 'N/A')} | Hash: {entry.get('code_hash', '')}")
+        print("[GOBY GATE] BLOCKED. Fix each file, then run `goby check <file>` until it passes.")
+        sys.exit(1)
+
     elif cmd == "evolve":
-        print("[EVOLUTION] Running Goby v4.0 Omni-Synthesis Evolution Benchmark...")
+        print("[EVOLUTION] Running Goby v4.2.0 Omni-Synthesis Evolution Benchmark...")
         from .evolution_loop import SelfEvolutionEngine
         engine = SelfEvolutionEngine()
         result = engine.run_evolution_cycle()
@@ -272,17 +401,24 @@ def main():
         sys.exit(0)
 
     elif cmd == "check":
-        if len(args) < 2:
+        verbose = "-v" in args or "--verbose" in args
+        check_args = [a for a in args[1:] if a not in ("-v", "--verbose")]
+        if not check_args:
             print("Error: Please provide code string or filepath to check. Example: goby check 'x = 1' or goby check main.py")
             sys.exit(1)
-        target = args[1]
+        target = check_args[0]
         ccr = CognitiveControlRoom()
 
         if os.path.isfile(target):
-            passed = validate_filepath(target, ccr)
+            memory = StateMemoryManager("cognitive_map.json")
+            passed = validate_filepath(target, ccr, memory=memory, verbose=verbose)
             sys.exit(0 if passed else 1)
 
         code = target
+        if not _looks_like_code(code):
+            print("[GOBY] Input is prose / not code (triage SKIP) — verification skipped, no neurons executed.")
+            sys.exit(0)
+
         signals = []
         syn = ccr.neuron_syntax_check(code)
         signals.append(syn)
@@ -290,17 +426,8 @@ def main():
             signals.append(ccr.neuron_scope_check(code))
             signals.append(ccr.neuron_taste_design_check(code))
 
-        res = ccr.evaluate_signals(signals)
-
-        for sig in signals:
-            print(f"[{sig.neuron_name}] {'PASS' if sig.passed else 'FAIL'} (Gate: {sig.gate_type.value}) - {sig.message}")
-
-        if res["blocked"]:
-            print(f"\n[BLOCKED] {res['summary']}")
-            sys.exit(1)
-        else:
-            print("\n[SUCCESS] Code passed all hard gates.")
-            sys.exit(0)
+        print("[GOBY CHECK] Verifying candidate...")
+        sys.exit(0 if _report_signals(ccr, signals, verbose=verbose) else 1)
 
     else:
         print(f"Unknown command: '{cmd}'. Run 'goby --help' for usage.")

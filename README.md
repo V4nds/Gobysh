@@ -97,12 +97,12 @@ python -m tests.benchmark_simulation
 - **Environment**: Python 3.12 / Windows & Linux x86_64
 - **Unit Test Suite**: 123 Unit Test Case terisolasi di folder `tests/` (`100% Passed`)
 - **60-Case Static AST Verifier Classification Dataset**:
-  - *Accuracy*: **85.0%** (51 dari 60 kasus uji terklasifikasi sempurna)
-  - *Precision*: **1.000** | *Recall*: **0.700** | *F1-Score*: **0.824**
-  - *False-Positive Rate (False Alarms)*: **0.0%** (0/60 kasus — 0 false alarm pada kode bersih)
-  - *False-Negative Rate (Missed Defects)*: **15.0%** (9/60 kasus — penugasan secret variabel tak terperiksa pada static check standar)
-  - *True Positives (Blocked Defects)*: 21 | *True Negatives (Passed Clean Code)*: 30
-  - *Average Verification Latency*: **~640 ms** per candidate evaluation (termasuk kompilasi kandidat TypeScript terisolasi via `tsc --noEmit`)
+  - *Accuracy*: **80.0%** (48 dari 60 kasus uji terklasifikasi sempurna)
+  - *Precision*: **0.875** | *Recall*: **0.700** | *F1-Score*: **0.778**
+  - *False-Positive Rate (False Alarms)*: **5.0%** (3/60 kasus)
+  - *False-Negative Rate (Missed Defects)*: **15.0%** (9/60 kasus)
+  - *True Positives (Blocked Defects)*: 21 | *True Negatives (Passed Clean Code)*: 27
+  - *Average Verification Latency*: **~468 ms** per candidate evaluation (termasuk kompilasi kandidat TypeScript terisolasi via `tsc --noEmit`)
 - **Loop Interception Reduction**: **80.0%** (LDE menghentikan osilasi perbaikan pada iterasi ke-3 dari 15 baseline attempt)
 - **Workload Parallelism Speedup Factor**: **3.84x** (8 tugas worker pool paralel vs sekuensial)
 

@@ -136,6 +136,60 @@ class StateMemoryManager:
             state["temporal_state"][key] = value
             self.save_state(state)
 
+    # -----------------------------------------------------------------------
+    # Unresolved File Error Ledger (Closed-Loop Awareness)
+    # -----------------------------------------------------------------------
+
+    def record_file_validation(
+        self,
+        file_path: str,
+        passed: bool,
+        blocked: bool = False,
+        gate: Optional[str] = None,
+        summary: str = "",
+        signals: Optional[List[Dict[str, Any]]] = None,
+        error_message: str = "",
+        code_hash: str = "",
+    ) -> None:
+        """
+        Records the latest validation result for a file into the persistent
+        ledger. A file that fails validation stays in the ledger (unresolved)
+        until a later validation of the same file passes.
+        """
+        with self._lock:
+            state = self.load_state()
+            ledger = state.setdefault("file_validation", {})
+            abs_path = os.path.abspath(file_path)
+            ledger[abs_path] = {
+                "file": abs_path,
+                "passed": bool(passed),
+                "blocked": bool(blocked),
+                "gate": gate,
+                "summary": summary,
+                "signals": signals or [],
+                "message": error_message,
+                "code_hash": code_hash,
+                "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+            self.save_state(state)
+
+    def get_unresolved_errors(self) -> List[Dict[str, Any]]:
+        """
+        Returns all files in the ledger whose last validation failed.
+        These are the errors the agent MUST resolve before claiming completion.
+        """
+        with self._lock:
+            state = self.load_state()
+            ledger = state.get("file_validation", {})
+            return [entry for entry in ledger.values() if not entry.get("passed")]
+
+    def clear_validation_ledger(self) -> None:
+        """Wipes the file validation ledger (used for cleanup / re-baseline)."""
+        with self._lock:
+            state = self.load_state()
+            state["file_validation"] = {}
+            self.save_state(state)
+
     def get_temporal_variable(self, key: str, default: Any = None) -> Any:
         """Gets a dynamic temporal variable from state."""
         with self._lock:

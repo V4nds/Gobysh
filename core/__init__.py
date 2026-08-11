@@ -85,14 +85,14 @@ def __getattr__(name: str):
         "UniversalMemoryStore":  (".universal_memory", "UniversalMemoryStore"),
         "UniversalMemoryPattern":(".universal_memory", "UniversalMemoryPattern"),
 
-        # v4.0 Omni-Synthesis & Evolution
+        # v4.2.0 Omni-Synthesis & Evolution
         "OmniSynthesisEngine":   (".omni_synthesis", "OmniSynthesisEngine"),
         "SynthesisResult":       (".omni_synthesis", "SynthesisResult"),
         "SelfEvolutionEngine":   (".evolution_loop", "SelfEvolutionEngine"),
         
         # Taste Synthesis (Right Brain)
-        "TasteSynthesisEngine":  (".taste_synthesis", "TasteSynthesisEngine"),
-        "TasteEvaluation":       (".taste_synthesis", "TasteEvaluation"),
+        "ModernCSSKeywordHeuristic":  (".taste_synthesis", "ModernCSSKeywordHeuristic"),
+        "HeuristicEvaluation":       (".taste_synthesis", "HeuristicEvaluation"),
     }
 
     if name in _lazy_map:
@@ -120,5 +120,5 @@ __all__ = [
     "SessionBriefingEngine",
     "ConsciousnessEngine", "UniversalMemoryStore", "UniversalMemoryPattern",
     "OmniSynthesisEngine", "SynthesisResult", "SelfEvolutionEngine",
-    "TasteSynthesisEngine", "TasteEvaluation",
+    "ModernCSSKeywordHeuristic", "HeuristicEvaluation",
 ]

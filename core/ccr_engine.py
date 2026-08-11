@@ -20,7 +20,7 @@ from .gca_runner import GroundedCompilerArbitrage
 from .lde_detector import LoopDetectionEngine
 from .output_parsers import get_parser
 from .state_memory import StateMemoryManager
-from .taste_synthesis import TasteSynthesisEngine
+from .taste_synthesis import ModernCSSKeywordHeuristic
 
 
 # ---------------------------------------------------------------------------
@@ -277,759 +277,97 @@ class CognitiveControlRoom:
     # Neuron 1: Syntax Check (HARD GATE)
     # -----------------------------------------------------------------------
 
-    def neuron_syntax_check(self, code: str) -> NeuronSignal:
-        """
-        Signal: Is this code syntactically valid?
-        Mechanism: ast.parse()
 
-        HARD GATE — if syntax is invalid, code CANNOT be output.
-        """
-        try:
-            ast.parse(code)
-            return NeuronSignal(
-                neuron_name="SYNTAX",
-                gate_type=GateType.HARD,
-                passed=True,
-                confidence=1.0,
-                message="Syntax is valid.",
-                evidence={"valid": True},
-                suggestion="",
-            )
-        except SyntaxError as e:
-            return NeuronSignal(
-                neuron_name="SYNTAX",
-                gate_type=GateType.HARD,
-                passed=False,
-                confidence=1.0,
-                message=f"SyntaxError: {e.msg} at line {e.lineno}",
-                evidence={
-                    "error_type": "SyntaxError",
-                    "message": e.msg or "",
-                    "line": e.lineno,
-                    "offset": e.offset,
-                    "text": (e.text or "").strip(),
-                },
-                suggestion=f"Fix syntax error at line {e.lineno}: {e.msg}",
-            )
+    def neuron_syntax_check(self, *args, **kwargs):
+        from .neurons.syntax import neuron_syntax_check
+        return neuron_syntax_check(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
     # Neuron 1b: JavaScript/TypeScript Syntax Check (HARD GATE)
     # -----------------------------------------------------------------------
 
-    def neuron_js_syntax_check(self, code: str) -> NeuronSignal:
-        """
-        Signal: Is this JavaScript/TypeScript snippet syntactically valid?
-        Mechanism: Node.js evaluation via GCA.
 
-        HARD GATE when Node.js is available.
-        """
-        if not self.gca.is_node_available():
-            return NeuronSignal(
-                neuron_name="JS_SYNTAX",
-                gate_type=GateType.SOFT,
-                passed=True,
-                confidence=0.5,
-                message="Node.js is not available in PATH — JS syntax check skipped.",
-                evidence={"node_available": False},
-                suggestion="Install Node.js to enable hard-gate JS/TS syntax checking.",
-            )
+    def neuron_js_syntax_check(self, *args, **kwargs):
+        from .neurons.javascript import neuron_js_syntax_check
+        return neuron_js_syntax_check(self, *args, **kwargs)
 
-        js_wrapper = f"try {{ new Function({json.dumps(code)}); }} catch(e) {{ console.error(e.message); process.exit(1); }}"
-        res = self.gca.run_js_snippet(js_wrapper)
 
-        if res.is_success:
-            return NeuronSignal(
-                neuron_name="JS_SYNTAX",
-                gate_type=GateType.HARD,
-                passed=True,
-                confidence=1.0,
-                message="JavaScript syntax is valid.",
-                evidence={"node_available": True, "valid": True},
-                suggestion="",
-            )
-        else:
-            return NeuronSignal(
-                neuron_name="JS_SYNTAX",
-                gate_type=GateType.HARD,
-                passed=False,
-                confidence=1.0,
-                message=f"JS SyntaxError: {res.stderr.strip()}",
-                evidence={"node_available": True, "error": res.stderr.strip()},
-                suggestion="Fix JavaScript syntax error before delivery.",
-            )
-
-    def neuron_ts_syntax_check(self, code: str) -> NeuronSignal:
-        """
-        Signal: Does this TypeScript candidate code conform to valid TS/JS syntax?
-        Mechanism: Writes candidate to a temporary .ts file and validates via tsc or AST type-stripping.
-        """
-        import shutil
-        import tempfile
-
-        # Write candidate to a temporary .ts file for accurate compiler validation
-        with tempfile.NamedTemporaryFile(suffix=".ts", mode="w", delete=False, encoding="utf-8") as temp_ts:
-            temp_ts.write(code)
-            temp_ts_path = temp_ts.name
-
-        try:
-            tsc_bin = shutil.which("tsc")
-            if tsc_bin:
-                tsc_res = self.gca.run_command([tsc_bin, "--noEmit", temp_ts_path], timeout=10.0)
-            else:
-                tsc_res = self.gca.run_command(f"npx tsc --noEmit \"{temp_ts_path}\"", timeout=10.0)
-
-            if tsc_res.is_success:
-                return NeuronSignal(
-                    neuron_name="TS_SYNTAX",
-                    gate_type=GateType.HARD,
-                    passed=True,
-                    confidence=1.0,
-                    message="TypeScript candidate syntax verified via tsc.",
-                    evidence={"tsc_available": True, "valid": True},
-                    suggestion="",
-                )
-        finally:
-            if os.path.exists(temp_ts_path):
-                try:
-                    os.remove(temp_ts_path)
-                except OSError:
-                    pass
-
-        # Fallback: Strip TypeScript type annotations & interfaces using clean AST regex transformation
-        clean_code = re.sub(r'interface\s+\w+\s*\{[^}]*\}', '', code)
-        clean_code = re.sub(r'type\s+\w+\s*=[^;]+;', '', clean_code)
-        clean_code = re.sub(r':\s*[A-Za-z0-9_<>\[\]]+', '', clean_code)
-
-        js_sig = self.neuron_js_syntax_check(clean_code)
-        return NeuronSignal(
-            neuron_name="TS_SYNTAX",
-            gate_type=GateType.HARD,
-            passed=js_sig.passed,
-            confidence=0.9,
-            message=f"TypeScript AST Syntax {'PASS' if js_sig.passed else 'FAIL'}: {js_sig.message}",
-            evidence={"type_stripped": True, "inner_js": js_sig.evidence},
-            suggestion=js_sig.suggestion
-        )
+    def neuron_ts_syntax_check(self, *args, **kwargs):
+        from .neurons.javascript import neuron_ts_syntax_check
+        return neuron_ts_syntax_check(self, *args, **kwargs)
 
 
     # -----------------------------------------------------------------------
     # Neuron: Taste Design & Motion Synthesis (HARD/SOFT GATE)
     # -----------------------------------------------------------------------
 
-    def neuron_taste_design_check(self, code: str, content_type: str = "CODE") -> NeuronSignal:
-        """
-        Signal: Does this code conform to modern Taste Design and Motion Synthesis?
-        (ThreeJS, GSAP, Design DNA, Lottie, Genjutsu)
-        
-        Mechanism: Delegates evaluation to the TasteSynthesisEngine (Right Brain) 
-        to calculate a multi-dimensional aesthetic score.
-        """
-        # Only strict check if code contains UI elements (html, css, jsx, tsx)
-        is_ui = any(tag in code.lower() for tag in ["<div", "className=", "style=", "<style", "document.create"])
-        
-        if not is_ui:
-            return NeuronSignal(
-                neuron_name="TASTE_DESIGN",
-                gate_type=GateType.SOFT,
-                passed=True,
-                confidence=1.0,
-                message="Code is not a UI component, skipping Taste Design check.",
-            )
-            
-        evaluation = TasteSynthesisEngine.evaluate(code)
-        
-        if evaluation.is_slop:
-            return NeuronSignal(
-                neuron_name="TASTE_DESIGN",
-                gate_type=GateType.HARD if content_type == "DESIGN" else GateType.SOFT,
-                passed=False,
-                confidence=0.9,
-                message="UI Code detected as SLOP (lacking multi-dimensional aesthetics).",
-                evidence={"scores": evaluation.__dict__},
-                suggestion=evaluation.bypass_suggestion,
-            )
-            
-        return NeuronSignal(
-            neuron_name="TASTE_DESIGN",
-            gate_type=GateType.SOFT,
-            passed=True,
-            confidence=0.8,
-            message="Modern Taste Design detected.",
-            evidence={"scores": evaluation.__dict__},
-            suggestion=evaluation.bypass_suggestion if evaluation.bypass_suggestion else None,
-        )
+
+    def neuron_taste_design_check(self, *args, **kwargs):
+        from .neurons.taste import neuron_taste_design_check
+        return neuron_taste_design_check(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
     # Neuron 2: Scope Integrity Check (HARD GATE)
     # -----------------------------------------------------------------------
 
-    def neuron_scope_check(self, code: str) -> NeuronSignal:
-        """
-        Signal: Are all names used in this code defined within scope?
-        Mechanism: AST analysis — extract Load vs Store name nodes.
 
-        HARD GATE — undefined variables cause NameError at runtime.
-
-        Known limitations (documented honestly):
-        - Cannot detect variables from outer scope (closure, global, builtins)
-        - Cannot check attribute access (x.method())
-        - Cannot verify pip package availability
-        """
-        try:
-            tree = ast.parse(code)
-        except SyntaxError:
-            return NeuronSignal(
-                neuron_name="SCOPE",
-                gate_type=GateType.HARD,
-                passed=False,
-                confidence=1.0,
-                message="Cannot analyze scope — code has syntax errors.",
-                evidence={"reason": "syntax_error"},
-                suggestion="Fix syntax errors first (use neuron_syntax_check).",
-            )
-
-        # Collect defined names (assigned, imported, function/class defs, params)
-        defined: Set[str] = set()
-        used: Set[str] = set()
-
-        # Python builtins that are always available
-        builtins_set = {
-            "print", "len", "range", "int", "str", "float", "bool", "list",
-            "dict", "set", "tuple", "type", "isinstance", "issubclass",
-            "hasattr", "getattr", "setattr", "delattr", "callable",
-            "iter", "next", "enumerate", "zip", "map", "filter", "sorted",
-            "reversed", "min", "max", "sum", "abs", "round", "pow",
-            "any", "all", "id", "hash", "repr", "format",
-            "open", "input", "super", "property", "classmethod", "staticmethod",
-            "True", "False", "None", "Exception", "BaseException", "ValueError", "TypeError",
-            "KeyError", "IndexError", "AttributeError", "ImportError", "ModuleNotFoundError",
-            "RuntimeError", "StopIteration", "OSError", "IOError", "PermissionError",
-            "FileNotFoundError", "NotImplementedError", "ZeroDivisionError",
-            "AssertionError", "NameError", "SyntaxError", "SystemExit", "KeyboardInterrupt",
-            "OverflowError", "MemoryError", "RecursionError", "UnicodeEncodeError", "UnicodeDecodeError",
-            "SyntaxWarning", "DeprecationWarning", "UserWarning", "Warning",
-            "object", "bytes", "bytearray", "memoryview", "complex",
-            "frozenset", "vars", "dir", "globals", "locals", "exec", "eval",
-            "compile", "breakpoint", "exit", "quit",
-            "__name__", "__file__", "__doc__", "__all__",
-        }
-        defined.update(builtins_set)
-
-        def extract_target_names(t_node):
-            if isinstance(t_node, ast.Name):
-                defined.add(t_node.id)
-            elif isinstance(t_node, (ast.Tuple, ast.List)):
-                for elt in t_node.elts:
-                    extract_target_names(elt)
-            elif isinstance(t_node, ast.Starred):
-                extract_target_names(t_node.value)
-
-        for node in ast.walk(tree):
-            # Definitions: assignments
-            if isinstance(node, ast.Assign):
-                for target in node.targets:
-                    extract_target_names(target)
-            # Definitions: augmented assignments (x += 1)
-            elif isinstance(node, ast.AugAssign):
-                extract_target_names(node.target)
-            # Definitions: annotated assignments (x: int = 5)
-            elif isinstance(node, ast.AnnAssign):
-                extract_target_names(node.target)
-            # Definitions: function defs
-            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                defined.add(node.name)
-                posargs = getattr(node.args, "posonlyargs", [])
-                kwargs = getattr(node.args, "kwonlyargs", [])
-                for arg in node.args.args + posargs + kwargs:
-                    defined.add(arg.arg)
-                if node.args.vararg:
-                    defined.add(node.args.vararg.arg)
-                if node.args.kwarg:
-                    defined.add(node.args.kwarg.arg)
-            # Definitions: class defs
-            elif isinstance(node, ast.ClassDef):
-                defined.add(node.name)
-            # Definitions: imports
-            elif isinstance(node, ast.Import):
-                for alias in node.names:
-                    defined.add(alias.asname or alias.name.split(".")[0])
-            elif isinstance(node, ast.ImportFrom):
-                for alias in node.names:
-                    defined.add(alias.asname or alias.name)
-            # Definitions: for loop targets
-            elif isinstance(node, (ast.For, ast.AsyncFor)):
-                extract_target_names(node.target)
-            # Definitions: with statement
-            elif isinstance(node, (ast.With, ast.AsyncWith)):
-                for item in node.items:
-                    if item.optional_vars:
-                        extract_target_names(item.optional_vars)
-            # Definitions: comprehension variables
-            elif isinstance(node, ast.comprehension):
-                extract_target_names(node.target)
-            # Definitions: except handler
-            elif isinstance(node, ast.ExceptHandler):
-                if node.name:
-                    defined.add(node.name)
-            # Definitions: lambda function parameters
-            elif isinstance(node, ast.Lambda):
-                posargs = getattr(node.args, "posonlyargs", [])
-                kwargs = getattr(node.args, "kwonlyargs", [])
-                for arg in node.args.args + posargs + kwargs:
-                    defined.add(arg.arg)
-                if node.args.vararg:
-                    defined.add(node.args.vararg.arg)
-                if node.args.kwarg:
-                    defined.add(node.args.kwarg.arg)
-            # Definitions: named expression (walrus operator)
-            elif isinstance(node, ast.NamedExpr):
-                extract_target_names(node.target)
-
-            # Usages: name references in Load context
-            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
-                used.add(node.id)
-
-        undefined = used - defined
-        if not undefined:
-            return NeuronSignal(
-                neuron_name="SCOPE",
-                gate_type=GateType.HARD,
-                passed=True,
-                confidence=0.85,  # Not 1.0 — cannot check outer scopes
-                message="All referenced names are defined within visible scope.",
-                evidence={"defined_count": len(defined - builtins_set), "used_count": len(used)},
-                suggestion="",
-            )
-
-        return NeuronSignal(
-            neuron_name="SCOPE",
-            gate_type=GateType.HARD,
-            passed=False,
-            confidence=0.75,  # Could be false positive (outer scope variable)
-            message=f"Potentially undefined names: {', '.join(sorted(undefined))}",
-            evidence={"undefined_names": sorted(undefined)},
-            suggestion=f"Verify these names exist: {', '.join(sorted(undefined))}. "
-                       f"They may be from outer scope (closure/global) — in that case, safe to proceed.",
-        )
+    def neuron_scope_check(self, *args, **kwargs):
+        from .neurons.scope import neuron_scope_check
+        return neuron_scope_check(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
     # Neuron 3: Cross-Reference (HARD GATE)
     # -----------------------------------------------------------------------
 
-    def neuron_cross_reference(
-        self, code: str, project_root: str
-    ) -> NeuronSignal:
-        """
-        Signal: Do imported modules/functions actually exist in the project?
-        Mechanism: Dynamic scan of project files + AST import extraction.
 
-        HARD GATE — importing non-existent modules causes ImportError.
-        """
-        try:
-            tree = ast.parse(code)
-        except SyntaxError:
-            return NeuronSignal(
-                neuron_name="CROSS_REF",
-                gate_type=GateType.HARD,
-                passed=False,
-                confidence=1.0,
-                message="Cannot cross-reference — code has syntax errors.",
-                evidence={"reason": "syntax_error"},
-                suggestion="Fix syntax errors first.",
-            )
-
-        # Extract local imports (skip stdlib and pip packages)
-        local_imports: List[Dict[str, str]] = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom) and node.module:
-                # Heuristic: local imports often start with '.' or known project prefixes
-                if node.level > 0:  # Relative import
-                    local_imports.append({
-                        "module": "." * node.level + (node.module or ""),
-                        "names": [a.name for a in node.names],
-                        "type": "relative",
-                    })
-                elif node.module.startswith("core"):  # Known project prefix
-                    local_imports.append({
-                        "module": node.module,
-                        "names": [a.name for a in node.names],
-                        "type": "project",
-                    })
-
-        if not local_imports:
-            return NeuronSignal(
-                neuron_name="CROSS_REF",
-                gate_type=GateType.HARD,
-                passed=True,
-                confidence=1.0,
-                message="No local project imports to validate.",
-                evidence={"imports_checked": 0},
-                suggestion="",
-            )
-
-        # Scan project for existing modules
-        existing_modules = self._scan_project(project_root)
-        missing: List[str] = []
-
-        for imp in local_imports:
-            module_path = imp["module"].replace(".", os.sep)
-            if imp["type"] == "relative":
-                module_path = module_path.lstrip(os.sep)
-
-            # Check if module file or package directory exists
-            found = False
-            for ext in [".py", ""]:
-                candidate = os.path.join(project_root, module_path + ext)
-                if os.path.exists(candidate):
-                    found = True
-                    break
-                # Check as package (directory with __init__.py)
-                pkg_init = os.path.join(project_root, module_path, "__init__.py")
-                if os.path.exists(pkg_init):
-                    found = True
-                    break
-
-            if not found and imp["module"] in existing_modules:
-                found = True
-
-            if not found:
-                missing.append(imp["module"])
-
-        if missing:
-            return NeuronSignal(
-                neuron_name="CROSS_REF",
-                gate_type=GateType.HARD,
-                passed=False,
-                confidence=0.9,
-                message=f"Missing project modules: {', '.join(missing)}",
-                evidence={"missing_modules": missing, "checked": len(local_imports)},
-                suggestion=f"Verify these modules exist: {', '.join(missing)}",
-            )
-
-        return NeuronSignal(
-            neuron_name="CROSS_REF",
-            gate_type=GateType.HARD,
-            passed=True,
-            confidence=0.95,
-            message=f"All {len(local_imports)} local imports verified against project.",
-            evidence={"imports_checked": len(local_imports), "project_modules": list(existing_modules.keys())},
-            suggestion="",
-        )
+    def neuron_cross_reference(self, *args, **kwargs):
+        from .neurons.cross_reference import neuron_cross_reference
+        return neuron_cross_reference(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
     # Neuron 4: Behavior Check (SOFT SIGNAL)
     # -----------------------------------------------------------------------
 
-    def neuron_behavior_check(
-        self, code: str, expected_behavior: Dict[str, Any]
-    ) -> NeuronSignal:
-        """
-        Signal: Does this code produce output matching expected behavior?
-        Mechanism: Execute via GCA, compare output against expectations.
 
-        SOFT SIGNAL — behavior matching requires AI interpretation.
-
-        expected_behavior = {
-            "success_indicators": ["expected output", ...],
-            "failure_indicators": ["error", "traceback", ...],
-            "description": "what this code should do"
-        }
-        """
-        result = self.gca.run_python_snippet(code, timeout=10.0)
-        combined_output = (result.stdout + " " + result.stderr).lower()
-
-        success_indicators = expected_behavior.get("success_indicators", [])
-        failure_indicators = expected_behavior.get("failure_indicators", [])
-
-        success_matches = [
-            ind for ind in success_indicators if ind.lower() in combined_output
-        ]
-        failure_matches = [
-            ind for ind in failure_indicators if ind.lower() in combined_output
-        ]
-
-        passed = result.is_success and len(failure_matches) == 0
-        if success_indicators:
-            passed = passed and len(success_matches) > 0
-
-        confidence = 0.5
-        if passed and success_matches:
-            confidence = min(0.5 + 0.1 * len(success_matches), 0.95)
-        elif failure_matches:
-            confidence = min(0.5 + 0.15 * len(failure_matches), 0.95)
-
-        return NeuronSignal(
-            neuron_name="BEHAVIOR",
-            gate_type=GateType.SOFT,
-            passed=passed,
-            confidence=confidence,
-            message=(
-                f"Behavior check {'PASSED' if passed else 'FAILED'}. "
-                f"Exit code: {result.exit_code}. "
-                f"Success matches: {len(success_matches)}/{len(success_indicators)}. "
-                f"Failure matches: {len(failure_matches)}."
-            ),
-            evidence={
-                "exit_code": result.exit_code,
-                "stdout_preview": result.stdout[:500] if result.stdout else "",
-                "stderr_preview": result.stderr[:500] if result.stderr else "",
-                "success_matches": success_matches,
-                "failure_matches": failure_matches,
-                "duration": result.duration_seconds,
-            },
-            suggestion=(
-                f"Code failed behavior check. Failure indicators found: {failure_matches}"
-                if not passed else ""
-            ),
-        )
+    def neuron_behavior_check(self, *args, **kwargs):
+        from .neurons.execution import neuron_behavior_check
+        return neuron_behavior_check(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
     # Neuron 5: Reference Similarity (SOFT SIGNAL)
     # -----------------------------------------------------------------------
 
-    def neuron_reference_similarity(
-        self, output: str, reference: str
-    ) -> NeuronSignal:
-        """
-        Signal: How structurally similar is the output to a reference?
-        Mechanism: Token/keyword overlap and structural comparison.
 
-        SOFT SIGNAL — similarity is subjective, AI interprets the data.
-
-        Returns RAW DATA (shared keywords, unique elements, overlap ratio)
-        for AI to judge — does NOT make pass/fail decision on its own.
-        """
-        def tokenize(text: str) -> Set[str]:
-            tokens = re.findall(r'\b\w{3,}\b', text.lower())
-            return set(tokens)
-
-        output_tokens = tokenize(output)
-        reference_tokens = tokenize(reference)
-
-        shared = output_tokens & reference_tokens
-        output_unique = output_tokens - reference_tokens
-        reference_unique = reference_tokens - output_tokens
-
-        total_unique = len(output_tokens | reference_tokens)
-        overlap_ratio = len(shared) / total_unique if total_unique > 0 else 0.0
-
-        return NeuronSignal(
-            neuron_name="REFERENCE",
-            gate_type=GateType.SOFT,
-            passed=True,  # Always "passes" — AI decides if similarity is acceptable
-            confidence=overlap_ratio,
-            message=f"Structural overlap: {overlap_ratio:.1%}. "
-                    f"Shared: {len(shared)}, Output-unique: {len(output_unique)}, "
-                    f"Reference-unique: {len(reference_unique)}.",
-            evidence={
-                "shared_keywords": sorted(shared)[:30],
-                "output_unique": sorted(output_unique)[:20],
-                "reference_unique": sorted(reference_unique)[:20],
-                "structural_overlap": round(overlap_ratio, 3),
-                "missing_from_output": sorted(reference_unique)[:20],
-            },
-            suggestion="",
-        )
+    def neuron_reference_similarity(self, *args, **kwargs):
+        from .neurons.cross_reference import neuron_reference_similarity
+        return neuron_reference_similarity(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
     # Neuron 6: GCA Execute (HARD GATE)
     # -----------------------------------------------------------------------
 
-    def neuron_gca_execute(self, test_command: str) -> NeuronSignal:
-        """
-        Signal: Does this test command pass with Exit Code 0?
-        Mechanism: Delegates to existing GroundedCompilerArbitrage.
 
-        HARD GATE — Exit Code != 0 is empirical proof of failure.
-        """
-        result = self.gca.run_command(test_command)
-
-        return NeuronSignal(
-            neuron_name="GCA",
-            gate_type=GateType.HARD,
-            passed=result.is_success,
-            confidence=1.0,
-            message=(
-                f"GCA {'PASSED' if result.is_success else 'FAILED'}: "
-                f"Exit Code {result.exit_code} in {result.duration_seconds}s"
-            ),
-            evidence={
-                "command": test_command,
-                "exit_code": result.exit_code,
-                "stdout_preview": result.stdout[:500] if result.stdout else "",
-                "stderr_preview": result.stderr[:500] if result.stderr else "",
-                "duration": result.duration_seconds,
-            },
-            suggestion=(
-                f"Test failed. Stderr: {result.stderr[:200]}" if not result.is_success else ""
-            ),
-        )
+    def neuron_gca_execute(self, *args, **kwargs):
+        from .neurons.execution import neuron_gca_execute
+        return neuron_gca_execute(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
     # Neuron 7: Information Density (SOFT SIGNAL)
     # -----------------------------------------------------------------------
 
-    def neuron_info_density(self, text: str) -> NeuronSignal:
-        """
-        Signal: Raw text statistics for AI to judge substance vs filler.
-        Mechanism: Word counting, lexical diversity, filler phrase detection.
 
-        SOFT SIGNAL — returns raw metrics, AI interprets.
-        """
-        words = re.findall(r'\b\w+\b', text.lower())
-        total_words = len(words)
-
-        if total_words == 0:
-            return NeuronSignal(
-                neuron_name="DENSITY",
-                gate_type=GateType.SOFT,
-                passed=False,
-                confidence=1.0,
-                message="Text is empty.",
-                evidence={"total_words": 0},
-                suggestion="Provide substantive content.",
-            )
-
-        unique_words = set(words)
-        lexical_diversity = len(unique_words) / total_words
-
-        sentences = re.split(r'[.!?]+', text)
-        sentences = [s.strip() for s in sentences if s.strip()]
-        avg_sentence_length = total_words / max(len(sentences), 1)
-
-        # Count filler phrase occurrences
-        text_lower = text.lower()
-        filler_counts: Dict[str, int] = {}
-        total_filler_hits = 0
-        for filler in self.FILLER_PHRASES:
-            count = text_lower.count(filler)
-            if count > 0:
-                filler_counts[filler] = count
-                total_filler_hits += count
-
-        filler_ratio = total_filler_hits / max(len(sentences), 1)
-
-        return NeuronSignal(
-            neuron_name="DENSITY",
-            gate_type=GateType.SOFT,
-            passed=True,  # Always "passes" — AI decides from raw data
-            confidence=lexical_diversity,
-            message=(
-                f"Words: {total_words}, Unique: {len(unique_words)}, "
-                f"Diversity: {lexical_diversity:.2%}, "
-                f"Avg sentence: {avg_sentence_length:.1f} words, "
-                f"Filler hits: {total_filler_hits}"
-            ),
-            evidence={
-                "total_words": total_words,
-                "unique_words": len(unique_words),
-                "lexical_diversity": round(lexical_diversity, 3),
-                "avg_sentence_length": round(avg_sentence_length, 1),
-                "sentence_count": len(sentences),
-                "filler_phrase_counts": filler_counts,
-                "total_filler_hits": total_filler_hits,
-                "filler_ratio_per_sentence": round(filler_ratio, 2),
-            },
-            suggestion="",
-        )
+    def neuron_info_density(self, *args, **kwargs):
+        from .neurons.semantics import neuron_info_density
+        return neuron_info_density(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
     # Neuron 8: Consistency Check (SOFT SIGNAL)
     # -----------------------------------------------------------------------
 
-    def neuron_consistency(self, text: str) -> NeuronSignal:
-        """
-        Signal: Extract claims, detect numeric conflicts and negation pairs.
-        Mechanism: Regex-based claim and number extraction.
 
-        SOFT SIGNAL — returns extracted data, AI judges contradictions.
-        """
-        claims: List[Dict[str, Any]] = []
-        numeric_conflicts: List[Dict[str, Any]] = []
-        negation_pairs: List[Dict[str, Any]] = []
-
-        lines = text.split("\n")
-
-        # --- Extract numeric claims ---
-        number_pattern = re.compile(
-            r'(\b\w[\w\s]{2,30})\b(?:adalah|=|:|\bsebesar\b|\bof\b|\bis\b)\s*(\d+[\d.,]*\s*\w*)',
-            re.IGNORECASE,
-        )
-        numeric_claims: List[Tuple[str, str, int]] = []
-        for line_no, line in enumerate(lines, 1):
-            for match in number_pattern.finditer(line):
-                context = match.group(1).strip().lower()
-                value = match.group(2).strip()
-                claims.append({"text": match.group(0).strip(), "line": line_no, "type": "numeric"})
-                numeric_claims.append((context, value, line_no))
-
-        # Check for conflicting numbers with same context
-        seen_contexts: Dict[str, List[Tuple[str, int]]] = {}
-        for context, value, line_no in numeric_claims:
-            key = re.sub(r'\s+', ' ', context)[:30]
-            if key not in seen_contexts:
-                seen_contexts[key] = []
-            seen_contexts[key].append((value, line_no))
-
-        for context, values in seen_contexts.items():
-            if len(values) >= 2:
-                unique_vals = set(v for v, _ in values)
-                if len(unique_vals) > 1:
-                    numeric_conflicts.append({
-                        "context": context,
-                        "values": [{"value": v, "line": ln} for v, ln in values],
-                    })
-
-        # --- Extract negation pairs ---
-        negation_patterns = [
-            (r'(?:mendukung|support)\s+(.+)', r'(?:tidak|not)\s+(?:mendukung|support|kompatibel|compatible)\s+(.+)'),
-            (r'(?:menggunakan|using|use)\s+(.+)', r'(?:tidak|not)\s+(?:menggunakan|using|use)\s+(.+)'),
-        ]
-
-        positive_claims: List[Tuple[str, int]] = []
-        negative_claims: List[Tuple[str, int]] = []
-
-        for line_no, line in enumerate(lines, 1):
-            for pos_pattern, neg_pattern in negation_patterns:
-                pos_match = re.search(pos_pattern, line, re.IGNORECASE)
-                neg_match = re.search(neg_pattern, line, re.IGNORECASE)
-                if pos_match:
-                    positive_claims.append((pos_match.group(0), line_no))
-                if neg_match:
-                    negative_claims.append((neg_match.group(0), line_no))
-
-        for pos_text, pos_line in positive_claims:
-            for neg_text, neg_line in negative_claims:
-                if pos_line != neg_line:
-                    negation_pairs.append({
-                        "positive": {"text": pos_text, "line": pos_line},
-                        "negative": {"text": neg_text, "line": neg_line},
-                    })
-
-        has_issues = len(numeric_conflicts) > 0 or len(negation_pairs) > 0
-
-        return NeuronSignal(
-            neuron_name="CONSISTENCY",
-            gate_type=GateType.SOFT,
-            passed=True,  # Always "passes" — AI judges from data
-            confidence=0.6 if has_issues else 0.9,
-            message=(
-                f"Claims extracted: {len(claims)}. "
-                f"Numeric conflicts: {len(numeric_conflicts)}. "
-                f"Negation pairs: {len(negation_pairs)}."
-            ),
-            evidence={
-                "claims": claims[:20],
-                "numeric_conflicts": numeric_conflicts,
-                "negation_pairs": negation_pairs,
-                "total_lines_analyzed": len(lines),
-            },
-            suggestion=(
-                f"Found {len(numeric_conflicts)} numeric conflict(s) and "
-                f"{len(negation_pairs)} potential negation pair(s). Review carefully."
-                if has_issues else ""
-            ),
-        )
+    def neuron_consistency(self, *args, **kwargs):
+        from .neurons.semantics import neuron_consistency
+        return neuron_consistency(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
     # Signal Evaluator — Hard Gate blocker
@@ -1190,40 +528,10 @@ class CognitiveControlRoom:
     # Internal Helpers
     # -----------------------------------------------------------------------
 
-    def _scan_project(self, root: str) -> Dict[str, Dict[str, Any]]:
-        """
-        Dynamically scan project directory for Python modules.
-        Returns a map of module names to their metadata.
-        """
-        modules: Dict[str, Dict[str, Any]] = {}
 
-        if not os.path.isdir(root):
-            return modules
-
-        for dirpath, dirnames, filenames in os.walk(root):
-            # Skip hidden dirs and common non-project dirs
-            dirnames[:] = [
-                d for d in dirnames
-                if not d.startswith(".") and d not in ("__pycache__", "node_modules", ".git", "venv", "env")
-            ]
-
-            for filename in filenames:
-                if filename.endswith(".py"):
-                    filepath = os.path.join(dirpath, filename)
-                    rel_path = os.path.relpath(filepath, root)
-                    # Convert file path to module notation (Python 3.8+ compatible)
-                    module_name = rel_path.replace(os.sep, ".")
-                    if module_name.endswith(".py"):
-                        module_name = module_name[:-3]
-                    if module_name.endswith(".__init__"):
-                        module_name = module_name[:-9]
-
-                    modules[module_name] = {
-                        "path": rel_path,
-                        "abs_path": filepath,
-                    }
-
-        return modules
+    def _scan_project(self, *args, **kwargs):
+        from .neurons.cross_reference import _scan_project
+        return _scan_project(self, *args, **kwargs)
 
     def _calculate_lexical_diversity(self, text: str) -> float:
         """Calculate unique words / total words ratio."""

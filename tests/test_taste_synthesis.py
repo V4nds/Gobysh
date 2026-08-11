@@ -1,12 +1,12 @@
 import unittest
-from core.taste_synthesis import TasteSynthesisEngine
+from core.taste_synthesis import ModernCSSKeywordHeuristic
 
-class TestTasteSynthesisEngine(unittest.TestCase):
+class TestModernCSSKeywordHeuristic(unittest.TestCase):
     
     def test_evaluate_slop(self):
         # Code with very basic HTML/CSS, no modern keywords
         code = "<div><h1>Hello World</h1><p>Basic text</p></div>"
-        evaluation = TasteSynthesisEngine.evaluate(code)
+        evaluation = ModernCSSKeywordHeuristic.evaluate(code)
         
         self.assertTrue(evaluation.is_slop)
         self.assertEqual(evaluation.total_score, 0)
@@ -17,7 +17,7 @@ class TestTasteSynthesisEngine(unittest.TestCase):
         # as per rule: is_slop = total_score < 3 or (spatial == 0 and visual == 0)
         # Wait, if spatial=1, visual=0, motion=0, total=1 -> slop
         code = "<div style='display: flex;'></div>"
-        evaluation = TasteSynthesisEngine.evaluate(code)
+        evaluation = ModernCSSKeywordHeuristic.evaluate(code)
         self.assertTrue(evaluation.is_slop)
         
     def test_evaluate_modern_taste(self):
@@ -29,7 +29,7 @@ class TestTasteSynthesisEngine(unittest.TestCase):
                 </div>
             </div>
         '''
-        evaluation = TasteSynthesisEngine.evaluate(code)
+        evaluation = ModernCSSKeywordHeuristic.evaluate(code)
         
         self.assertFalse(evaluation.is_slop)
         self.assertGreaterEqual(evaluation.spatial_score, 3) # bento, grid, clamp
@@ -44,7 +44,7 @@ class TestTasteSynthesisEngine(unittest.TestCase):
             const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas') });
             // Add particles
         '''
-        evaluation = TasteSynthesisEngine.evaluate(code)
+        evaluation = ModernCSSKeywordHeuristic.evaluate(code)
         
         # In JS files without UI tags it might not be passed to evaluate by CCR, but evaluate handles it.
         # total_score = 3 (three, webgl, canvas, particles = 4)

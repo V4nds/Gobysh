@@ -24,8 +24,7 @@ This file establishes mandatory rules for any AI agent (Gemini, Claude, Cursor, 
 
 ## 🧪 Verification Commands
 
-Before declaring any work complete, run:
-```bash
-python -m unittest discover tests/
-```
-Ensure all tests pass with clean status (Exit Code 0).
+Before declaring any work complete, run **BOTH** gates and ensure both return Exit Code 0:
+
+1. **Ledger Gate (closed-loop awareness):** `goby gate` — must return Exit Code 0 (ZERO unresolved edited-file errors). If a file you edited still produces an error, it is recorded persistently in the ledger by `goby check`/`goby watch`/git hooks. You are NOT allowed to claim completion while any unresolved error remains.
+2. **Test Gate:** `python -m unittest discover tests/` — must pass with clean status (Exit Code 0).

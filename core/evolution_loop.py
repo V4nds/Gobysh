@@ -1,5 +1,5 @@
 """
-Autonomous Evolution Loop for Goby Framework (v4.1).
+Autonomous Evolution Loop for Goby Framework (v4.2.0).
 Generates synthetic paradoxes dynamically from Universal Memory,
 stress-tests the Goby Cognitive architecture,
 and measures the Bypass Frequency Metric (BFM) to drive continuous self-refinement.

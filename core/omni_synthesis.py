@@ -1,5 +1,5 @@
 """
-Omni-Synthesis Engine for Goby Framework (v4.0).
+Omni-Synthesis Engine for Goby Framework (v4.2.0).
 Provides pre-emptive AST analysis and Axiomatic Synthesis to eliminate the need for emergency bypasses.
 Achieves Zero-Bypass Direct Resolution by catching structural paradoxes apriori.
 """

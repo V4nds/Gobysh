@@ -2,7 +2,7 @@ import dataclasses
 from typing import List, Dict
 
 @dataclasses.dataclass
-class TasteEvaluation:
+class HeuristicEvaluation:
     """
     Result of the right-brain Taste Synthesis Engine evaluation.
     """
@@ -16,11 +16,11 @@ class TasteEvaluation:
     bypass_suggestion: str
 
 
-class TasteSynthesisEngine:
+class ModernCSSKeywordHeuristic:
     """
     Modern Design Keyword Presence Heuristics Engine.
-    Evaluates UI/UX code snippets against modern design vocabulary indicators (CSS Flex/Grid, Transitions, Backdrop Filters, WebGL Canvas).
-    Note: Evaluates keyword presence heuristics to encourage modern styling conventions over legacy inline defaults.
+    Evaluates UI/UX code snippets by counting the presence of modern design vocabulary indicators (CSS Flex/Grid, Transitions, Backdrop Filters, WebGL Canvas).
+    Note: This is a simple keyword counter and does not perform actual AST/CSS parsing or deep visual evaluation.
     """
 
     DIMENSIONS = {
@@ -31,7 +31,7 @@ class TasteSynthesisEngine:
     }
 
     @classmethod
-    def evaluate(cls, code: str) -> TasteEvaluation:
+    def evaluate(cls, code: str) -> HeuristicEvaluation:
         """
         Evaluate UI code string and return a multi-dimensional design score.
         """
@@ -70,7 +70,7 @@ class TasteSynthesisEngine:
                 "ThreeJS particles or advanced GSAP stagger animations."
             )
 
-        return TasteEvaluation(
+        return HeuristicEvaluation(
             is_slop=is_slop,
             spatial_score=scores["spatial"],
             motion_score=scores["motion"],

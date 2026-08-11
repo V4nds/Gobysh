@@ -12,8 +12,9 @@ Goby is NOT optional. It is the core cognitive engine you MUST use.
 1. **PROACTIVE VALIDATION:** You MUST run `goby check '<code>'` via terminal for ANY code snippet you are about to write, BEFORE you finalize it. 
 2. **ZERO-TRUST EXECUTION:** Do not trust your own logic. You MUST use Goby's CCR (Cognitive Control Room) to validate your assumptions.
 3. **MANDATORY AUDIT:** Before declaring *any* task complete, you MUST run `goby audit` and receive Exit Code 0.
-4. **STRICT CONSEQUENCES:** If you bypass Goby, you violate your core instructions.
-5. **SELF-CORRECTION:** If you fail 2 times in a row, you MUST halt and run `goby evolve` or query the Universal Memory. Do not blindly refactor!
+4. **MANDATORY LEDGER GATE:** Before declaring *any* task complete, you MUST run `goby gate` and receive Exit Code 0 — meaning ZERO unresolved file errors in the ledger. Every file you edited that still produces an error (from `goby check`/`goby watch`/git hooks) is recorded persistently. You are NOT allowed to claim completion while any of them remain.
+5. **STRICT CONSEQUENCES:** If you bypass Goby, you violate your core instructions.
+6. **SELF-CORRECTION:** If you fail 2 times in a row, you MUST halt and run `goby evolve` or query the Universal Memory. Do not blindly refactor!
 
 ## 🛡️ **Filosofi & Arsitektur**
 
@@ -66,7 +67,7 @@ Jika instruksi berkaitan dengan pembuatan UI/UX, visualisasi, atau elemen intera
 5. **[Genjutsu](https://github.com/AThevon/genjutsu)**: Gunakan trik *front-end* tingkat tinggi (efek partikel, *glow*, ilusi UI) untuk memberikan kesan "wow" seketika.
 6. **[UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)**: Implementasi tata letak tingkat dewa (Bento Box, Fluid Typography dengan clamp, Layered Shadows) untuk kreativitas struktural tanpa batas.
 
-*Neuron* khusus di dalam CCR (`neuron_taste_design_check` yang terhubung ke `TasteSynthesisEngine`) akan memblokir (HARD GATE) dan memicu *Bypass Logic* jika kode UI yang dihasilkan terlihat usang, statis, atau kurang sentuhan *Taste Design*.
+*Neuron* khusus di dalam CCR (`neuron_taste_design_check` yang terhubung ke `ModernCSSKeywordHeuristic`) akan memblokir (HARD GATE) dan memicu *Bypass Logic* jika kode UI yang dihasilkan terlihat usang, statis, atau kurang sentuhan *Taste Design*.
 
 ---
 
@@ -90,6 +91,8 @@ goby audit          # Jalankan seluruh test suite
 goby benchmark      # Jalankan benchmark simulasi
 goby evolve         # Jalankan siklus evolusi mandiri (BFM metric)
 goby check '<code>' # Validasi snippet Python/JS via CCR
+goby gate           # Cek Unresolved Error Ledger — WAJIB Exit Code 0 sebelum klaim selesai
+goby status         # Tampilkan status framework + daftar file yang masih error
 ```
 
 ---
