@@ -10,7 +10,7 @@
 [![Bilingual Support](https://img.shields.io/badge/Language-ID%20%7C%20EN%20Bilingual-orange.svg)](#1-cognitive-gateway-intent-resolver--conversation-memory)
 
 <p align="center">
-  <b>Gobysh mengubah asisten coding AI (Antigravity, Gemini CLI, Claude Code, Cursor) sebagai **mechanical execution harness** yang tertanam langsung ke dalam *runtime lifecycle loop* IDE untuk mengawasi setiap ketukan kode yang dihasilkan AI.</b>
+  <b>Gobysh mengubah asisten coding AI (Antigravity, Gemini CLI, Claude Code, Cursor) sebagai mechanical execution harness yang tertanam langsung ke dalam *runtime lifecycle loop* IDE untuk mengawasi setiap ketukan kode yang dihasilkan AI.</b>
 </p>
 
 </div>
