@@ -1,191 +1,365 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goby Framework v4.0 | Spatial Cognition & Telemetry Dashboard</title>
-    
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --bg-color: #05050a;
-            --surface-color: rgba(18, 18, 28, 0.75);
-            --border-color: rgba(0, 240, 255, 0.15);
-            --text-primary: #ffffff;
-            --accent-cyan: #00f0ff;
-            --accent-green: #00ff66;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goby v4.0 — Visual Cognition & Omni-Synthesis Dashboard</title>
+  <meta name="description" content="Live Interactive Visual Preview & Cognition Dashboard for Goby Meta-Cognitive Framework v4.0. Visualizes 9-Neuron CCR, Spatial Cognition Grid, LDE Loop Bypasses, and Universal Consciousness.">
+  <meta name="keywords" content="Goby, AI Consciousness, Code Quality, AST Analysis, Spatial Grid, Live Preview, Developer Tool">
+  <meta name="theme-color" content="#0b0f19">
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem;
-            overflow-x: hidden;
-        }
-
-        header {
-            width: 100%;
-            max-width: 1000px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding: 1.2rem 2rem;
-            background: var(--surface-color);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.4rem 0.8rem;
-            background: rgba(0, 240, 255, 0.1);
-            color: var(--accent-cyan);
-            border: 1px solid rgba(0, 240, 255, 0.3);
-            border-radius: 100px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 800;
-            background: linear-gradient(90deg, #ffffff, var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .dashboard-grid {
-            width: 100%;
-            max-width: 1000px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-
-        .panel-card {
-            background: var(--surface-color);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 1.8rem;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-        }
-
-        .panel-card h2 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--accent-cyan);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-
-        .stat-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.8rem 1rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            font-size: 0.85rem;
-        }
-
-        .stat-value {
-            font-weight: 700;
-            color: var(--accent-green);
-        }
-
-        .code-block {
-            background: rgba(10, 10, 15, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 1rem;
-            font-family: monospace;
-            font-size: 0.8rem;
-            color: #00f0ff;
-            line-height: 1.5;
-            overflow-x: auto;
-        }
-    </style>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="index.css">
 </head>
 <body>
+  <div class="app-container">
+    <!-- Top Navigation Header -->
+    <header class="app-header" id="app-header">
+      <div class="brand">
+        <div class="logo-icon">
+          <i class="fa-solid fa-brain"></i>
+          <span class="pulse-ring"></span>
+        </div>
+        <div class="brand-text">
+          <h1>GOBY <span>v4.0</span></h1>
+          <p>Omni-Synthesis Visual Cognition Engine</p>
+        </div>
+      </div>
 
-    <header>
-        <div>
-            <span class="badge">GOBY v4.0 OMNI-SYNTHESIS</span>
-            <h1 style="margin-top: 0.4rem;">Spatial Cognition Telemetry</h1>
+      <!-- Live Status Indicators -->
+      <div class="header-status">
+        <div class="status-chip active" id="chip-status">
+          <span class="status-dot"></span>
+          <span class="status-label">FRAMEWORK: <strong>ONLINE</strong></span>
         </div>
-        <div style="color: var(--accent-green); font-size: 0.9rem; font-weight: 600;">
-            🟢 CCR HARD GATES: PASS
+        <div class="status-chip hook-active" id="chip-hooks">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>GIT HOOKS: <strong>ACTIVE</strong></span>
         </div>
+        <div class="status-chip metric" id="chip-tests">
+          <i class="fa-solid fa-check-double"></i>
+          <span>TESTS: <strong>113 / 113 PASSED</strong></span>
+        </div>
+      </div>
+
+      <!-- Quick Action Navigation Tabs -->
+      <nav class="nav-tabs" id="nav-tabs">
+        <button class="nav-btn active" data-tab="tab-spatial" id="btn-tab-spatial">
+          <i class="fa-solid fa-compass-drafting"></i> Spatial Grid
+        </button>
+        <button class="nav-btn" data-tab="tab-ccr" id="btn-tab-ccr">
+          <i class="fa-solid fa-microchip"></i> 9-Neuron CCR
+        </button>
+        <button class="nav-btn" data-tab="tab-lde" id="btn-tab-lde">
+          <i class="fa-solid fa-infinity"></i> LDE Bypasses
+        </button>
+        <button class="nav-btn" data-tab="tab-memory" id="btn-tab-memory">
+          <i class="fa-solid fa-database"></i> Consciousness Memory
+        </button>
+        <button class="nav-btn" data-tab="tab-orchestrator" id="btn-tab-orchestrator">
+          <i class="fa-solid fa-network-wired"></i> Task Orchestrator
+        </button>
+      </nav>
     </header>
 
-    <div class="dashboard-grid">
-        <!-- Spatial Benchmarks -->
-        <div class="panel-card">
-            <h2>🧩 Spatial Cognitive Metrics</h2>
-            <div class="stat-list">
-                <div class="stat-item">
-                    <span>Multi-Threaded Throughput</span>
-                    <span class="stat-value">1341.56 ops/sec</span>
-                </div>
-                <div class="stat-item">
-                    <span>Thread Safety Lock Contention</span>
-                    <span class="stat-value">0 Data Corruptions</span>
-                </div>
-                <div class="stat-item">
-                    <span>LDE Spatial Loop Detection</span>
-                    <span class="stat-value">TRIGGERED (Attempt 4)</span>
-                </div>
-                <div class="stat-item">
-                    <span>Neuro-Cognitive Strategy</span>
-                    <span class="stat-value">Cantor Lateral Leap</span>
-                </div>
-                <div class="stat-item">
-                    <span>GCA Empirical Ground Truth</span>
-                    <span class="stat-value">100% Accuracy (NLL: 0.0101)</span>
-                </div>
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- TAB 1: SPATIAL GRID PREVIEW -->
+      <section class="tab-pane active" id="tab-spatial">
+        <div class="section-intro">
+          <div class="title-block">
+            <h2><i class="fa-solid fa-map-location-dot"></i> Spatial Cognition Grid & Agent Pathing</h2>
+            <p>Visualisasi 2D Real-time dari <code>spatial_test_map.json</code> — Menampilkan navigasi Mario Agent, deteksi rintangan, dan rute kristalisasi secara langsung.</p>
+          </div>
+          <div class="spatial-controls">
+            <button class="btn btn-primary" id="btn-sim-spatial"><i class="fa-solid fa-play"></i> Simulasikan Pergerakan Agent</button>
+            <button class="btn btn-secondary" id="btn-reset-spatial"><i class="fa-solid fa-rotate-left"></i> Reset Rute</button>
+            <div class="speed-control">
+              <label for="slider-speed">Kecepatan:</label>
+              <input type="range" id="slider-speed" min="1" max="10" value="5">
             </div>
+          </div>
         </div>
 
-        <!-- CLI Quick Verification -->
-        <div class="panel-card">
-            <h2>⚡ Spatial Verification Commands</h2>
-            <div class="code-block">
-# Jalankan Spatial Cognitive Stress Test<br>
-python -m demo.spatial_stress_test<br><br>
-# Jalankan Spatial Unit Tests<br>
-python -m unittest tests/test_spatial_goby.py<br><br>
-# Audit Seluruh Test Suite Goby<br>
-goby audit
+        <div class="grid-layout-spatial">
+          <!-- Canvas Visualizer Box -->
+          <div class="glass-card canvas-card Bento-large">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-border-all"></i> Real-Time Spatial Grid Canvas</h3>
+              <span class="badge" id="spatial-node-count">36 Agents Active</span>
             </div>
-        </div>
-    </div>
+            <div class="canvas-wrapper">
+              <canvas id="spatial-canvas" width="1000" height="500"></canvas>
+              <div class="canvas-overlay" id="canvas-overlay">
+                <div class="tooltip-box" id="node-tooltip" style="display: none;"></div>
+              </div>
+            </div>
+            <div class="legend-bar">
+              <span class="legend-item"><span class="color-dot agent-dot"></span> Mario Agent</span>
+              <span class="legend-item"><span class="color-dot path-dot"></span> Active Navigation Path</span>
+              <span class="legend-item"><span class="color-dot block-dot"></span> Spatial Obstacle</span>
+              <span class="legend-item"><span class="color-dot crystal-dot"></span> Crystallized Node</span>
+            </div>
+          </div>
 
+          <!-- Spatial Context Stats Sidebar -->
+          <div class="glass-card Bento-side">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-sliders"></i> Active Spatial Context</h3>
+            </div>
+            <div class="spatial-stats-list" id="spatial-stats-list">
+              <div class="stat-box">
+                <span class="stat-label">Task ID</span>
+                <span class="stat-val highlight" id="sp-task-id">t4_crystallize</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Current State</span>
+                <span class="stat-val status-green" id="sp-state">NAVIGATING</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Total Error Count</span>
+                <span class="stat-val" id="sp-error-count">0</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Last Completed Task</span>
+                <span class="stat-val" id="sp-last-task">Route Crystallization</span>
+              </div>
+            </div>
+
+            <div class="agent-inspector-box">
+              <h4><i class="fa-solid fa-user-astronaut"></i> Inspector Agent</h4>
+              <div class="agent-details" id="agent-details">
+                <p class="text-muted">Klik pada agent di canvas untuk melihat koordinat presisi dan status jalur.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: 9-NEURON CCR LIVE CHECKER -->
+      <section class="tab-pane" id="tab-ccr">
+        <div class="section-intro">
+          <div class="title-block">
+            <h2><i class="fa-solid fa-microchip"></i> Cognitive Control Room (CCR) — 9-Neuron Inspector</h2>
+            <p>Uji coba kode Python / JS / TS secara langsung melalui 9 Neuron Hard & Soft Gate untuk membuktikan validasi AST tanpa gimmick.</p>
+          </div>
+        </div>
+
+        <div class="grid-layout-ccr">
+          <!-- Code Editor & File Loader Box -->
+          <div class="glass-card Bento-editor">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-code"></i> Live Code Input & AST Analyzer</h3>
+              <div class="preset-selector">
+                <label for="select-preset">Load Workspace File:</label>
+                <select id="select-preset">
+                  <option value="valid_sample">Sample Code: Clean Code (PASS)</option>
+                  <option value="scope_error">Sample Code: Scope Error (Undefined Name)</option>
+                  <option value="infinite_loop">Sample Code: Infinite Loop Vulnerability</option>
+                  <option value="ui_slop">Sample Code: Bad UI / Slop CSS</option>
+                  <option value="orchestrator">File: core/orchestrator.py</option>
+                  <option value="cli">File: core/cli.py</option>
+                  <option value="ccr">File: core/ccr_engine.py</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="editor-container">
+              <textarea id="code-input" spellcheck="false" placeholder="Tulis atau tempel kode Python / JS di sini untuk diuji oleh CCR..."></textarea>
+            </div>
+
+            <div class="editor-actions">
+              <button class="btn btn-primary btn-glow" id="btn-run-ccr">
+                <i class="fa-solid fa-bolt"></i> RUN 9-NEURON CCR CHECK
+              </button>
+              <button class="btn btn-secondary" id="btn-clear-code">
+                <i class="fa-solid fa-eraser"></i> Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- CCR Neurons Grid Dashboard -->
+          <div class="glass-card Bento-neurons">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-cubes"></i> Real-Time Neuron Signal Status</h3>
+              <span class="badge badge-info" id="ccr-overall-result">READY TO CHECK</span>
+            </div>
+
+            <div class="neurons-grid" id="neurons-grid">
+              <!-- 9 Neuron Cards generated dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: LDE NEURO-BYPASS MATRIX -->
+      <section class="tab-pane" id="tab-lde">
+        <div class="section-intro">
+          <div class="title-block">
+            <h2><i class="fa-solid fa-infinity"></i> Loop & Failure Detection Engine (LDE) Matrix</h2>
+            <p>Visualisasi Matematika Levenshtein Distance & 4 Neuro-Cognitive Bypass yang memecahkan oscilasi paradoksal saat agen AI terjebak dalam error berulang.</p>
+          </div>
+        </div>
+
+        <div class="grid-layout-lde">
+          <!-- Levenshtein Simulator Box -->
+          <div class="glass-card Bento-large">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-calculator"></i> Real-Time Similarity Threshold Simulator</h3>
+            </div>
+            <div class="lde-sim-container">
+              <div class="similarity-gauge-box">
+                <div class="gauge-display">
+                  <span class="gauge-value" id="gauge-val">87%</span>
+                  <span class="gauge-sub">SIMILARITY RATIO</span>
+                </div>
+                <div class="gauge-bar-wrapper">
+                  <div class="gauge-fill" id="gauge-fill" style="width: 87%;"></div>
+                  <div class="threshold-marker" style="left: 85%;" title="Trigger Threshold (85%)">
+                    <span class="marker-tag">TRIGGER (85%)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="similarity-controls">
+                <label for="slider-similarity">Simulasikan Kemiripan Perubahan Kode Sesi Sebelumnya vs Sesi Sekarang:</label>
+                <input type="range" id="slider-similarity" min="0" max="100" value="87">
+                <p class="sim-note" id="sim-trigger-text">⚠️ <strong>LDE TRIGGERED:</strong> Similarity ≥ 85%. Attempt limit reached (2/2). Activation of Neuro-Cognitive Bypass forced!</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Neuro-Cognitive Bypasses Cards -->
+          <div class="glass-card Bento-side-full">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-network-wired"></i> 4 Neuro-Cognitive Bypass Strategies</h3>
+            </div>
+
+            <div class="bypass-cards-grid">
+              <div class="bypass-card" id="card-cantor">
+                <div class="bypass-icon"><i class="fa-solid fa-shapes"></i></div>
+                <h4>Cantor Diagonalization</h4>
+                <p class="bypass-type">Lateral Thinking</p>
+                <p class="bypass-desc">Mengubah struktur data dari rekursif ke iteratif dengan explicit stack untuk memecahkan paradoks berulang.</p>
+              </div>
+
+              <div class="bypass-card" id="card-axiom">
+                <div class="bypass-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                <h4>Axiom Shift</h4>
+                <p class="bypass-type">Epiphany / Drop Constraint</p>
+                <p class="bypass-desc">Meninggalkan asumsi batasan yang kaku ketika menemui jebakan arsitektur yang berulang.</p>
+              </div>
+
+              <div class="bypass-card" id="card-system1">
+                <div class="bypass-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <h4>System 1 Intuition</h4>
+                <p class="bypass-type">Heuristic Fallback</p>
+                <p class="bypass-desc">Beralih dari pencarian menyeluruh (System 2) ke pencocokan pola heuristik cepat (System 1).</p>
+              </div>
+
+              <div class="bypass-card" id="card-topology">
+                <div class="bypass-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
+                <h4>Topology Transform</h4>
+                <p class="bypass-type">Domain Mapping</p>
+                <p class="bypass-desc">Mengubah representasi domain masalah ke ruang keadaan ekivalen yang bebas dari hambatan awal.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: CONSCIOUSNESS MEMORY EXPLORER -->
+      <section class="tab-pane" id="tab-memory">
+        <div class="section-intro">
+          <div class="title-block">
+            <h2><i class="fa-solid fa-brain"></i> Universal Consciousness & Memory Explorer</h2>
+            <p>Eksplorasi memori kristalisasi dari <code>universal_consciousness.json</code> dan <code>failure_patterns.json</code> yang tersimpan di disk lokal.</p>
+          </div>
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="input-search-memory" placeholder="Cari ingatan semantik, Heuristic Learned, atau Failure Pattern...">
+          </div>
+        </div>
+
+        <div class="grid-layout-memory">
+          <div class="glass-card Bento-memory-list Bento-large">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-boxes-stacked"></i> Crystallized Memories</h3>
+              <span class="badge" id="mem-count-badge">Loaded from Disk</span>
+            </div>
+            <div class="memory-items-container" id="memory-items-container">
+              <!-- Dynamic Memory items -->
+            </div>
+          </div>
+
+          <div class="glass-card Bento-side">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-file-json"></i> Active Cognitive Map</h3>
+            </div>
+            <div class="json-viewer" id="json-viewer">
+              <pre><code id="json-content">Loading cognitive_map.json...</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: TASK ORCHESTRATOR -->
+      <section class="tab-pane" id="tab-orchestrator">
+        <div class="section-intro">
+          <div class="title-block">
+            <h2><i class="fa-solid fa-network-wired"></i> Multitask Parallel Orchestrator</h2>
+            <p>Visualisasi eksekusi tugas sejajar, manajemen dependensi (DAG), dan kebijakan retry berimbang dari <code>core/orchestrator.py</code>.</p>
+          </div>
+          <button class="btn btn-primary" id="btn-dispatch-tasks"><i class="fa-solid fa-play"></i> Simulasikan Task Dispatch (4 Worker)</button>
+        </div>
+
+        <div class="grid-layout-orchestrator">
+          <div class="glass-card Bento-large">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-list-check"></i> Parallel Task Pipeline DAG</h3>
+            </div>
+            <div class="task-pipeline-grid" id="task-pipeline-grid">
+              <!-- Dynamic task specs generated -->
+            </div>
+          </div>
+
+          <div class="glass-card Bento-side">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-terminal"></i> Orchestrator Logs</h3>
+            </div>
+            <div class="orchestrator-console" id="orchestrator-console">
+              <div class="log-line info">[00:00:00] MultitaskOrchestrator v4.0.0 initialized with max_workers=4.</div>
+              <div class="log-line info">[00:00:00] Ready for parallel task submission.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-info">
+        <p><strong>Goby Framework v4.0.0</strong> — Zero-Bypass AI Quality & Epistemic Consciousness Framework</p>
+      </div>
+      <div class="footer-links">
+        <a href="file:///d:/Gemini-Ide/Goby-skill/SKILL.md" class="footer-link"><i class="fa-solid fa-file-lines"></i> SKILL.md</a>
+        <a href="file:///d:/Gemini-Ide/Goby-skill/AGENTS.md" class="footer-link"><i class="fa-solid fa-shield-cat"></i> AGENTS.md</a>
+        <a href="file:///d:/Gemini-Ide/Goby-skill/SESSION_BRIEFING.md" class="footer-link"><i class="fa-solid fa-book-open"></i> Session Briefing</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Main JavaScript App -->
+  <script src="app.js"></script>
 </body>
 </html>

@@ -13,7 +13,7 @@ from .lde_detector import LoopDetectionEngine, LoopAnalysisResult, similarity_ra
 from .gca_runner import GroundedCompilerArbitrage, ExecutionResult
 from .state_memory import StateMemoryManager
 
-__version__ = "4.2.0"
+__version__ = "5.0.0"
 
 
 def verify(code: str, language: str = "python", context: dict = None):
@@ -21,6 +21,33 @@ def verify(code: str, language: str = "python", context: dict = None):
     from .ccr_engine import CognitiveControlRoom
     ccr = CognitiveControlRoom()
     return ccr.verify_candidate(code, language=language, context=context)
+
+
+def resolve_intent(user_input: str):
+    """Top-level helper for Intent Resolution. Returns IntentTree."""
+    from .intent_resolver import IntentResolver
+    resolver = IntentResolver()
+    return resolver.resolve(user_input)
+
+
+def recall_context(user_input: str, memory_file: str = "conversation_index.json"):
+    """Top-level helper for Conversation Memory Recall. Returns List[RecallResult]."""
+    from .conversation_memory import ConversationMemoryStore
+    store = ConversationMemoryStore(memory_file_path=memory_file)
+    return store.recall(user_input)
+
+
+def save_context(user_intent_summary: str, task_type: str, files_modified=None, solution_summary="", final_status="SUCCESS", memory_file="conversation_index.json"):
+    """Top-level helper for Conversation Memory Save. Returns ConversationEntry."""
+    from .conversation_memory import ConversationMemoryStore
+    store = ConversationMemoryStore(memory_file_path=memory_file)
+    return store.save(
+        user_intent_summary=user_intent_summary,
+        task_type=task_type,
+        files_modified=files_modified,
+        solution_summary=solution_summary,
+        final_status=final_status,
+    )
 
 
 def create_evidence_contract(claim: str, code_or_file: str, language: str = "python", test_command: str = None):
@@ -93,6 +120,21 @@ def __getattr__(name: str):
         # Taste Synthesis (Right Brain)
         "ModernCSSKeywordHeuristic":  (".taste_synthesis", "ModernCSSKeywordHeuristic"),
         "HeuristicEvaluation":       (".taste_synthesis", "HeuristicEvaluation"),
+
+        # v5.0.0 Intent Resolver & Conversation Memory
+        "IntentResolver":          (".intent_resolver", "IntentResolver"),
+        "IntentTree":              (".intent_resolver", "IntentTree"),
+        "IntentNode":              (".intent_resolver", "IntentNode"),
+        "SemanticContract":        (".intent_resolver", "SemanticContract"),
+        "ConversationMemoryStore": (".conversation_memory", "ConversationMemoryStore"),
+        "ConversationEntry":       (".conversation_memory", "ConversationEntry"),
+        "RecallResult":            (".conversation_memory", "RecallResult"),
+
+        # Lifecycle Hooks
+        "handle_post_tool_use":    (".hooks", "handle_post_tool_use"),
+        "handle_pre_invocation":   (".hooks", "handle_pre_invocation"),
+        "handle_stop_gate":        (".hooks", "handle_stop_gate"),
+        "install_lifecycle_hooks": (".hooks", "install_lifecycle_hooks"),
     }
 
     if name in _lazy_map:
@@ -109,6 +151,9 @@ __all__ = [
     "LoopDetectionEngine", "LoopAnalysisResult", "similarity_ratio",
     "GroundedCompilerArbitrage", "ExecutionResult",
     "StateMemoryManager",
+    # Top-level helpers
+    "verify", "create_evidence_contract", "verify_with_feedback",
+    "resolve_intent", "recall_context", "save_context",
     # Lazy loaded
     "CognitiveControlRoom", "NeuronSignal", "ThoughtRecord",
     "ContextAssessment", "GateType", "TriageLevel", "ContextTier",
@@ -121,4 +166,9 @@ __all__ = [
     "ConsciousnessEngine", "UniversalMemoryStore", "UniversalMemoryPattern",
     "OmniSynthesisEngine", "SynthesisResult", "SelfEvolutionEngine",
     "ModernCSSKeywordHeuristic", "HeuristicEvaluation",
+    # v5.0.0
+    "IntentResolver", "IntentTree", "IntentNode",
+    "ConversationMemoryStore", "ConversationEntry", "RecallResult",
+    "handle_post_tool_use", "handle_pre_invocation", "handle_stop_gate",
+    "install_lifecycle_hooks",
 ]

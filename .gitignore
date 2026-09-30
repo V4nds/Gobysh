@@ -51,12 +51,17 @@ cover/
 
 # IDE & Editor settings
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 *.swp
 *.swo
 *~
 .DS_Store
 *.tmp
+
+# Goby runtime memory & test maps
 failure_patterns.json
 universal_consciousness.json
+conversation_index.json
+spatial_test_map.json
 test_*.json

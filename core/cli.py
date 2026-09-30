@@ -1,6 +1,6 @@
 """
-CLI Entrypoint for Goby Framework v4.2.0.
-Run using: goby audit | goby benchmark | goby check <code|filepath> | goby install-hook | goby watch | goby status
+CLI Entrypoint for Goby Framework v5.0.0.
+Run using: goby audit | goby benchmark | goby check <code|filepath> | goby install-hook | goby watch | goby status | goby intent | goby recall | goby save
 """
 
 import hashlib
@@ -10,6 +10,7 @@ import sys
 import time
 import unittest
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 from .ccr_engine import CognitiveControlRoom
 from .state_memory import StateMemoryManager
 
@@ -169,6 +170,17 @@ exit 0
     print("  -> .git/hooks/pre-commit (CCR file check)")
     print("  -> .git/hooks/pre-push   (Full audit suite)")
 
+    # Install Antigravity lifecycle hooks
+    try:
+        from .hooks import install_lifecycle_hooks
+        res = install_lifecycle_hooks()
+        print("[SUCCESS] Goby Antigravity Lifecycle Hooks installed into .agents/hooks.json")
+        print("  -> PostToolUse: Intercepts file writes & auto-validates CCR")
+        print("  -> PreInvocation: Injects active error ledger warnings into model prompt")
+        print("  -> Stop: Mechanically blocks completion if ledger has unresolved errors")
+    except Exception as e:
+        print(f"[WARNING] Could not install .agents/hooks.json: {e}")
+
 
 def run_watch_loop(memory: StateMemoryManager = None):
     print("[GOBY WATCH] Starting Active CCR Workspace Watcher...")
@@ -202,7 +214,7 @@ def run_watch_loop(memory: StateMemoryManager = None):
         print("\n[GOBY WATCH] Active Watcher stopped.")
 
 
-def validate_filepath(target_path: str, ccr: CognitiveControlRoom, memory: StateMemoryManager = None, verbose: bool = False) -> bool:
+def validate_filepath(target_path: str, ccr: CognitiveControlRoom, memory: StateMemoryManager = None, verbose: bool = False, contract: Any = None) -> bool:
     print(f"[GOBY CHECK] Validating file: {target_path}")
     try:
         with open(target_path, "r", encoding="utf-8") as f:
@@ -221,12 +233,21 @@ def validate_filepath(target_path: str, ccr: CognitiveControlRoom, memory: State
         syn = ccr.neuron_js_syntax_check(code)
         signals.append(syn)
         signals.append(ccr.neuron_taste_design_check(code))
-    else:
+    elif target_path.endswith((".css", ".html")):
+        signals.append(ccr.neuron_taste_design_check(code))
+    elif target_path.endswith((".py", ".pyw")):
         syn = ccr.neuron_syntax_check(code)
         signals.append(syn)
         if syn.passed:
             signals.append(ccr.neuron_scope_check(code))
             signals.append(ccr.neuron_taste_design_check(code))
+    else:
+        # Default: if it's code, attempt syntax check
+        syn = ccr.neuron_syntax_check(code)
+        signals.append(syn)
+
+    if contract is not None:
+        signals.append(ccr.neuron_semantic_alignment(code, contract=contract))
 
     res = ccr.evaluate_signals(signals)
     passed = _report_signals(ccr, signals, verbose=verbose)
@@ -252,13 +273,16 @@ def validate_filepath(target_path: str, ccr: CognitiveControlRoom, memory: State
 
 def show_status():
     print("==========================================================")
-    print("       GOBY META-COGNITIVE FRAMEWORK STATUS (v4.2.0)")
+    print("       GOBY META-COGNITIVE FRAMEWORK STATUS (v5.0.0)")
     print("==========================================================")
     print(f"Working Directory: {os.getcwd()}")
 
     git_hooks_installed = Path(".git/hooks/pre-commit").exists() and Path(".git/hooks/pre-push").exists()
     print(f"Git Pre-Commit Hook: {'INSTALLED (Active)' if git_hooks_installed else 'NOT INSTALLED (Run: goby install-hook)'}")
     print(f"Git Pre-Push Hook:   {'INSTALLED (Active)' if git_hooks_installed else 'NOT INSTALLED (Run: goby install-hook)'}")
+
+    lifecycle_hooks_installed = Path(".agents/hooks.json").exists()
+    print(f"Antigravity Hooks:   {'INSTALLED (Active: PostToolUse, PreInvocation, Stop)' if lifecycle_hooks_installed else 'NOT INSTALLED (Run: goby install-hook)'}")
 
     # Memory files status
     mem_file = Path("universal_consciousness.json")
@@ -279,24 +303,42 @@ def show_status():
     if unresolved:
         print("  -> Run `goby check <file>` until passing, then `goby gate` must exit 0.")
 
+    # Conversation Memory stats
+    conv_file = Path("conversation_index.json")
+    if conv_file.exists():
+        try:
+            from .conversation_memory import ConversationMemoryStore
+            conv_store = ConversationMemoryStore("conversation_index.json")
+            stats = conv_store.get_summary_stats()
+            print(f"Conversation Memory: {stats['total']} entries, {stats['unique_files']} unique files")
+        except Exception:
+            print(f"Conversation Memory: PRESENT ({conv_file.stat().st_size} bytes)")
+    else:
+        print("Conversation Memory: NOT INITIALIZED")
+
     print("==========================================================")
 
 
 def main():
     args = sys.argv[1:]
     if not args or args[0] in ("-h", "--help"):
-        print("Goby Framework CLI v4.2.0 (Verification & Evidence Engine)")
+        print("Goby Framework CLI v5.0.0 (Aggressive-Autonomous AI Quality Engine)")
         print("Usage:")
         print("  goby audit         Run full test suite verification")
         print("  goby benchmark     Run empirical benchmark simulation")
         print("  goby evolve        Run autonomous self-evolution cycle (BFM metric)")
-        print("  goby check <code|filepath> Validate python/JS snippet or file via CCR (add -v for verbose)")
-        print("  goby verify <code_string>   Genuine Pre-Output In-Memory Code Verification (add -v for verbose)")
+        print("  goby check <code|filepath> Validate python/JS snippet or file via CCR (add -v for verbose, --intent '<text>' for semantic alignment)")
+        print("  goby verify <code_string>   Genuine Pre-Output In-Memory Code Verification (add -v for verbose, --intent '<text>' for semantic alignment)")
         print("  goby evidence <claim> <file> Generate Machine-Verifiable Evidence Contract")
-        print("  goby install-hook  Install Git pre-commit & pre-push hard-gate hooks")
+        print("  goby install-hook  Install Git hooks and Antigravity lifecycle hooks (.agents/hooks.json)")
+        print("  goby hooks [status|install] Manage Antigravity lifecycle hooks")
         print("  goby watch         Run active workspace CCR watcher")
         print("  goby status        Show framework installation & memory status")
         print("  goby gate          Check Unresolved Error Ledger (must exit 0 before claiming done)")
+        print("  goby intent <text> Parse user intent -> structured JSON (bilingual)")
+        print("  goby recall <text> Recall similar past conversations from memory")
+        print("  goby save '<summary>' <type> Save current session context to conversation memory")
+        print("  goby briefing      Show auto-generated session briefing from memory")
         sys.exit(0)
 
     cmd = args[0].lower()
@@ -307,11 +349,30 @@ def main():
 
     elif cmd == "verify":
         verbose = "-v" in args or "--verbose" in args
-        verify_args = [a for a in args[1:] if a not in ("-v", "--verbose")]
-        if not verify_args:
+        intent_text = None
+        filtered_args = []
+        skip_next = False
+        for i, a in enumerate(args[1:], 1):
+            if skip_next:
+                skip_next = False
+                continue
+            if a == "--intent":
+                if i < len(args) - 1:
+                    intent_text = args[i + 1]
+                    skip_next = True
+                continue
+            if a not in ("-v", "--verbose"):
+                filtered_args.append(a)
+
+        contract = None
+        if intent_text:
+            from .intent_resolver import IntentResolver
+            contract = IntentResolver().resolve(intent_text).semantic_contract
+
+        if not filtered_args:
             print("Error: Please provide code string to verify. Example: goby verify 'x = 10'")
             sys.exit(1)
-        code = verify_args[0]
+        code = filtered_args[0]
         ccr = CognitiveControlRoom()
 
         if not _looks_like_code(code):
@@ -324,6 +385,8 @@ def main():
         if syn.passed:
             signals.append(ccr.neuron_scope_check(code))
             signals.append(ccr.neuron_taste_design_check(code))
+        if contract is not None:
+            signals.append(ccr.neuron_semantic_alignment(code, contract=contract))
 
         print("[GOBY VERIFY] Verifying candidate...")
         sys.exit(0 if _report_signals(ccr, signals, verbose=verbose) else 1)
@@ -355,6 +418,12 @@ def main():
 
     elif cmd == "install-hook":
         install_git_hooks()
+        sys.exit(0)
+
+    elif cmd == "hooks":
+        from .hooks import cli_entry
+        subaction = args[1] if len(args) > 1 else "status"
+        cli_entry(subaction)
         sys.exit(0)
 
     elif cmd == "watch":
@@ -402,16 +471,35 @@ def main():
 
     elif cmd == "check":
         verbose = "-v" in args or "--verbose" in args
-        check_args = [a for a in args[1:] if a not in ("-v", "--verbose")]
-        if not check_args:
+        intent_text = None
+        filtered_args = []
+        skip_next = False
+        for i, a in enumerate(args[1:], 1):
+            if skip_next:
+                skip_next = False
+                continue
+            if a == "--intent":
+                if i < len(args) - 1:
+                    intent_text = args[i + 1]
+                    skip_next = True
+                continue
+            if a not in ("-v", "--verbose"):
+                filtered_args.append(a)
+
+        contract = None
+        if intent_text:
+            from .intent_resolver import IntentResolver
+            contract = IntentResolver().resolve(intent_text).semantic_contract
+
+        if not filtered_args:
             print("Error: Please provide code string or filepath to check. Example: goby check 'x = 1' or goby check main.py")
             sys.exit(1)
-        target = check_args[0]
+        target = filtered_args[0]
         ccr = CognitiveControlRoom()
 
         if os.path.isfile(target):
             memory = StateMemoryManager("cognitive_map.json")
-            passed = validate_filepath(target, ccr, memory=memory, verbose=verbose)
+            passed = validate_filepath(target, ccr, memory=memory, verbose=verbose, contract=contract)
             sys.exit(0 if passed else 1)
 
         code = target
@@ -425,9 +513,91 @@ def main():
         if syn.passed:
             signals.append(ccr.neuron_scope_check(code))
             signals.append(ccr.neuron_taste_design_check(code))
+        if contract is not None:
+            signals.append(ccr.neuron_semantic_alignment(code, contract=contract))
 
         print("[GOBY CHECK] Verifying candidate...")
         sys.exit(0 if _report_signals(ccr, signals, verbose=verbose) else 1)
+
+    elif cmd == "intent":
+        if len(args) < 2:
+            print("Error: Please provide user text. Example: goby intent 'perbaiki error di app.js'")
+            sys.exit(1)
+        user_text = " ".join(args[1:])
+        from .intent_resolver import IntentResolver
+        resolver = IntentResolver()
+        intent_tree = resolver.resolve(user_text)
+        import json
+        print(json.dumps(intent_tree.to_dict(), indent=2, ensure_ascii=False))
+        if intent_tree.clarification_needed:
+            print("\n[GOBY INTENT] [!] Clarification needed:")
+            for q in intent_tree.clarification_questions:
+                print(f"  -> {q}")
+            sys.exit(1)
+        sys.exit(0)
+
+    elif cmd == "recall":
+        if len(args) < 2:
+            print("Error: Please provide search text. Example: goby recall 'fix error in app.js'")
+            sys.exit(1)
+        search_text = " ".join(args[1:])
+        from .conversation_memory import ConversationMemoryStore
+        store = ConversationMemoryStore("conversation_index.json")
+        results = store.recall(search_text)
+        if results and results[0].found:
+            print(f"[GOBY RECALL] Found {len([r for r in results if r.found])} similar past conversation(s):")
+            for r in results:
+                if r.found:
+                    print(f"  [{r.similarity:.0%} match] {r.context_hint}")
+        else:
+            print("[GOBY RECALL] No similar past conversations found. Starting fresh.")
+        sys.exit(0)
+
+    elif cmd == "save":
+        if len(args) < 3:
+            print("Error: Usage: goby save '<summary>' <task_type> [files...]")
+            print("  task_type: fix_bug | create_feature | refactor | design_ui | test | configure")
+            sys.exit(1)
+        summary = args[1]
+        task_type = args[2]
+        files = args[3:] if len(args) > 3 else []
+        from .conversation_memory import ConversationMemoryStore
+        store = ConversationMemoryStore("conversation_index.json")
+        entry = store.save(
+            user_intent_summary=summary,
+            task_type=task_type,
+            files_modified=files,
+            final_status="SUCCESS",
+        )
+        print(f"[GOBY SAVE] Session context saved: {entry.entry_id}")
+        print(f"  Summary: {summary}")
+        print(f"  Type: {task_type}")
+        if files:
+            print(f"  Files: {', '.join(files)}")
+        sys.exit(0)
+
+    elif cmd == "briefing":
+        from .conversation_memory import ConversationMemoryStore
+        store = ConversationMemoryStore("conversation_index.json")
+        stats = store.get_summary_stats()
+        entries = store.get_all_entries()
+        print("==========================================================")
+        print("       GOBY SESSION BRIEFING (Auto-Generated)")
+        print("==========================================================")
+        print(f"Total Past Conversations: {stats['total']}")
+        if stats['by_type']:
+            print(f"By Type: {stats['by_type']}")
+        if stats['by_status']:
+            print(f"By Status: {stats['by_status']}")
+        if entries:
+            print("\nRecent Sessions (last 5):")
+            for e in entries[-5:]:
+                status_icon = "[OK]" if e.final_status == "SUCCESS" else "[!]"
+                print(f"  {status_icon} [{e.timestamp}] {e.user_intent_summary}")
+                if e.files_modified:
+                    print(f"     Files: {', '.join(e.files_modified[:3])}")
+        print("==========================================================")
+        sys.exit(0)
 
     else:
         print(f"Unknown command: '{cmd}'. Run 'goby --help' for usage.")

@@ -45,6 +45,24 @@ class TestCLI(unittest.TestCase):
             if os.path.exists(temp_path):
                 os.remove(temp_path)
 
+    def test_cli_check_with_intent_passes(self):
+        with patch.object(sys, "argv", ["goby", "check", "def add(a, b): return a + b", "--intent", "buat fungsi tambah"]):
+            with self.assertRaises(SystemExit) as cm:
+                cli.main()
+            self.assertEqual(cm.exception.code, 0)
+
+    def test_cli_check_with_intent_fails_on_violation(self):
+        with patch.object(sys, "argv", ["goby", "check", "def update_db(): pass", "--intent", "buat fungsi tapi jangan sentuh db"]):
+            with self.assertRaises(SystemExit) as cm:
+                cli.main()
+            self.assertEqual(cm.exception.code, 1)
+
+    def test_cli_hooks_status(self):
+        with patch.object(sys, "argv", ["goby", "hooks", "status"]):
+            with self.assertRaises(SystemExit) as cm:
+                cli.main()
+            self.assertEqual(cm.exception.code, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

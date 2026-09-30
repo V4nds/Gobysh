@@ -19,7 +19,11 @@ class SessionBriefingEngine:
 
     def __init__(self, workspace_dir: Optional[str] = None, memory_mgr: Optional[StateMemoryManager] = None):
         self.workspace_dir = workspace_dir or os.getcwd()
-        self.briefing_file = os.path.join(self.workspace_dir, "SESSION_BRIEFING.md")
+        docs_dir = os.path.join(self.workspace_dir, "docs")
+        if os.path.isdir(docs_dir):
+            self.briefing_file = os.path.join(docs_dir, "SESSION_BRIEFING.md")
+        else:
+            self.briefing_file = os.path.join(self.workspace_dir, "SESSION_BRIEFING.md")
         self.memory_mgr = memory_mgr or StateMemoryManager(
             memory_file_path=os.path.join(self.workspace_dir, "cognitive_map.json")
         )

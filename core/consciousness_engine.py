@@ -1,8 +1,7 @@
 """
-Consciousness Engine for Goby Framework.
-This module triggers a reflective state when a problem is successfully solved (Exit Code 0).
-It acts as the Meta-Cognitive brain, capturing the journey, "translating" it into abstract heuristics,
-and saving it to the Universal Memory Store.
+Execution Reflection & Heuristic Memory Engine for Goby Framework.
+Captures error-to-resolution heuristic patterns upon successful execution
+and stores them to Universal Memory for regression prevention.
 """
 
 from typing import Dict, Any, List, Tuple
@@ -11,8 +10,8 @@ from .universal_memory import UniversalMemoryStore
 
 class ConsciousnessEngine:
     """
-    Epistemic Consciousness Engine.
-    Observes successful executions and abstracts the specific solutions into universal heuristic memories.
+    Resolution Reflection Engine.
+    Observes successful executions and extracts generalizable heuristics from past errors.
     """
 
     def __init__(self, universal_store: UniversalMemoryStore = None):

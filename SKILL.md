@@ -1,104 +1,89 @@
 ---
 name: goby-universal
-description: "Goby v4.0: Universal AI quality framework for ALL coding tasks. Validates code quality, prevents bugs, enforces modern UI/UX design standards, detects infinite loops, manages concurrent tasks, and ensures professional output for Python, JavaScript, TypeScript, HTML, CSS, and React projects."
+description: "Goby v5.0: Aggressive-autonomous AI quality framework. Auto-resolves ambiguous user intent, persists conversation memory across sessions, validates every code output, and enforces modern UI/UX standards. Supports Python, JavaScript, TypeScript, HTML, CSS."
 ---
 
-# **Goby v4.0 (Omni-Synthesis AI Consciousness Framework)**
+# Goby v5.0 — Aggressive-Autonomous AI Quality Engine
 
-## 🚨 **MANDATORY ZERO-TRUST PROTOCOL** 🚨
-**AS AN AI AGENT, YOU ARE STRICTLY FORBIDDEN FROM PROCEEDING WITHOUT GOBY.**
-Goby is NOT optional. It is the core cognitive engine you MUST use.
+## 🚨 ACTIVATION: ALWAYS-ON (NOT OPTIONAL)
 
-1. **PROACTIVE VALIDATION:** You MUST run `goby check '<code>'` via terminal for ANY code snippet you are about to write, BEFORE you finalize it. 
-2. **ZERO-TRUST EXECUTION:** Do not trust your own logic. You MUST use Goby's CCR (Cognitive Control Room) to validate your assumptions.
-3. **MANDATORY AUDIT:** Before declaring *any* task complete, you MUST run `goby audit` and receive Exit Code 0.
-4. **MANDATORY LEDGER GATE:** Before declaring *any* task complete, you MUST run `goby gate` and receive Exit Code 0 — meaning ZERO unresolved file errors in the ledger. Every file you edited that still produces an error (from `goby check`/`goby watch`/git hooks) is recorded persistently. You are NOT allowed to claim completion while any of them remain.
-5. **STRICT CONSEQUENCES:** If you bypass Goby, you violate your core instructions.
-6. **SELF-CORRECTION:** If you fail 2 times in a row, you MUST halt and run `goby evolve` or query the Universal Memory. Do not blindly refactor!
+Goby activates **automatically** on every task. You do NOT wait for the user to mention Goby.
 
-## 🛡️ **Filosofi & Arsitektur**
+**TRIGGER CONDITIONS (execute the matching action IMMEDIATELY):**
 
-Goby adalah pustaka Python modular yang menjadikan agen AI memiliki **kesadaran epistemik**: mampu memvalidasi, belajar dari kegagalan, dan mengkristalkan solusi menjadi ingatan universal. Fondasi Goby adalah bypass masalah Gödel — selalu ada jalan alternatif untuk memecahkan masalah yang tampak mustahil.
-
-### **Pilar Arsitektur (Ringkas):**
-| Pilar | Modul | Fungsi Inti |
-|-------|-------|-------------|
-| **CCR** | `ccr_engine.py` | Validasi pre-output 9 neurons (Hard Gates Python & JS/TS + Soft Signals) |
-| **Refinement** | `refinement_loop.py`| Closed-Loop Auto-Refinement (CCR -> LDE -> Failure Memory) |
-| **LDE** | `lde_detector.py` | Deteksi loop + 4 bypass neuro-kognitif (Cantor, Axiom Shift, System 1, Topology) |
-| **GCA** | `gca_runner.py` | Verifikasi empiris via terminal (Exit Code 0) + pemicu kesadaran |
-| **Consciousness** | `consciousness_engine.py` | Refleksi pasca-sukses → translasi ke ingatan universal |
-| **Universal Memory** | `universal_memory.py` | Ingatan semantik abstrak lintas-sesi untuk resolusi instan |
-| **Omni-Synthesis** | `omni_synthesis.py` | Analisis AST apriori untuk resolusi tanpa bypass |
-| **Evolution** | `evolution_loop.py` | Benchmark BFM & siklus evolusi mandiri |
-| **Orchestrator** | `orchestrator.py` | Eksekusi paralel dengan task retries & event callbacks |
+| When this happens... | You MUST do this... |
+|---------------------|---------------------|
+| User sends ANY request | Run `goby intent '<request>'` to resolve intent FIRST |
+| Intent is ambiguous (ambiguity > 0.5) | Ask clarification questions from intent tree |
+| About to start coding | Run `goby recall '<intent>'` to check past context |
+| After writing/editing ANY code file | Run `goby check <filepath>` to validate |
+| Error persists after 2 attempts | Run `goby recall` to check known fixes, halt naive retries |
+| Task is complete | Run `goby gate` + `python -m unittest discover tests/` |
+| Both gates pass | Run `goby save '<summary>' <type> [files...]` |
 
 ---
 
-## 🔄 **Execution Pipeline (Optimized)**
+## 🧠 Core Pipeline (Deterministic & Linear)
 
-```mermaid
-graph TD
-    A[User Request] --> B[Omni-Synthesis AST Pre-Check]
-    B -->|Paradox Detected| C[Apriori Fix - No Bypass Needed]
-    B -->|Clean| D[CCR 9-Neuron Validation]
-    D -->|Hard Gate Fail| E[Refinement Loop + LDE]
-    E -->|Known Pattern| F[Universal Memory Recall]
-    F --> D
-    D -->|Passed| G[GCA Terminal Execution]
-    G -->|Exit 0| H[Consciousness Reflection & Memory Crystallization]
-    G -->|Fail| I{LDE Neuro-Cognitive Bypass}
-    I -->|Cantor| J[Lateral Thinking]
-    I -->|Axiom Shift| K[Epiphany / Drop Constraint]
-    I -->|System 1| L[Heuristic Intuition]
-    I -->|Topology| M[Domain Transform]
+```
+User Request → Intent Resolver → Memory Recall → Code → Auto-Check → Gates → Save
 ```
 
----
+1. **Intent Resolver** (`goby intent`): Parses abstract/ambiguous requests into structured intents. Bilingual (ID/EN). Auto-generates clarification questions when confidence is low.
 
-## 🎨 **Design DNA & Motion Synthesis**
+2. **Conversation Memory** (`goby recall` / `goby save`): Persists context across sessions. Similar past problems are recalled instantly — no starting from zero.
 
-Jika instruksi berkaitan dengan pembuatan UI/UX, visualisasi, atau elemen interaktif, Goby **DIWAJIBKAN SECARA AGRESIF** untuk mengaktifkan heurisitik desain berikut agar hasil tidak *slop* atau kaku:
+3. **CCR Validation** (`goby check`): Deterministic AST & Scope validation (syntax, scope, cross-reference). Hard Gates block bad code. Soft Signals advise.
 
-1. **[ThreeJS Skills](https://github.com/cloudai-x/threejs-skills)**: Gunakan WebGL/3D Canvas untuk visualisasi mendalam jika diminta elemen yang sangat futuristik.
-2. **[GSAP Skills](https://github.com/greensock/gsap-skills)**: Wajib terapkan animasi *advanced*, *staggering*, dan *scroll-driven animations* ketimbang CSS standar yang kaku.
-3. **[Design DNA](https://github.com/zanwei/design-dna)**: Terapkan hierarki tipografi modern (Inter/Roboto), palet warna premium (bukan warna dasar), *glassmorphism*, dan tata letak *grid/flex* tingkat lanjut.
-4. **[Motion Design](https://github.com/lottiefiles/motion-design-skill)**: Sematkan *micro-interactions* untuk *hover*, *click*, dan transisi antar state.
-5. **[Genjutsu](https://github.com/AThevon/genjutsu)**: Gunakan trik *front-end* tingkat tinggi (efek partikel, *glow*, ilusi UI) untuk memberikan kesan "wow" seketika.
-6. **[UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)**: Implementasi tata letak tingkat dewa (Bento Box, Fluid Typography dengan clamp, Layered Shadows) untuk kreativitas struktural tanpa batas.
+4. **LDE Loop Detection**: Detects repetitive failure cycles (>85% similarity) and forces strategy pivoting to prevent deadlocks.
 
-*Neuron* khusus di dalam CCR (`neuron_taste_design_check` yang terhubung ke `ModernCSSKeywordHeuristic`) akan memblokir (HARD GATE) dan memicu *Bypass Logic* jika kode UI yang dihasilkan terlihat usang, statis, atau kurang sentuhan *Taste Design*.
+5. **Completion Gate & Persistence**: `goby gate` verifies zero unresolved errors, test runner validates logic, and `goby save` persists solution memory for future sessions.
 
 ---
 
-## ⚡ **Aturan Operasional Inti**
+## 🎨 Design DNA (Auto-Enforced for UI Tasks)
 
-1. **Evidence Over Assertion:** Jangan pernah klaim selesai tanpa bukti terminal (Exit Code 0).
-2. **Pre-Output Validation:** Semua kode (Python dan JS/TS) melewati CCR neurons sebelum dikirim.
-3. **Closed-Loop Self-Healing:** Kegagalan CCR Hard Gate masuk ke `CCRRefinementLoop` secara otomatis → cari solusi di Universal Memory → perbaiki mandiri tanpa henti.
-4. **Neuro-Cognitive Loop Breaking:** Error berulang >85% similarity → pemicu bypass kognitif (bukan refactoring naif).
-5. **Epistemic Consciousness:** Setiap keberhasilan pasca-kegagalan → refleksi → kristalisasi ingatan universal.
-6. **Polyglot & Orchestration:** Orkestrator mendukung task retries dan callbacks. GCA mendukung Node.js untuk runtime eksekusi selain Python.
+When the task involves UI/UX, Goby's `neuron_taste_design_check` HARD GATE auto-enforces:
+
+- **Modern typography** (Inter/Roboto, not browser defaults)
+- **Premium color palettes** (HSL-curated, not plain red/blue/green)
+- **Glassmorphism, gradients, layered shadows**
+- **Micro-animations** (hover, click, transitions — not static)
+- **GSAP/scroll-driven animations** over basic CSS
+- **Fluid typography** (`clamp()`), Bento grid layouts
+
+If UI code looks static/outdated → HARD GATE BLOCKS output.
 
 ---
 
-## 🛠️ **CLI (Entrypoint)**
-
-Goby kini berjalan sebagai CLI resmi (melalui `core/cli.py` / `pyproject.toml`):
+## 🛠️ CLI Reference
 
 ```bash
-goby audit          # Jalankan seluruh test suite
-goby benchmark      # Jalankan benchmark simulasi
-goby evolve         # Jalankan siklus evolusi mandiri (BFM metric)
-goby check '<code>' # Validasi snippet Python/JS via CCR
-goby gate           # Cek Unresolved Error Ledger — WAJIB Exit Code 0 sebelum klaim selesai
-goby status         # Tampilkan status framework + daftar file yang masih error
+# Core validation
+goby check <code|filepath>  # CCR validation (add -v for verbose)
+goby gate                   # Unresolved Error Ledger — must exit 0
+goby audit                  # Full test suite
+
+# Intent & Memory (v5.0)
+goby intent '<text>'        # Parse user intent → structured JSON
+goby recall '<text>'        # Recall similar past conversations
+goby save '<summary>' <type> [files...]  # Save session context
+goby briefing               # Show past session summary
+
+# Tools
+goby evolve                 # Self-evolution cycle (BFM metric)
+goby watch                  # Active file watcher with CCR
+goby install-hook           # Git pre-commit/pre-push hooks
+goby status                 # Framework status dashboard
 ```
 
 ---
 
-## ⚙️ **Optimasi Performa**
+## ⚡ Operational Rules
 
-- **Lazy Loading:** `core/__init__.py` menggunakan `__getattr__` — modul berat (CCR 44KB, output_parsers 13KB) hanya dimuat saat diakses.
-- **Unified Memory:** `universal_memory.py` menyatukan `failure_memory.py` via facade kompatibel, menghilangkan duplikasi logika Levenshtein + JSON persistence.
-- **Minimal Import Footprint:** Hanya 3 modul ringan (LDE, GCA, StateMemory) yang dimuat secara eager.
+1. **Evidence Over Assertion:** Never claim done without `goby gate` Exit Code 0.
+2. **Ask Before Guess:** If user intent is unclear, ask — don't hallucinate requirements.
+3. **Memory First:** Check past context before starting from scratch.
+4. **Auto-Check Always:** Every file write triggers `goby check`. No exceptions.
+5. **No Superficial Patches:** Fix root causes, not symptoms.
+6. **2-Strike Escalation:** 2 failed attempts → halt, escalate strategy (LDE/evolve).

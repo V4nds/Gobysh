@@ -1,0 +1,30 @@
+{
+  "goby-lifecycle": {
+    "PostToolUse": [
+      {
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "set PYTHONPATH=..;.&& python -u -m core.hooks post-tool",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "set PYTHONPATH=..;.&& python -u -m core.hooks pre-invocation",
+        "timeout": 10
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "set PYTHONPATH=..;.&& python -u -m core.hooks stop-gate",
+        "timeout": 10
+      }
+    ]
+  }
+}

@@ -1,7 +1,7 @@
 {
   "version": "4.0.0",
   "framework": "Goby Agent Consciousness Framework",
-  "last_updated": "2026-07-31T14:05:00Z",
+  "last_updated": "2026-09-30T02:04:21Z",
   "active_context": {
     "last_completed_task": "Goby Epistemic Consciousness v3.0: Metacognitive reflection and Universal Memory injection.",
     "current_in_progress": "v3.0 Architecture deployment",
@@ -57,5 +57,547 @@
     }
   },
   "temporal_state": {},
-  "error_history": []
+  "error_history": [],
+  "file_validation": {
+    "D:\\Gemini-Ide\\Goby-skill\\demo\\spatial_stress_test.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\demo\\spatial_stress_test.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "7f9b371f110dd6b2",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\core\\session_briefing.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\core\\session_briefing.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "1a7885c1bd9363a4",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\core\\omni_synthesis.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\core\\omni_synthesis.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "5e390d44a47cbd32",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\core\\consciousness_engine.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\core\\consciousness_engine.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "6e99e3ebccc42c1a",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\core\\intent_resolver.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\core\\intent_resolver.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "c24b0c65de6d238b",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\core\\__init__.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\core\\__init__.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "379a55ffd7663eb2",
+      "checked_at": "2026-09-30T02:04:11Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\core\\neurons\\semantics.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\core\\neurons\\semantics.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "e55b49087bac52e8",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\core\\cli.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\core\\cli.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "d23a0da6a6116475",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\core\\ccr_engine.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\core\\ccr_engine.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "21e9e6d70179114d",
+      "checked_at": "2026-09-30T02:04:11Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\core\\hooks.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\core\\hooks.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "26ce619a828c7657",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\core\\conversation_memory.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\core\\conversation_memory.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "52dca810d06fb2ed",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\demo\\app.js": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\demo\\app.js",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "JS_SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "JavaScript syntax is valid."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Modern Taste Design detected."
+        }
+      ],
+      "message": "",
+      "code_hash": "5e113fdbe20a0f9b",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\demo\\index.css": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\demo\\index.css",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "cfa76d6eb77a4690",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\demo\\index.html": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\demo\\index.html",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Modern Taste Design detected."
+        }
+      ],
+      "message": "",
+      "code_hash": "d447a6e8bc8d679a",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\tests\\test_cli.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\tests\\test_cli.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "d8143a99dbdf22c6",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\tests\\test_conversation_memory.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\tests\\test_conversation_memory.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "ebd77cc45a805692",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\tests\\test_hooks.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\tests\\test_hooks.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "fedf206d1a7e217f",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\tests\\test_intent_resolver.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\tests\\test_intent_resolver.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "0f0255c8f1d8ea7b",
+      "checked_at": "2026-09-30T02:04:12Z"
+    },
+    "D:\\Gemini-Ide\\Goby-skill\\tests\\test_semantic_alignment.py": {
+      "file": "D:\\Gemini-Ide\\Goby-skill\\tests\\test_semantic_alignment.py",
+      "passed": true,
+      "blocked": false,
+      "gate": null,
+      "summary": "PASSED all gates. No warnings.",
+      "signals": [
+        {
+          "neuron": "SYNTAX",
+          "passed": true,
+          "gate": "HARD",
+          "message": "Syntax is valid."
+        },
+        {
+          "neuron": "SCOPE",
+          "passed": true,
+          "gate": "HARD",
+          "message": "All referenced names are defined within visible scope."
+        },
+        {
+          "neuron": "TASTE_DESIGN",
+          "passed": true,
+          "gate": "SOFT",
+          "message": "Code is not a UI component, skipping Taste Design check."
+        }
+      ],
+      "message": "",
+      "code_hash": "dbfcf76d14a73dc5",
+      "checked_at": "2026-09-30T02:04:12Z"
+    }
+  }
 }

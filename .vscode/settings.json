@@ -1,0 +1,27 @@
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "pyproject.toml": "kilo.json, LICENSE, .gitignore, *.egg-info, setup.cfg",
+    "AGENTS.md": "SKILL.md, .agents",
+    "README.md": "goby_agent_impact_runner.py, cognitive_map.json",
+    "*.py": "${capture}.pyc"
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/*.egg-info": true,
+    "**/.pytest_cache": true,
+    "**/.coverage": true,
+    "universal_consciousness.json": true,
+    "failure_patterns.json": true,
+    "conversation_index.json": true,
+    "spatial_test_map.json": true
+  }
+}

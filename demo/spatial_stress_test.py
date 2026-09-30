@@ -4,6 +4,7 @@ Simulates a multi-agent Super Mario Bros spatial environment (grid navigation,
 obstacle loops, concurrent trajectory resolution, and LDE Neuro-Bypass).
 """
 
+import os
 import time
 import random
 import threading
@@ -20,7 +21,8 @@ def run_spatial_cognitive_benchmark():
 
     # Test 1: High-Frequency Spatial State Locking & Thread Safety
     print("\n[TEST 1] High-Frequency Spatial Thread Safety (50 Workers)...")
-    state_mgr = StateMemoryManager(memory_file_path="spatial_test_map.json")
+    map_path = os.path.join(os.path.dirname(__file__), "spatial_test_map.json")
+    state_mgr = StateMemoryManager(memory_file_path=map_path)
     thread_count = 50
     steps_per_thread = 20
     errors = []

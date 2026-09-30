@@ -166,3 +166,174 @@ def neuron_consistency(self, text: str) -> NeuronSignal:
         ),
     )
 
+
+def neuron_semantic_alignment(
+    self,
+    code: str,
+    contract: Optional[Any] = None,
+    original_code: Optional[str] = None
+) -> NeuronSignal:
+    """
+    Signal: Does this code faithfully adhere to semantic constraints,
+    scope relevance, and Indonesian intent traits?
+
+    Evaluates:
+      1. Faithfulness (0.0 - 1.0): No forbidden target mutations, no unauthorized symbol deletions.
+      2. Context Relevance (0.0 - 1.0): Scope containment to target domains.
+      3. Semantic Similarity (0.0 - 1.0): Requested action traits realized in AST.
+    """
+    if not code or not code.strip():
+        return NeuronSignal(
+            neuron_name="SEMANTIC_ALIGNMENT",
+            gate_type=GateType.SOFT,
+            passed=True,
+            confidence=1.0,
+            message="No code provided for semantic alignment evaluation.",
+            evidence={"faithfulness_score": 1.0, "context_relevance_score": 1.0, "semantic_similarity_score": 1.0},
+        )
+
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return NeuronSignal(
+            neuron_name="SEMANTIC_ALIGNMENT",
+            gate_type=GateType.HARD,
+            passed=False,
+            confidence=1.0,
+            message=f"Syntax error prevents semantic alignment check: {e.msg} at line {e.lineno}",
+            evidence={"error": str(e), "faithfulness_score": 0.0, "context_relevance_score": 0.0, "semantic_similarity_score": 0.0},
+            suggestion="Fix syntax errors before running semantic evaluation.",
+        )
+
+    if contract is None:
+        return NeuronSignal(
+            neuron_name="SEMANTIC_ALIGNMENT",
+            gate_type=GateType.SOFT,
+            passed=True,
+            confidence=1.0,
+            message="No semantic contract provided; default alignment passed.",
+            evidence={"faithfulness_score": 1.0, "context_relevance_score": 1.0, "semantic_similarity_score": 1.0},
+        )
+
+    violations = []
+    faithfulness = 1.0
+    relevance = 1.0
+    similarity = 1.0
+
+    # 1. Faithfulness: Forbidden targets
+    defined_symbols = set()
+    referenced_names = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            defined_symbols.add(node.name.lower())
+        elif isinstance(node, ast.ClassDef):
+            defined_symbols.add(node.name.lower())
+        elif isinstance(node, ast.Name):
+            referenced_names.add(node.id.lower())
+
+    for target in contract.forbidden_targets:
+        target_clean = re.sub(r'\.(py|js|ts|json|md)$', '', target).lower()
+        if any(target_clean in sym for sym in defined_symbols) or any(target_clean in ref for ref in referenced_names):
+            faithfulness -= 0.6
+            violations.append(f"Forbidden target modified/accessed: '{target}'")
+
+    # 1b. Faithfulness: Preservation of existing methods
+    if contract.preserve_existing and original_code:
+        try:
+            orig_tree = ast.parse(original_code)
+            orig_funcs = {
+                n.name for n in ast.walk(orig_tree)
+                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+            }
+            new_funcs = {
+                n.name for n in ast.walk(tree)
+                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+            }
+            missing = orig_funcs - new_funcs
+            if missing:
+                faithfulness = min(faithfulness - 0.6, 0.4)
+                violations.append(f"Deleted existing symbol(s) despite preservation constraint: {list(missing)}")
+        except Exception:
+            pass
+
+    faithfulness = max(0.0, min(1.0, round(faithfulness, 2)))
+
+    # 2. Context Relevance: Strict scope containment
+    if contract.strict_scope:
+        matched_scope_hits = 0
+        all_text = code.lower()
+        for scope_item in contract.strict_scope:
+            if scope_item.lower() in all_text or any(scope_item.lower() in sym for sym in defined_symbols):
+                matched_scope_hits += 1
+        relevance = matched_scope_hits / len(contract.strict_scope)
+        relevance = max(0.2, min(1.0, round(relevance, 2)))
+
+    # 3. Semantic Similarity: Expected traits realized in AST
+    matched_traits = []
+    if contract.expected_traits:
+        for trait in contract.expected_traits:
+            if trait == "validation":
+                has_check = any(isinstance(n, (ast.If, ast.Assert, ast.Raise)) for n in ast.walk(tree))
+                has_val_func = any("valid" in s or "check" in s or "verify" in s for s in defined_symbols)
+                if has_check or has_val_func:
+                    matched_traits.append("validation")
+            elif trait == "auth":
+                has_auth = any("auth" in s or "login" in s or "token" in s for s in defined_symbols) or "token" in code.lower() or "auth" in code.lower()
+                if has_auth:
+                    matched_traits.append("auth")
+            elif trait == "refactor":
+                if defined_symbols:
+                    matched_traits.append("refactor")
+            elif trait == "testing":
+                has_test = any("test" in s for s in defined_symbols) or any(isinstance(n, ast.Assert) for n in ast.walk(tree))
+                if has_test:
+                    matched_traits.append("testing")
+            elif trait == "security":
+                has_sec = any(w in code.lower() for w in ["sanitize", "escape", "clean", "secure", "hash"])
+                if has_sec:
+                    matched_traits.append("security")
+            elif trait == "documentation":
+                has_doc = any(ast.get_docstring(n) is not None for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.ClassDef, ast.Module)))
+                if has_doc:
+                    matched_traits.append("documentation")
+
+        similarity = len(matched_traits) / len(contract.expected_traits)
+        similarity = round(similarity, 2)
+
+    composite_score = round(0.4 * faithfulness + 0.3 * relevance + 0.3 * similarity, 2)
+    passed = faithfulness >= 0.5 and composite_score >= 0.6
+    gate_type = GateType.HARD if faithfulness < 0.5 else GateType.SOFT
+
+    message = (
+        f"Semantic Alignment: {composite_score:.0%} "
+        f"(Faithfulness: {faithfulness:.0%}, Relevance: {relevance:.0%}, Similarity: {similarity:.0%})."
+    )
+    if violations:
+        message += f" Violations: {'; '.join(violations)}."
+
+    suggestion = ""
+    if not passed:
+        if faithfulness < 0.5:
+            suggestion = f"BLOCKED: Faithfulness violation. Do not modify forbidden targets or remove preserved symbols: {violations}."
+        elif similarity < 0.5:
+            suggestion = f"Missing expected semantic traits: {[t for t in contract.expected_traits if t not in matched_traits]}."
+
+    return NeuronSignal(
+        neuron_name="SEMANTIC_ALIGNMENT",
+        gate_type=gate_type,
+        passed=passed,
+        confidence=composite_score,
+        message=message,
+        evidence={
+            "faithfulness_score": faithfulness,
+            "context_relevance_score": relevance,
+            "semantic_similarity_score": similarity,
+            "composite_score": composite_score,
+            "violations": violations,
+            "matched_traits": matched_traits,
+            "expected_traits": contract.expected_traits,
+        },
+        suggestion=suggestion,
+    )
+
+

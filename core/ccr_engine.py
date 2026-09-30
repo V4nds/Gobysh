@@ -370,6 +370,14 @@ class CognitiveControlRoom:
         return neuron_consistency(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
+    # Neuron 9: Semantic Alignment Check (HARD/SOFT GATE)
+    # -----------------------------------------------------------------------
+
+    def neuron_semantic_alignment(self, *args, **kwargs):
+        from .neurons.semantics import neuron_semantic_alignment
+        return neuron_semantic_alignment(self, *args, **kwargs)
+
+    # -----------------------------------------------------------------------
     # Signal Evaluator — Hard Gate blocker
     # -----------------------------------------------------------------------
 
@@ -558,7 +566,9 @@ class CognitiveControlRoom:
         self,
         code: str,
         language: str = "python",
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
+        contract: Optional[Any] = None,
+        original_code: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Genuine Pre-Output In-Memory Verification API.
@@ -583,6 +593,9 @@ class CognitiveControlRoom:
                 signals.append(self.neuron_scope_check(code))
                 signals.append(self.neuron_taste_design_check(code))
 
+        if contract is not None:
+            signals.append(self.neuron_semantic_alignment(code, contract=contract, original_code=original_code))
+
         eval_result = self.evaluate_signals(signals)
         return {
             "verified": not eval_result["blocked"],
@@ -604,13 +617,17 @@ class CognitiveControlRoom:
         code: str,
         language: str = "python",
         error_context: Optional[str] = None,
-        attempt: int = 1
+        attempt: int = 1,
+        contract: Optional[Any] = None,
+        original_code: Optional[str] = None
     ) -> GobyFeedback:
         """
         Agent Control Protocol API: Evaluates candidate code and produces an actionable GobyFeedback object.
         Transitions state to 'STRATEGY_CHANGE_REQUIRED' when LDE detects repeated repair cycles.
         """
-        raw_res = self.verify_candidate(code, language=language)
+        raw_res = self.verify_candidate(
+            code, language=language, contract=contract, original_code=original_code
+        )
 
         if raw_res["blocked"]:
             failed_sig = next((s for s in raw_res["signals"] if not s["passed"]), None)

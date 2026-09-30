@@ -1,7 +1,6 @@
 """
-Omni-Synthesis Engine for Goby Framework (v4.2.0).
-Provides pre-emptive AST analysis and Axiomatic Synthesis to eliminate the need for emergency bypasses.
-Achieves Zero-Bypass Direct Resolution by catching structural paradoxes apriori.
+Pre-Execution AST Structural Analyzer for Goby Framework.
+Provides deterministic AST inspection to catch infinite while-loops and unbounded recursion prior to execution.
 """
 
 import ast
@@ -20,9 +19,8 @@ class SynthesisResult:
 
 class OmniSynthesisEngine:
     """
-    Unified Field Validator.
-    Analyzes code at the AST level to catch infinite loops, unbounded recursion,
-    and paradoxical states prior to execution.
+    Deterministic AST Structural Inspector.
+    Analyzes Python AST to catch unbounded recursion and infinite while-loops without termination conditions.
     """
 
     def __init__(self):
