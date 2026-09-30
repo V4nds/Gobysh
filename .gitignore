@@ -60,8 +60,12 @@ cover/
 *.tmp
 
 # Goby runtime memory & test maps
+cognitive_map.json
+cognitive_map.json.*
 failure_patterns.json
 universal_consciousness.json
 conversation_index.json
 spatial_test_map.json
 test_*.json
+.kilo/
+
