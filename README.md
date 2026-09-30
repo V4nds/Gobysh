@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🐟 Gobysh (Goby Framework v5.0)
+# 🐟 Gobysh
 ### *Deterministic Mechanical Harness & Semantic Verification Engine for AI Coding Agents*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -16,12 +16,6 @@
 </div>
 
 ---
-
-## 🌊 Mengapa Dinamakan "Gobysh"?
-
-Nama **Gobysh** terinspirasi dari simbiosis mutualisme alamiah antara **ikan Goby** dan **udang pistol (*pistol shrimp*)**:
-- **Udang Pistol (AI Agent):** Pekerja tangguh yang menggali dan membangun sarang tanpa henti, tetapi memiliki penglihatan yang rabun (rawan berhalusinasi, lupa konteks masa lalu, dan salah menangkap instruksi manusia).
-- **Ikan Goby (Gobysh Framework):** Penjaga bersirip dengan penglihatan tajam yang berdiri di mulut sarang sebagai mata deterministik. Bila ada bahaya (sintaksis rusak, variabel tak terdefinisi, pelanggaran kontrak semantik), Goby memperingatkan udang dan memblokir pintu keluar sarang hingga kondisi aman.
 
 **Gobysh bukanlah sekadar prompt template atau file teks panduan.** Gobysh adalah **mechanical execution harness** yang tertanam langsung ke dalam *runtime lifecycle loop* IDE untuk mengawasi setiap ketukan kode yang dihasilkan AI.
 
