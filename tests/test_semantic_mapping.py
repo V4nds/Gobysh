@@ -126,7 +126,77 @@ class TestDependencyGraph(unittest.TestCase):
         self.assertIn("UserModel", affected)
 
 
+from core.semantics.intermediate_representation import SemanticEntity
+from core.semantics.specification import Requirement
+from core.translation.engine import CodeSemanticMapper, MappingReport
+
+
+class TestCodeSemanticMapper(unittest.TestCase):
+    """Test suite for CodeSemanticMapper and MappingReport."""
+
+    def test_map_intent_matching_symbols_and_files(self):
+        s1 = Symbol("login", "function", "core/auth.py")
+        s2 = Symbol("renderLogin", "function", "ui/login.js")
+        s3 = Symbol("api_call", "function", "core/api.py")
+
+        f1 = FileSymbolMap("core/auth.py", symbols=[s1], imports=[])
+        f2 = FileSymbolMap("ui/login.js", symbols=[s2], imports=[])
+        f3 = FileSymbolMap("core/api.py", symbols=[s3], imports=["core/auth.py"])
+
+        sym_map = SymbolMap({"core/auth.py": f1, "ui/login.js": f2, "core/api.py": f3})
+        dg = DependencyGraph.build_from_symbol_map(sym_map)
+        mapper = CodeSemanticMapper(sym_map, dg)
+
+        report = mapper.map_query("fix login authentication")
+
+        matched_names = [s.name for s in report.matched_symbols]
+        self.assertIn("login", matched_names)
+        self.assertIn("renderLogin", matched_names)
+
+        self.assertIn("core/auth.py", report.target_files)
+        self.assertIn("ui/login.js", report.target_files)
+        self.assertIn("core/api.py", report.impacted_dependents)
+
+    def test_protected_symbol_violation_detection(self):
+        s1 = Symbol("UserModel", "class", "core/db.py")
+        f1 = FileSymbolMap("core/db.py", symbols=[s1], imports=[])
+        sym_map = SymbolMap({"core/db.py": f1})
+        dg = DependencyGraph.build_from_symbol_map(sym_map)
+        mapper = CodeSemanticMapper(sym_map, dg)
+
+        report = mapper.map_query("modify UserModel schema", protected_symbols=["UserModel"])
+        self.assertIn("UserModel", report.protected_symbols_violated)
+
+    def test_map_with_semantic_entities_and_requirements(self):
+        s1 = Symbol("process_payment", "function", "core/billing.py")
+        f1 = FileSymbolMap("core/billing.py", symbols=[s1], imports=[])
+        sym_map = SymbolMap({"core/billing.py": f1})
+        dg = DependencyGraph.build_from_symbol_map(sym_map)
+        mapper = CodeSemanticMapper(sym_map, dg)
+
+        entities = [SemanticEntity(name="billing", entity_type="module")]
+        reqs = [Requirement(id="REQ-01", description="Improve payment processing speed")]
+        report = mapper.map_intent(entities=entities, requirements=reqs)
+
+        self.assertIn("core/billing.py", report.target_files)
+        self.assertTrue(len(report.matched_symbols) >= 1)
+
+    def test_mapping_report_to_dict(self):
+        report = MappingReport(
+            matched_symbols=[Symbol("foo", "function", "foo.py")],
+            target_files=["foo.py"],
+            impacted_dependents=["bar.py"],
+            protected_symbols_violated=["foo"],
+        )
+        d = report.to_dict()
+        self.assertIn("matched_symbols", d)
+        self.assertIn("target_files", d)
+        self.assertEqual(d["target_files"], ["foo.py"])
+        self.assertEqual(d["impacted_dependents"], ["bar.py"])
+
+
 if __name__ == "__main__":
     unittest.main()
+
 
 
