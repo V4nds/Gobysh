@@ -4,9 +4,10 @@ Enables repository impact analysis, upstream/downstream tracking, and protected 
 """
 
 from collections import defaultdict, deque
-from typing import Dict, List, Set
+from typing import Dict, List, Set, TYPE_CHECKING
 
-from core.translation.symbol_mapper import SymbolMap
+if TYPE_CHECKING:
+    from core.translation.symbol_mapper import SymbolMap
 
 
 class DependencyGraph:
@@ -18,7 +19,7 @@ class DependencyGraph:
         self.file_symbols: Dict[str, Set[str]] = defaultdict(set) # file -> symbol names
 
     @classmethod
-    def build_from_symbol_map(cls, sym_map: SymbolMap) -> "DependencyGraph":
+    def build_from_symbol_map(cls, sym_map: "SymbolMap") -> "DependencyGraph":
         graph = cls()
 
         for file_path, fmap in sym_map.files.items():

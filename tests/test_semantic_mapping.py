@@ -195,8 +195,23 @@ class TestCodeSemanticMapper(unittest.TestCase):
         self.assertEqual(d["impacted_dependents"], ["bar.py"])
 
 
+from core.intent_resolver import IntentResolver
+
+
+class TestIntegrationSemanticMapping(unittest.TestCase):
+    """Integration test suite for end-to-end repository mapping."""
+
+    def test_intent_resolver_with_repo_mapping(self):
+        resolver = IntentResolver()
+        tree = resolver.resolve("modify neuron syntax check in control room", repo_root="core")
+        self.assertIsNotNone(tree.code_mapping)
+        self.assertIn("code_mapping", tree.to_dict())
+        self.assertTrue(len(tree.primary_intent.target_files) >= 1)
+
+
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

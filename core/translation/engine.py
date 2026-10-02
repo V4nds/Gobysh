@@ -5,9 +5,11 @@ Bridges formal Semantic IR and constraints to concrete repository symbols and fi
 
 from dataclasses import dataclass, field
 import re
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING
 
-from core.semantics.dependency_graph import DependencyGraph
+if TYPE_CHECKING:
+    from core.semantics.dependency_graph import DependencyGraph
+
 from core.semantics.intermediate_representation import SemanticEntity
 from core.semantics.specification import Requirement
 from core.translation.symbol_mapper import Symbol, SymbolMap
@@ -43,7 +45,7 @@ class MappingReport:
 class CodeSemanticMapper:
     """Maps high-level intent/IR to code symbols, target files, and impact radius."""
 
-    def __init__(self, symbol_map: SymbolMap, dependency_graph: DependencyGraph):
+    def __init__(self, symbol_map: SymbolMap, dependency_graph: "DependencyGraph"):
         self.symbol_map = symbol_map
         self.dependency_graph = dependency_graph
 

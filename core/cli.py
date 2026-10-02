@@ -335,7 +335,8 @@ def main():
         print("  goby watch         Run active workspace CCR watcher")
         print("  goby status        Show framework installation & memory status")
         print("  goby gate          Check Unresolved Error Ledger (must exit 0 before claiming done)")
-        print("  goby intent <text> Parse user intent -> structured JSON (bilingual)")
+        print("  goby intent <text> [--repo <path>] Parse user intent -> structured JSON (bilingual)")
+        print("  goby map <query> [--repo <path>]   Map intent/query to repository symbols and blast radius")
         print("  goby recall <text> Recall similar past conversations from memory")
         print("  goby save '<summary>' <type> Save current session context to conversation memory")
         print("  goby briefing      Show auto-generated session briefing from memory")
@@ -523,10 +524,20 @@ def main():
         if len(args) < 2:
             print("Error: Please provide user text. Example: goby intent 'perbaiki error di app.js'")
             sys.exit(1)
-        user_text = " ".join(args[1:])
+        repo_arg = None
+        user_words = []
+        i = 1
+        while i < len(args):
+            if args[i] == "--repo" and i + 1 < len(args):
+                repo_arg = args[i + 1]
+                i += 2
+            else:
+                user_words.append(args[i])
+                i += 1
+        user_text = " ".join(user_words)
         from .intent_resolver import IntentResolver
         resolver = IntentResolver()
-        intent_tree = resolver.resolve(user_text)
+        intent_tree = resolver.resolve(user_text, repo_root=repo_arg)
         import json
         print(json.dumps(intent_tree.to_dict(), indent=2, ensure_ascii=False))
         if intent_tree.semantic_contract.contradictions:
@@ -538,6 +549,31 @@ def main():
             for q in intent_tree.clarification_questions:
                 print(f"  -> {q}")
             sys.exit(1)
+        sys.exit(0)
+
+    elif cmd == "map":
+        if len(args) < 2:
+            print("Error: Please provide query. Example: goby map 'authentication logic' [--repo .]")
+            sys.exit(1)
+        repo_arg = "."
+        query_words = []
+        i = 1
+        while i < len(args):
+            if args[i] == "--repo" and i + 1 < len(args):
+                repo_arg = args[i + 1]
+                i += 2
+            else:
+                query_words.append(args[i])
+                i += 1
+        query_text = " ".join(query_words)
+        from .translation import RepositoryScanner, CodeSemanticMapper
+        from .semantics import DependencyGraph
+        sym_map = RepositoryScanner.scan_directory(repo_arg)
+        dg = DependencyGraph.build_from_symbol_map(sym_map)
+        mapper = CodeSemanticMapper(sym_map, dg)
+        report = mapper.map_query(query_text)
+        import json
+        print(json.dumps(report.to_dict(), indent=2, ensure_ascii=False))
         sys.exit(0)
 
     elif cmd == "recall":

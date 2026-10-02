@@ -21,6 +21,9 @@ from core.semantics.preservation import PreservationContract
 from core.semantics.scope import ScopeNormalizer
 from core.semantics.negation import NegationHandler
 from core.semantics.contract_validator import ContractValidator
+from core.semantics.dependency_graph import DependencyGraph
+from core.translation.scanner import RepositoryScanner
+from core.translation.engine import CodeSemanticMapper, MappingReport
 
 
 # ---------------------------------------------------------------------------
@@ -71,6 +74,7 @@ class IntentTree:
     ambiguity_score: float = 0.0        # 0.0 = crystal clear, 1.0 = completely ambiguous
     semantic_contract: SemanticContract = field(default_factory=SemanticContract)
     semantic_ir: Optional[SemanticIR] = None
+    code_mapping: Optional[MappingReport] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -96,7 +100,9 @@ class IntentTree:
             "ambiguity_score": round(self.ambiguity_score, 2),
             "semantic_contract": self.semantic_contract.to_dict(),
             "semantic_ir": self.semantic_ir.to_dict() if self.semantic_ir else None,
+            "code_mapping": self.code_mapping.to_dict() if self.code_mapping else None,
         }
+
 
 
 
@@ -210,7 +216,7 @@ class IntentResolver:
     CONFIDENCE_THRESHOLD = 0.4  # Below this → ask for clarification
     AMBIGUITY_THRESHOLD = 0.5   # Above this → flag as ambiguous
 
-    def resolve(self, user_input: str) -> IntentTree:
+    def resolve(self, user_input: str, repo_root: Optional[str] = None) -> IntentTree:
         """
         Main entry point. Resolves raw user text into an IntentTree.
         """
@@ -341,11 +347,37 @@ class IntentResolver:
                 contradictions.append(err)
         semantic_contract.contradictions = contradictions
 
+        # Step 7.5: Code mapping if repo_root is provided
+        code_mapping = None
+        if repo_root:
+            try:
+                sym_map = RepositoryScanner.scan_directory(repo_root)
+                dg = DependencyGraph.build_from_symbol_map(sym_map)
+                mapper = CodeSemanticMapper(sym_map, dg)
+                code_mapping = mapper.map_intent(
+                    entities=semantic_ir.entities,
+                    requirements=semantic_ir.specification.requirements,
+                    protected_symbols=semantic_ir.protected_symbols,
+                )
+                if code_mapping.target_files:
+                    for tf in code_mapping.target_files:
+                        if tf not in primary.target_files:
+                            primary.target_files.append(tf)
+
+                if code_mapping.protected_symbols_violated:
+                    prot_err = f"Modifications touch protected symbol(s): {', '.join(code_mapping.protected_symbols_violated)}"
+                    if prot_err not in contradictions:
+                        contradictions.append(prot_err)
+                    semantic_contract.contradictions = contradictions
+            except Exception:
+                pass
+
         # Step 8: Determine if clarification is needed
         needs_clarification = (
             primary.confidence < self.CONFIDENCE_THRESHOLD
             or ambiguity > self.AMBIGUITY_THRESHOLD
             or not val_result.valid
+            or (code_mapping is not None and bool(code_mapping.protected_symbols_violated))
         )
 
         clarification_qs = []
@@ -369,6 +401,7 @@ class IntentResolver:
             ambiguity_score=ambiguity,
             semantic_contract=semantic_contract,
             semantic_ir=semantic_ir,
+            code_mapping=code_mapping,
         )
 
     # -------------------------------------------------------------------
