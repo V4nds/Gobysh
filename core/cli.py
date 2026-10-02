@@ -223,9 +223,37 @@ def validate_filepath(target_path: str, ccr: CognitiveControlRoom, memory: State
         print(f"[ERROR] Could not read file {target_path}: {e}")
         return False
 
-    # Triage: skip non-code content (prose/documentation) entirely — no neurons.
+    # Triage: skip non-code files (documentation/prose) entirely — no neurons.
+    if target_path.lower().endswith((".md", ".markdown", ".txt", ".rst")):
+        print(f"[GOBY] File {target_path} is documentation / prose (triage SKIP) — verification skipped.")
+        if memory:
+            abs_path = os.path.abspath(target_path)
+            memory.record_file_validation(
+                file_path=abs_path,
+                passed=True,
+                blocked=False,
+                gate=None,
+                summary="Documentation/prose triage pass",
+                signals=[],
+                error_message="",
+                code_hash="",
+            )
+        return True
+
     if not _looks_like_code(code):
         print("[GOBY] Content is prose / not code (triage SKIP) — verification skipped, no neurons executed.")
+        if memory:
+            abs_path = os.path.abspath(target_path)
+            memory.record_file_validation(
+                file_path=abs_path,
+                passed=True,
+                blocked=False,
+                gate=None,
+                summary="Prose triage pass",
+                signals=[],
+                error_message="",
+                code_hash="",
+            )
         return True
 
     signals = []
