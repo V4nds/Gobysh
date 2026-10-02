@@ -17,6 +17,10 @@ from typing import Any, Dict, List, Optional, Tuple
 from core.semantics.specification import Requirement, SemanticSpecification
 from core.semantics.constraints import ConstraintModel
 from core.semantics.intermediate_representation import SemanticEntity, SemanticIR
+from core.semantics.preservation import PreservationContract
+from core.semantics.scope import ScopeNormalizer
+from core.semantics.negation import NegationHandler
+from core.semantics.contract_validator import ContractValidator
 
 
 # ---------------------------------------------------------------------------
@@ -307,6 +311,13 @@ class IntentResolver:
             SemanticEntity(name=tf, entity_type="file") for tf in primary.target_files
         ]
 
+        # Build first-class PreservationContract
+        preservation_contract = PreservationContract(
+            required=semantic_contract.preserve_existing,
+            invariants=["preserve_existing_system"] if semantic_contract.preserve_existing else [],
+            verification_strategy=["existing_test_suite", "ast_signature_check"] if semantic_contract.preserve_existing else [],
+        )
+
         semantic_ir = SemanticIR(
             specification=spec,
             intent={
@@ -316,15 +327,25 @@ class IntentResolver:
             },
             entities=entities,
             constraints=constraint_model,
+            preservation=preservation_contract,
             contradictions=contradictions,
         )
         semantic_contract.semantic_ir_dict = semantic_ir.to_dict()
 
-        # Step 7: Determine if clarification is needed
+        # Step 7: Validate contract through ContractValidator
+        validator = ContractValidator()
+        val_result = validator.validate(semantic_ir)
+
+        for err in val_result.errors:
+            if err not in contradictions:
+                contradictions.append(err)
+        semantic_contract.contradictions = contradictions
+
+        # Step 8: Determine if clarification is needed
         needs_clarification = (
             primary.confidence < self.CONFIDENCE_THRESHOLD
             or ambiguity > self.AMBIGUITY_THRESHOLD
-            or bool(contradictions)
+            or not val_result.valid
         )
 
         clarification_qs = []
@@ -506,7 +527,11 @@ class IntentResolver:
         self, text: str, text_lower: str, task_type: str
     ) -> SemanticContract:
         """Extract explicit semantic contract and constraints from Indonesian & English text."""
-        forbidden_targets = []
+        # Advanced bilingual negation extraction
+        neg_res = NegationHandler.parse_negations(text)
+        forbidden_targets = list(neg_res.forbidden_targets)
+
+        # Fallback keyword regex
         neg_patterns = [
             r'(?:jangan|don\'?t|tidak boleh|tanpa|without)\s+(?:ubah|ganti|edit|sentuh|change|touch|modify|menghapus|remove|delete)\s+(?:file\s+)?([a-zA-Z0-9_./\-]+)',
             r'(?:jangan|don\'?t|without)\s+(?:sentuh|touch)\s+([a-zA-Z0-9_./\-]+)',
@@ -514,11 +539,11 @@ class IntentResolver:
         for pat in neg_patterns:
             for match in re.finditer(pat, text_lower):
                 target = match.group(1).strip()
-                if target and target not in forbidden_targets:
+                if target and target not in forbidden_targets and target not in ("file", "table", "tabel", "fungsi", "method", "ini"):
                     forbidden_targets.append(target)
 
         # Preservation constraint
-        preserve_existing = any(p in text_lower for p in [
+        preserve_existing = neg_res.preserve_demanded or any(p in text_lower for p in [
             "tanpa menghapus", "tanpa merusak", "tanpa ubah method lama",
             "tanpa menghapus method", "tanpa menghapus fungsi", "preserve",
             "keep existing", "jangan hapus", "don't delete", "don't remove"
@@ -530,7 +555,9 @@ class IntentResolver:
         for sm in scope_matches:
             s_target = sm.group(1).strip()
             if s_target and s_target not in ("file", "fungsi", "method", "ini"):
-                strict_scope.append(s_target)
+                norm_scope = ScopeNormalizer.normalize_path(s_target)
+                if norm_scope and norm_scope not in strict_scope:
+                    strict_scope.append(norm_scope)
 
         # Expected traits
         expected_traits = []

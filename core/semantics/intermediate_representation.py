@@ -11,6 +11,7 @@ import uuid
 
 from .specification import Requirement, SemanticSpecification
 from .constraints import ConstraintModel
+from .preservation import PreservationContract
 
 
 @dataclass
@@ -43,6 +44,7 @@ class SemanticIR:
     intent: Dict[str, Any] = field(default_factory=dict)
     entities: List[SemanticEntity] = field(default_factory=list)
     constraints: ConstraintModel = field(default_factory=ConstraintModel)
+    preservation: Optional[PreservationContract] = None
     preconditions: List[str] = field(default_factory=list)
     postconditions: List[str] = field(default_factory=list)
     invariants: List[str] = field(default_factory=list)
@@ -56,6 +58,7 @@ class SemanticIR:
             "intent": self.intent,
             "entities": [e.to_dict() for e in self.entities],
             "constraints": self.constraints.to_dict(),
+            "preservation": self.preservation.to_dict() if self.preservation else None,
             "preconditions": self.preconditions,
             "postconditions": self.postconditions,
             "invariants": self.invariants,
@@ -63,6 +66,7 @@ class SemanticIR:
             "acceptance": self.acceptance,
             "contradictions": self.contradictions,
         }
+
 
     def to_json(self, indent: int = 2) -> str:
         return json.dumps(self.to_dict(), indent=indent)
@@ -170,11 +174,18 @@ class SemanticIR:
             if isinstance(const_data, dict)
             else ConstraintModel()
         )
+        pres_data = data.get("preservation")
+        preservation = (
+            PreservationContract.from_dict(pres_data)
+            if isinstance(pres_data, dict)
+            else None
+        )
         return cls(
             specification=spec,
             intent=data.get("intent", {}),
             entities=entities,
             constraints=constraints,
+            preservation=preservation,
             preconditions=list(data.get("preconditions", [])),
             postconditions=list(data.get("postconditions", [])),
             invariants=list(data.get("invariants", [])),
@@ -182,3 +193,4 @@ class SemanticIR:
             acceptance=list(data.get("acceptance", [])),
             contradictions=list(data.get("contradictions", [])),
         )
+
