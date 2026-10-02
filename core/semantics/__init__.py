@@ -6,6 +6,7 @@ Formal Intermediate Representation, Semantic Specification, and Constraint Model
 from .specification import Requirement, SemanticSpecification
 from .constraints import Constraint, ConstraintModel
 from .intermediate_representation import SemanticEntity, SemanticIR
+from .preservation import PreservationContract
 
 __all__ = [
     "Requirement",
@@ -14,4 +15,5 @@ __all__ = [
     "ConstraintModel",
     "SemanticEntity",
     "SemanticIR",
+    "PreservationContract",
 ]
