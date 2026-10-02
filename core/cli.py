@@ -529,6 +529,10 @@ def main():
         intent_tree = resolver.resolve(user_text)
         import json
         print(json.dumps(intent_tree.to_dict(), indent=2, ensure_ascii=False))
+        if intent_tree.semantic_contract.contradictions:
+            print("\n[GOBY INTENT] [!] Contradictions detected:")
+            for c in intent_tree.semantic_contract.contradictions:
+                print(f"  -> {c}")
         if intent_tree.clarification_needed:
             print("\n[GOBY INTENT] [!] Clarification needed:")
             for q in intent_tree.clarification_questions:
