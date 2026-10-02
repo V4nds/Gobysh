@@ -58,6 +58,32 @@ class TestScopeNormalizer(unittest.TestCase):
         self.assertIn("secret/passwords.txt", violations[0])
 
 
+from core.semantics.negation import NegationHandler
+
+
+class TestNegationHandler(unittest.TestCase):
+    """Test suite for advanced bilingual negation parsing."""
+
+    def test_indonesian_compound_negations(self):
+        text = "buatkan auth tapi dilarang keras mengubah schema database dan jangan pernah sentuh file auth.conf"
+        res = NegationHandler.parse_negations(text)
+        self.assertIn("auth.conf", res.forbidden_targets)
+        self.assertTrue(any("schema" in t or "database" in t for t in res.forbidden_targets))
+        self.assertGreater(len(res.negative_phrases), 0)
+
+    def test_english_scoped_negations(self):
+        text = "refactor the payment module without touching payment_gateway.py or altering legacy tables"
+        res = NegationHandler.parse_negations(text)
+        self.assertIn("payment_gateway.py", res.forbidden_targets)
+        self.assertTrue(res.preserve_demanded)
+
+    def test_preservation_negation_markers(self):
+        text = "rapikan fungsi tanpa menghapus backward compatibility"
+        res = NegationHandler.parse_negations(text)
+        self.assertTrue(res.preserve_demanded)
+
+
 if __name__ == "__main__":
     unittest.main()
+
 

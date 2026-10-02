@@ -8,6 +8,7 @@ from .constraints import Constraint, ConstraintModel
 from .intermediate_representation import SemanticEntity, SemanticIR
 from .preservation import PreservationContract
 from .scope import ScopeNormalizer
+from .negation import NegationHandler, NegationResult
 
 __all__ = [
     "Requirement",
@@ -18,4 +19,6 @@ __all__ = [
     "SemanticIR",
     "PreservationContract",
     "ScopeNormalizer",
+    "NegationHandler",
+    "NegationResult",
 ]
