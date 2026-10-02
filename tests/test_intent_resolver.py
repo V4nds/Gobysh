@@ -203,6 +203,26 @@ class TestIntentResolver(unittest.TestCase):
         self.assertIsNotNone(res.semantic_contract)
         self.assertIn("validation", res.semantic_contract.expected_traits)
 
+    # -------------------------------------------------------------------
+    # Stage 1 Calibration: Semantic IR & Contradiction Detection
+    # -------------------------------------------------------------------
+
+    def test_semantic_ir_attached_to_intent_tree(self):
+        result = self.resolver.resolve("buatkan fitur login baru di auth.py tanpa ubah user_table")
+        self.assertIsNotNone(result.semantic_ir)
+        self.assertIn("user_table", result.semantic_ir.constraints.forbidden_targets)
+        self.assertEqual(result.semantic_ir.intent.get("action"), "create_feature")
+        self.assertIn("semantic_ir", result.to_dict())
+
+    def test_contradiction_detection_triggers_clarification(self):
+        # User says modify config.py but also says don't touch config.py
+        result = self.resolver.resolve("perbaiki bug di config.py tapi jangan ubah config.py")
+        self.assertTrue(result.clarification_needed)
+        self.assertGreaterEqual(result.ambiguity_score, 0.8)
+        self.assertTrue(any("CONTRADICTION" in q for q in result.clarification_questions))
+        self.assertGreater(len(result.semantic_contract.contradictions), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
+

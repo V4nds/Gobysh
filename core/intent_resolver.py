@@ -14,6 +14,17 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from core.semantics.specification import Requirement, SemanticSpecification
+from core.semantics.constraints import ConstraintModel
+from core.semantics.intermediate_representation import SemanticEntity, SemanticIR
+from core.semantics.preservation import PreservationContract
+from core.semantics.scope import ScopeNormalizer
+from core.semantics.negation import NegationHandler
+from core.semantics.contract_validator import ContractValidator
+from core.semantics.dependency_graph import DependencyGraph
+from core.translation.scanner import RepositoryScanner
+from core.translation.engine import CodeSemanticMapper, MappingReport
+
 
 # ---------------------------------------------------------------------------
 # Data Structures
@@ -37,6 +48,8 @@ class SemanticContract:
     strict_scope: List[str] = field(default_factory=list)
     expected_traits: List[str] = field(default_factory=list)
     action_verb: str = ""
+    contradictions: List[str] = field(default_factory=list)
+    semantic_ir_dict: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -45,6 +58,7 @@ class SemanticContract:
             "strict_scope": self.strict_scope,
             "expected_traits": self.expected_traits,
             "action_verb": self.action_verb,
+            "contradictions": self.contradictions,
         }
 
 
@@ -59,6 +73,8 @@ class IntentTree:
     detected_language: str = "unknown"  # "id" (Indonesian), "en" (English), "mixed"
     ambiguity_score: float = 0.0        # 0.0 = crystal clear, 1.0 = completely ambiguous
     semantic_contract: SemanticContract = field(default_factory=SemanticContract)
+    semantic_ir: Optional[SemanticIR] = None
+    code_mapping: Optional[MappingReport] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -83,7 +99,11 @@ class IntentTree:
             "detected_language": self.detected_language,
             "ambiguity_score": round(self.ambiguity_score, 2),
             "semantic_contract": self.semantic_contract.to_dict(),
+            "semantic_ir": self.semantic_ir.to_dict() if self.semantic_ir else None,
+            "code_mapping": self.code_mapping.to_dict() if self.code_mapping else None,
         }
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -196,7 +216,7 @@ class IntentResolver:
     CONFIDENCE_THRESHOLD = 0.4  # Below this → ask for clarification
     AMBIGUITY_THRESHOLD = 0.5   # Above this → flag as ambiguous
 
-    def resolve(self, user_input: str) -> IntentTree:
+    def resolve(self, user_input: str, repo_root: Optional[str] = None) -> IntentTree:
         """
         Main entry point. Resolves raw user text into an IntentTree.
         """
@@ -256,13 +276,108 @@ class IntentResolver:
                 if s[1] >= 0.3
             ]
 
-        # Step 6: Extract semantic contract
+        # Step 6: Extract semantic contract & build formal ConstraintModel
         semantic_contract = self._extract_semantic_contract(text, text_lower, primary.task_type)
 
-        # Step 7: Determine if clarification is needed
+        constraint_model = ConstraintModel(
+            forbidden_targets=semantic_contract.forbidden_targets,
+            preserve_existing=semantic_contract.preserve_existing,
+            strict_scope=semantic_contract.strict_scope,
+        )
+
+        # Detect contradictions between constraints and target files/action
+        contradictions = constraint_model.detect_contradictions(
+            target_files=primary.target_files,
+            action=primary.task_type,
+        )
+        semantic_contract.contradictions = contradictions
+
+        # Build formal SemanticSpecification
+        spec_reqs = []
+        if primary.task_type != "unknown":
+            spec_reqs.append(
+                Requirement(
+                    id="REQ-001",
+                    description=primary.description,
+                    source_text=text,
+                    action=primary.task_type,
+                    target_entities=primary.target_files,
+                    status="UNMAPPED",
+                )
+            )
+
+        spec = SemanticSpecification(
+            id=f"SPEC-{abs(hash(text)) % 1000000:06d}",
+            language=detected_lang,
+            raw_prompt=text,
+            requirements=spec_reqs,
+        )
+
+        entities = [
+            SemanticEntity(name=tf, entity_type="file") for tf in primary.target_files
+        ]
+
+        # Build first-class PreservationContract
+        preservation_contract = PreservationContract(
+            required=semantic_contract.preserve_existing,
+            invariants=["preserve_existing_system"] if semantic_contract.preserve_existing else [],
+            verification_strategy=["existing_test_suite", "ast_signature_check"] if semantic_contract.preserve_existing else [],
+        )
+
+        semantic_ir = SemanticIR(
+            specification=spec,
+            intent={
+                "action": primary.task_type,
+                "target": ", ".join(primary.target_files) if primary.target_files else primary.task_type,
+                "description": primary.description,
+            },
+            entities=entities,
+            constraints=constraint_model,
+            preservation=preservation_contract,
+            contradictions=contradictions,
+        )
+        semantic_contract.semantic_ir_dict = semantic_ir.to_dict()
+
+        # Step 7: Validate contract through ContractValidator
+        validator = ContractValidator()
+        val_result = validator.validate(semantic_ir)
+
+        for err in val_result.errors:
+            if err not in contradictions:
+                contradictions.append(err)
+        semantic_contract.contradictions = contradictions
+
+        # Step 7.5: Code mapping if repo_root is provided
+        code_mapping = None
+        if repo_root:
+            try:
+                sym_map = RepositoryScanner.scan_directory(repo_root)
+                dg = DependencyGraph.build_from_symbol_map(sym_map)
+                mapper = CodeSemanticMapper(sym_map, dg)
+                code_mapping = mapper.map_intent(
+                    entities=semantic_ir.entities,
+                    requirements=semantic_ir.specification.requirements,
+                    protected_symbols=semantic_ir.protected_symbols,
+                )
+                if code_mapping.target_files:
+                    for tf in code_mapping.target_files:
+                        if tf not in primary.target_files:
+                            primary.target_files.append(tf)
+
+                if code_mapping.protected_symbols_violated:
+                    prot_err = f"Modifications touch protected symbol(s): {', '.join(code_mapping.protected_symbols_violated)}"
+                    if prot_err not in contradictions:
+                        contradictions.append(prot_err)
+                    semantic_contract.contradictions = contradictions
+            except Exception:
+                pass
+
+        # Step 8: Determine if clarification is needed
         needs_clarification = (
             primary.confidence < self.CONFIDENCE_THRESHOLD
             or ambiguity > self.AMBIGUITY_THRESHOLD
+            or not val_result.valid
+            or (code_mapping is not None and bool(code_mapping.protected_symbols_violated))
         )
 
         clarification_qs = []
@@ -270,6 +385,11 @@ class IntentResolver:
             clarification_qs = self._generate_clarifications(
                 text, primary.task_type, detected_lang, ambiguity
             )
+
+        # If contradictions exist, prepend high-priority clarification question and bump ambiguity
+        if contradictions:
+            clarification_qs.insert(0, f"[CONTRADICTION DETECTED] {contradictions[0]} Please clarify.")
+            ambiguity = max(ambiguity, 0.85)
 
         return IntentTree(
             raw_input=text,
@@ -280,6 +400,8 @@ class IntentResolver:
             detected_language=detected_lang,
             ambiguity_score=ambiguity,
             semantic_contract=semantic_contract,
+            semantic_ir=semantic_ir,
+            code_mapping=code_mapping,
         )
 
     # -------------------------------------------------------------------
@@ -438,19 +560,23 @@ class IntentResolver:
         self, text: str, text_lower: str, task_type: str
     ) -> SemanticContract:
         """Extract explicit semantic contract and constraints from Indonesian & English text."""
-        forbidden_targets = []
+        # Advanced bilingual negation extraction
+        neg_res = NegationHandler.parse_negations(text)
+        forbidden_targets = list(neg_res.forbidden_targets)
+
+        # Fallback keyword regex
         neg_patterns = [
-            r'(?:jangan|don\'?t|tidak boleh)\s+(?:ubah|ganti|edit|sentuh|change|touch|modify)\s+(?:file\s+)?([a-zA-Z0-9_./\-]+)',
-            r'(?:jangan|don\'?t)\s+(?:sentuh|touch)\s+([a-zA-Z0-9_./\-]+)',
+            r'(?:jangan|don\'?t|tidak boleh|tanpa|without)\s+(?:ubah|ganti|edit|sentuh|change|touch|modify|menghapus|remove|delete)\s+(?:file\s+)?([a-zA-Z0-9_./\-]+)',
+            r'(?:jangan|don\'?t|without)\s+(?:sentuh|touch)\s+([a-zA-Z0-9_./\-]+)',
         ]
         for pat in neg_patterns:
             for match in re.finditer(pat, text_lower):
                 target = match.group(1).strip()
-                if target and target not in forbidden_targets:
+                if target and target not in forbidden_targets and target not in ("file", "table", "tabel", "fungsi", "method", "ini"):
                     forbidden_targets.append(target)
 
         # Preservation constraint
-        preserve_existing = any(p in text_lower for p in [
+        preserve_existing = neg_res.preserve_demanded or any(p in text_lower for p in [
             "tanpa menghapus", "tanpa merusak", "tanpa ubah method lama",
             "tanpa menghapus method", "tanpa menghapus fungsi", "preserve",
             "keep existing", "jangan hapus", "don't delete", "don't remove"
@@ -462,7 +588,9 @@ class IntentResolver:
         for sm in scope_matches:
             s_target = sm.group(1).strip()
             if s_target and s_target not in ("file", "fungsi", "method", "ini"):
-                strict_scope.append(s_target)
+                norm_scope = ScopeNormalizer.normalize_path(s_target)
+                if norm_scope and norm_scope not in strict_scope:
+                    strict_scope.append(norm_scope)
 
         # Expected traits
         expected_traits = []

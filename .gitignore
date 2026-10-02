@@ -68,4 +68,5 @@ conversation_index.json
 spatial_test_map.json
 test_*.json
 .kilo/
+.superpowers/
 
