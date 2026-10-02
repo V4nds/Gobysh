@@ -5,5 +5,13 @@ Formal Intermediate Representation, Semantic Specification, and Constraint Model
 
 from .specification import Requirement, SemanticSpecification
 from .constraints import Constraint, ConstraintModel
+from .intermediate_representation import SemanticEntity, SemanticIR
 
-__all__ = ["Requirement", "SemanticSpecification", "Constraint", "ConstraintModel"]
+__all__ = [
+    "Requirement",
+    "SemanticSpecification",
+    "Constraint",
+    "ConstraintModel",
+    "SemanticEntity",
+    "SemanticIR",
+]

@@ -108,6 +108,61 @@ class TestConstraintModel(unittest.TestCase):
         self.assertTrue(any("server/main.py" in c for c in contradictions))
 
 
+from core.semantics.intermediate_representation import SemanticEntity, SemanticIR
+
+
+class TestSemanticIR(unittest.TestCase):
+    """Test suite for Semantic Intermediate Representation (IR)."""
+
+    def test_semantic_ir_creation_and_yaml_export(self):
+        spec = SemanticSpecification(
+            id="SPEC-001",
+            language="en",
+            raw_prompt="add user registration",
+            requirements=[
+                Requirement(id="REQ-1", description="create registration endpoint", action="ADD")
+            ]
+        )
+        constraints = ConstraintModel(
+            forbidden_targets=["user_table"],
+            preserve_existing=True,
+            strict_scope=["auth/"],
+            invariants=["schema_stable"],
+            protected_symbols=["User"],
+        )
+        ir = SemanticIR(
+            specification=spec,
+            intent={"action": "ADD", "target": "auth", "description": "add registration"},
+            entities=[SemanticEntity(name="registration_flow", entity_type="feature")],
+            constraints=constraints,
+            preconditions=["email_input_exists"],
+            postconditions=["valid_email => registration_continues"],
+            invariants=["schema_stable"],
+            protected_symbols=["User"],
+            acceptance=["validation_test_passes"],
+        )
+
+        d = ir.to_dict()
+        self.assertEqual(d["intent"]["action"], "ADD")
+        self.assertEqual(len(d["entities"]), 1)
+        self.assertEqual(d["constraints"]["forbidden_targets"], ["user_table"])
+
+        # Test pure-Python YAML representation
+        yaml_str = ir.to_yaml()
+        self.assertIn("specification:", yaml_str)
+        self.assertIn("intent:", yaml_str)
+        self.assertIn("action: ADD", yaml_str)
+        self.assertIn("forbidden:", yaml_str)
+        self.assertIn("- user_table", yaml_str)
+
+        # Round trip from dict
+        restored = SemanticIR.from_dict(d)
+        self.assertEqual(restored.specification.id, "SPEC-001")
+        self.assertEqual(restored.entities[0].name, "registration_flow")
+        self.assertEqual(restored.constraints.forbidden_targets, ["user_table"])
+
+
 if __name__ == "__main__":
     unittest.main()
+
 
