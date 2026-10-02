@@ -95,6 +95,38 @@ class SessionManager {
         self.assertIn("SessionManager", names)
 
 
+from core.semantics.dependency_graph import DependencyGraph
+
+
+class TestDependencyGraph(unittest.TestCase):
+    """Test suite for DependencyGraph and impact analysis."""
+
+    def test_build_and_query_dependents(self):
+        f1 = FileSymbolMap("core/auth.py", symbols=[Symbol("login", "function", "core/auth.py")], imports=[])
+        f2 = FileSymbolMap("core/api.py", symbols=[Symbol("api_endpoint", "function", "core/api.py")], imports=["core/auth.py"])
+        f3 = FileSymbolMap("core/cli.py", symbols=[Symbol("main", "function", "core/cli.py")], imports=["core/api.py"])
+
+        sym_map = SymbolMap({"core/auth.py": f1, "core/api.py": f2, "core/cli.py": f3})
+
+        dg = DependencyGraph.build_from_symbol_map(sym_map)
+        downstream = dg.get_downstream_dependents("core/auth.py")
+        self.assertIn("core/api.py", downstream)
+        self.assertIn("core/cli.py", downstream)
+
+    def test_find_affected_protected_symbols(self):
+        f1 = FileSymbolMap("core/db.py", symbols=[Symbol("UserModel", "class", "core/db.py")], imports=[])
+        f2 = FileSymbolMap("core/service.py", symbols=[Symbol("get_user", "function", "core/service.py")], imports=["core/db.py"])
+        sym_map = SymbolMap({"core/db.py": f1, "core/service.py": f2})
+
+        dg = DependencyGraph.build_from_symbol_map(sym_map)
+        affected = dg.find_affected_protected_symbols(
+            target_files=["core/db.py"],
+            protected_symbols=["UserModel"],
+        )
+        self.assertIn("UserModel", affected)
+
+
 if __name__ == "__main__":
     unittest.main()
+
 

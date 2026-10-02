@@ -10,6 +10,7 @@ from .preservation import PreservationContract
 from .scope import ScopeNormalizer
 from .negation import NegationHandler, NegationResult
 from .contract_validator import ContractValidator, ValidationResult
+from .dependency_graph import DependencyGraph
 
 __all__ = [
     "Requirement",
@@ -24,4 +25,5 @@ __all__ = [
     "NegationResult",
     "ContractValidator",
     "ValidationResult",
+    "DependencyGraph",
 ]
