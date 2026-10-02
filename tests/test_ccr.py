@@ -428,6 +428,31 @@ class TestNeuronTasteDesign(unittest.TestCase):
         self.assertEqual(sig.evidence, {})
 
 
+
+    def test_kotlin_syntax_check(self):
+        ccr = CognitiveControlRoom()
+        valid_kt = """
+        package com.test
+        class TestClass(val x: Int) {
+            fun add(y: Int): Int {
+                return x + y
+            }
+        }
+        """
+        sig_valid = ccr.neuron_kotlin_syntax_check(valid_kt)
+        self.assertTrue(sig_valid.passed)
+
+        invalid_kt = """
+        class TestClass {
+            fun add(y: Int): Int {
+                return (x + y
+            }
+        """
+        sig_invalid = ccr.neuron_kotlin_syntax_check(invalid_kt)
+        self.assertFalse(sig_invalid.passed)
+        self.assertTrue("bracket" in sig_invalid.message.lower())
+
+
 if __name__ == "__main__":
     unittest.main()
 

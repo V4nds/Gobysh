@@ -23,8 +23,8 @@ for _p in [str(_project_root), str(_current_dir)]:
         sys.path.insert(0, _p)
 
 
-CODE_EXTENSIONS = (".py", ".js", ".ts", ".jsx", ".tsx", ".css", ".html")
-IGNORED_PATTERNS = (".venv", ".git", "__pycache__", ".kilo", "node_modules", ".pytest_cache")
+CODE_EXTENSIONS = (".py", ".js", ".ts", ".jsx", ".tsx", ".css", ".html", ".kt", ".kts")
+IGNORED_PATTERNS = (".venv", ".git", "__pycache__", ".kilo", "node_modules", ".pytest_cache", "build", ".gradle")
 
 
 def normalize_file_path(path_str: str, base_dir: Optional[str] = None) -> Optional[str]:

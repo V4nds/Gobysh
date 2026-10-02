@@ -1,9 +1,9 @@
 ---
 name: goby-universal
-description: "Goby v5.0: Aggressive-autonomous AI quality framework. Auto-resolves ambiguous user intent, persists conversation memory across sessions, validates every code output, and enforces modern UI/UX standards. Supports Python, JavaScript, TypeScript, HTML, CSS."
+description: "Goby v5.1: Aggressive-autonomous AI quality framework. Auto-resolves ambiguous user intent, repository AST & dependency graph code mapping, persists conversation memory across sessions, validates every code output, and enforces modern UI/UX standards. Supports Python, JavaScript, TypeScript, Kotlin, HTML, CSS."
 ---
 
-# Goby v5.0 — Aggressive-Autonomous AI Quality Engine
+# Goby v5.1 — Aggressive-Autonomous AI Quality Engine
 
 ## 🚨 ACTIVATION: ALWAYS-ON (NOT OPTIONAL)
 
@@ -13,12 +13,13 @@ Goby activates **automatically** on every task. You do NOT wait for the user to 
 
 | When this happens... | You MUST do this... |
 |---------------------|---------------------|
-| User sends ANY request | Run `goby intent '<request>'` to resolve intent FIRST |
+| User sends ANY request | Run `goby intent '<request>' [--repo .]` to resolve intent FIRST |
 | Intent is ambiguous (ambiguity > 0.5) | Ask clarification questions from intent tree |
+| Querying codebase symbols & blast radius | Run `goby map '<query>' [--repo .]` to map impact |
 | About to start coding | Run `goby recall '<intent>'` to check past context |
 | After writing/editing ANY code file | Run `goby check <filepath>` to validate |
 | Error persists after 2 attempts | Run `goby recall` to check known fixes, halt naive retries |
-| Task is complete | Run `goby gate` + `python -m unittest discover tests/` |
+| Task is complete | Run `goby gate` + `./gradlew.bat test` (or `python -m unittest discover tests/`) |
 | Both gates pass | Run `goby save '<summary>' <type> [files...]` |
 
 ---
@@ -26,18 +27,20 @@ Goby activates **automatically** on every task. You do NOT wait for the user to 
 ## 🧠 Core Pipeline (Deterministic & Linear)
 
 ```
-User Request → Intent Resolver → Memory Recall → Code → Auto-Check → Gates → Save
+User Request → Intent Resolver (+ Code Map) → Memory Recall → Code → Auto-Check → Gates → Save
 ```
 
-1. **Intent Resolver** (`goby intent`): Parses abstract/ambiguous requests into structured intents. Bilingual (ID/EN). Auto-generates clarification questions when confidence is low.
+1. **Intent Resolver & Semantic Core** (`goby intent`): Parses abstract/ambiguous requests into structured intents and formal `SemanticIR`. Bilingual (ID/EN). Auto-generates clarification questions when confidence is low.
 
-2. **Conversation Memory** (`goby recall` / `goby save`): Persists context across sessions. Similar past problems are recalled instantly — no starting from zero.
+2. **Repository AST Scanner & Dependency Graph** (`goby map`): Scans Python, JS/TS, and Kotlin source files. Maps intent to concrete classes, functions, and files, and calculates upstream/downstream causal blast radius.
 
-3. **CCR Validation** (`goby check`): Deterministic AST & Scope validation (syntax, scope, cross-reference). Hard Gates block bad code. Soft Signals advise.
+3. **Conversation Memory** (`goby recall` / `goby save`): Persists context across sessions. Similar past problems are recalled instantly — no starting from zero.
 
-4. **LDE Loop Detection**: Detects repetitive failure cycles (>85% similarity) and forces strategy pivoting to prevent deadlocks.
+4. **CCR Validation** (`goby check`): Deterministic AST, Bracket & Scope validation (syntax, scope, cross-reference). Hard Gates block bad code. Soft Signals advise. Supports Python, JavaScript, TypeScript, and Kotlin.
 
-5. **Completion Gate & Persistence**: `goby gate` verifies zero unresolved errors, test runner validates logic, and `goby save` persists solution memory for future sessions.
+5. **LDE Loop Detection**: Detects repetitive failure cycles (>85% similarity) and forces strategy pivoting to prevent deadlocks.
+
+6. **Completion Gate & Persistence**: `goby gate` verifies zero unresolved errors, test runner validates logic, and `goby save` persists solution memory for future sessions.
 
 ---
 
@@ -60,20 +63,23 @@ If UI code looks static/outdated → HARD GATE BLOCKS output.
 
 ```bash
 # Core validation
-goby check <code|filepath>  # CCR validation (add -v for verbose)
+goby check <code|filepath>  # CCR validation (add -v for verbose, --intent '<text>' for alignment)
+goby verify '<code_string>' # Genuine pre-output in-memory verification
+goby evidence '<claim>' '<file>' # Generate machine-verifiable evidence contract
 goby gate                   # Unresolved Error Ledger — must exit 0
 goby audit                  # Full test suite
 
-# Intent & Memory (v5.0)
-goby intent '<text>'        # Parse user intent → structured JSON
-goby recall '<text>'        # Recall similar past conversations
-goby save '<summary>' <type> [files...]  # Save session context
-goby briefing               # Show past session summary
+# Intent, Semantic IR & Repository Code Mapping (v5.1)
+goby intent '<text>' [--repo <path>]  # Parse user intent + repository code mapping
+goby map '<query>' [--repo <path>]    # Map intent/query to repository symbols & blast radius
+goby recall '<text>'                  # Recall similar past conversations
+goby save '<summary>' <type> [files...] # Save session context
+goby briefing                         # Show past session summary
 
-# Tools
+# Tools & Infrastructure
 goby evolve                 # Self-evolution cycle (BFM metric)
 goby watch                  # Active file watcher with CCR
-goby install-hook           # Git pre-commit/pre-push hooks
+goby install-hook           # Git pre-commit/pre-push hooks & Antigravity hooks
 goby status                 # Framework status dashboard
 ```
 
@@ -87,3 +93,4 @@ goby status                 # Framework status dashboard
 4. **Auto-Check Always:** Every file write triggers `goby check`. No exceptions.
 5. **No Superficial Patches:** Fix root causes, not symptoms.
 6. **2-Strike Escalation:** 2 failed attempts → halt, escalate strategy (LDE/evolve).
+

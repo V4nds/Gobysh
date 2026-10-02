@@ -1,7 +1,7 @@
 """
 Repository Scanner for Gobysh v5.1.
 Deterministically scans source files and directories using standard Python ast
-and lightweight regex tokenizers for JavaScript/TypeScript.
+and lightweight regex tokenizers for JavaScript/TypeScript and Kotlin.
 """
 
 import ast
@@ -30,6 +30,8 @@ class RepositoryScanner:
             return cls._scan_python(norm_path, content)
         elif norm_path.endswith((".js", ".jsx", ".ts", ".tsx")):
             return cls._scan_javascript(norm_path, content)
+        elif norm_path.endswith((".kt", ".kts")):
+            return cls._scan_kotlin(norm_path, content)
         else:
             return FileSymbolMap(file_path=norm_path)
 
@@ -100,14 +102,12 @@ class RepositoryScanner:
         symbols: List[Symbol] = []
         imports: List[str] = []
 
-        # Imports: import ... from 'mod'; or require('mod')
         import_matches = re.finditer(r"""(?:import\s+.*?from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\))""", code)
         for m in import_matches:
             mod = m.group(1) or m.group(2)
             if mod:
                 imports.append(mod)
 
-        # Functions: function foo(...) or const foo = (...) =>
         fn_matches = re.finditer(r"""(?:function\s+([a-zA-Z0-9_$]+)\s*\(|const\s+([a-zA-Z0-9_$]+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>)""", code)
         for m in fn_matches:
             fname = m.group(1) or m.group(2)
@@ -117,7 +117,6 @@ class RepositoryScanner:
                     Symbol(name=fname, kind="function", file_path=file_path, line_start=lineno)
                 )
 
-        # Classes: class Foo
         cls_matches = re.finditer(r"""class\s+([a-zA-Z0-9_$]+)""", code)
         for m in cls_matches:
             cname = m.group(1)
@@ -129,14 +128,54 @@ class RepositoryScanner:
         return FileSymbolMap(file_path=file_path, symbols=symbols, imports=imports)
 
     @classmethod
-    def scan_directory(cls, dir_path: str, max_files: int = 100) -> SymbolMap:
+    def _scan_kotlin(cls, file_path: str, code: str) -> FileSymbolMap:
+        symbols: List[Symbol] = []
+        imports: List[str] = []
+
+        # Strip comments so words inside comments are not mistaken for declarations
+        code_without_comments = re.sub(r"/\*.*?\*/", lambda m: "\n" * m.group(0).count("\n"), code, flags=re.DOTALL)
+        code_without_comments = re.sub(r"//.*", "", code_without_comments)
+
+        # Imports: import package.name.Class
+        import_matches = re.finditer(r"""^\s*import\s+([a-zA-Z0-9_.*]+)""", code_without_comments, re.MULTILINE)
+        for m in import_matches:
+            mod = m.group(1).strip()
+            if mod:
+                imports.append(mod)
+
+        # Classes, Interfaces, Objects, Enums
+        cls_matches = re.finditer(r"""\b(?:data\s+class|enum\s+class|sealed\s+class|sealed\s+interface|class|interface|object)\s+([a-zA-Z0-9_]+)""", code_without_comments)
+        for m in cls_matches:
+            cname = m.group(1)
+            lineno = code[:m.start()].count("\n") + 1
+            symbols.append(
+                Symbol(name=cname, kind="class", file_path=file_path, line_start=lineno)
+            )
+
+        # Functions & Methods
+        fn_matches = re.finditer(r"""\b(?:fun|suspend\s+fun|override\s+fun)\s+(?:<[^>]+>\s+)?([a-zA-Z0-9_]+)\s*\(""", code_without_comments)
+        for m in fn_matches:
+            fname = m.group(1)
+            lineno = code[:m.start()].count("\n") + 1
+            symbols.append(
+                Symbol(name=fname, kind="function", file_path=file_path, line_start=lineno)
+            )
+
+        return FileSymbolMap(file_path=file_path, symbols=symbols, imports=imports)
+
+    @classmethod
+    def scan_directory(cls, dir_path: str, max_files: int = 500) -> SymbolMap:
         """Scan a directory for supported source files."""
         sym_map = SymbolMap()
         count = 0
-        exts = (".py", ".js", ".jsx", ".ts", ".tsx")
+        exts = (".py", ".js", ".jsx", ".ts", ".tsx", ".kt", ".kts")
+        ignored_dirs = {
+            ".git", ".venv", "node_modules", "__pycache__", ".kilo",
+            "build", ".gradle", "gradle", ".idea", "dist", "out", "bin"
+        }
 
         for root, dirs, files in os.walk(dir_path):
-            dirs[:] = [d for d in dirs if d not in (".git", ".venv", "node_modules", "__pycache__", ".kilo")]
+            dirs[:] = [d for d in dirs if d not in ignored_dirs]
             for f in sorted(files):
                 if f.endswith(exts):
                     full_p = os.path.join(root, f)

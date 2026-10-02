@@ -94,6 +94,38 @@ class SessionManager {
         self.assertIn("authenticateUser", names)
         self.assertIn("SessionManager", names)
 
+    def test_scan_kotlin_content(self):
+        kt_code = """
+package com.laserlevel.core.geometry
+
+import com.laserlevel.core.math.Vector3
+import kotlin.math.atan2
+
+data class AngleEngine(val tolerance: Double) {
+    fun calculateAngle(v1: Vector3, v2: Vector3): Double {
+        return 45.0
+    }
+}
+
+interface SensorObserver {
+    fun onUpdate()
+}
+
+object CalibrationProfileSerializer {
+    fun serialize(): String = "{}"
+}
+"""
+        fmap = RepositoryScanner.scan_file("AngleEngine.kt", content=kt_code)
+        self.assertEqual(fmap.file_path, "AngleEngine.kt")
+        self.assertIn("com.laserlevel.core.math.Vector3", fmap.imports)
+        self.assertIn("kotlin.math.atan2", fmap.imports)
+
+        names = [s.name for s in fmap.symbols]
+        self.assertIn("AngleEngine", names)
+        self.assertIn("calculateAngle", names)
+        self.assertIn("SensorObserver", names)
+        self.assertIn("CalibrationProfileSerializer", names)
+
 
 from core.semantics.dependency_graph import DependencyGraph
 

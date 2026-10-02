@@ -296,6 +296,137 @@ class CognitiveControlRoom:
         from .neurons.javascript import neuron_ts_syntax_check
         return neuron_ts_syntax_check(self, *args, **kwargs)
 
+    def neuron_kotlin_syntax_check(self, code: str) -> NeuronSignal:
+        """Deterministic bracket-balance and structural syntax check for Kotlin."""
+        stack = []
+        pairs = {')': '(', '}': '{', ']': '['}
+        lines = code.splitlines()
+
+        in_multiline_comment = False
+        in_multiline_string = False
+
+        for line_no, line in enumerate(lines, 1):
+            i = 0
+            n = len(line)
+            while i < n:
+                if in_multiline_comment:
+                    if line[i:i+2] == "*/":
+                        in_multiline_comment = False
+                        i += 2
+                    else:
+                        i += 1
+                    continue
+
+                if in_multiline_string:
+                    if line[i:i+3] == '"""':
+                        in_multiline_string = False
+                        i += 3
+                    else:
+                        i += 1
+                    continue
+
+                if line[i:i+2] == "//":
+                    break  # rest of line is comment
+                if line[i:i+2] == "/*":
+                    in_multiline_comment = True
+                    i += 2
+                    continue
+                if line[i:i+3] == '"""':
+                    in_multiline_string = True
+                    i += 3
+                    continue
+
+                ch = line[i]
+                if ch == '"':
+                    # Single-line string, skip to closing quote
+                    i += 1
+                    while i < n and line[i] != '"':
+                        if line[i] == '\\':
+                            i += 2
+                        else:
+                            i += 1
+                    if i < n:
+                        i += 1
+                    continue
+
+                if ch == "'":
+                    # Character literal
+                    i += 1
+                    while i < n and line[i] != "'":
+                        if line[i] == '\\':
+                            i += 2
+                        else:
+                            i += 1
+                    if i < n:
+                        i += 1
+                    continue
+
+                if ch in "({[":
+                    stack.append((ch, line_no))
+                elif ch in ")}]":
+                    if not stack:
+                        return NeuronSignal(
+                            neuron_name="SYNTAX_KT",
+                            gate_type=GateType.HARD,
+                            passed=False,
+                            confidence=1.0,
+                            message=f"Unmatched closing bracket '{ch}' at line {line_no}",
+                            evidence={"line": line_no, "char": ch},
+                            suggestion=f"Remove or pair the extra closing '{ch}'"
+                        )
+                    top, start_line = stack.pop()
+                    if top != pairs[ch]:
+                        return NeuronSignal(
+                            neuron_name="SYNTAX_KT",
+                            gate_type=GateType.HARD,
+                            passed=False,
+                            confidence=1.0,
+                            message=f"Mismatched bracket: opened '{top}' at line {start_line}, closed with '{ch}' at line {line_no}",
+                            evidence={"line": line_no, "opened": top, "closed": ch},
+                            suggestion="Ensure brackets are properly nested"
+                        )
+                i += 1
+
+        if in_multiline_comment:
+            return NeuronSignal(
+                neuron_name="SYNTAX_KT",
+                gate_type=GateType.HARD,
+                passed=False,
+                confidence=1.0,
+                message="Unterminated multiline comment '/* ... */'",
+                suggestion="Close multiline comment with '*/'"
+            )
+
+        if in_multiline_string:
+            return NeuronSignal(
+                neuron_name="SYNTAX_KT",
+                gate_type=GateType.HARD,
+                passed=False,
+                confidence=1.0,
+                message='Unterminated multiline string """ ... """',
+                suggestion='Close multiline string with """'
+            )
+
+        if stack:
+            unclosed, start_line = stack[-1]
+            return NeuronSignal(
+                neuron_name="SYNTAX_KT",
+                gate_type=GateType.HARD,
+                passed=False,
+                confidence=1.0,
+                message=f"Unclosed opening bracket '{unclosed}' at line {start_line}",
+                evidence={"line": start_line, "char": unclosed},
+                suggestion=f"Close bracket '{unclosed}'"
+            )
+
+        return NeuronSignal(
+            neuron_name="SYNTAX_KT",
+            gate_type=GateType.HARD,
+            passed=True,
+            confidence=1.0,
+            message="Kotlin syntax structure valid."
+        )
+
 
     # -----------------------------------------------------------------------
     # Neuron: Taste Design & Motion Synthesis (HARD/SOFT GATE)
@@ -586,6 +717,9 @@ class CognitiveControlRoom:
             syn = self.neuron_ts_syntax_check(code)
             signals.append(syn)
             signals.append(self.neuron_taste_design_check(code))
+        elif lang_lower in ("kt", "kotlin"):
+            syn = self.neuron_kotlin_syntax_check(code)
+            signals.append(syn)
         else:
             syn = self.neuron_syntax_check(code)
             signals.append(syn)

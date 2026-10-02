@@ -26,7 +26,7 @@ _CODE_MARKERS = (
     "console.", "window.", "document.", "print(", "int(", "str(", "list(",
 )
 
-_ALWAYS_CODE_EXTENSIONS = (".py", ".pyw", ".js", ".jsx", ".ts", ".tsx", ".css", ".html", ".json", ".yaml", ".yml", ".toml")
+_ALWAYS_CODE_EXTENSIONS = (".py", ".pyw", ".js", ".jsx", ".ts", ".tsx", ".kt", ".kts", ".css", ".html", ".json", ".yaml", ".yml", ".toml")
 
 
 def _looks_like_code(content: str) -> bool:
@@ -269,6 +269,9 @@ def validate_filepath(target_path: str, ccr: CognitiveControlRoom, memory: State
         if syn.passed:
             signals.append(ccr.neuron_scope_check(code))
             signals.append(ccr.neuron_taste_design_check(code))
+    elif target_path.endswith((".kt", ".kts")):
+        syn = ccr.neuron_kotlin_syntax_check(code)
+        signals.append(syn)
     else:
         # Default: if it's code, attempt syntax check
         syn = ccr.neuron_syntax_check(code)

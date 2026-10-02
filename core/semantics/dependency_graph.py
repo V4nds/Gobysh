@@ -31,7 +31,7 @@ class DependencyGraph:
                 norm_imp = imp.replace("\\", "/").strip().lstrip("./")
                 # Remove common extensions for base comparison
                 imp_base = norm_imp
-                for ext in (".py", ".js", ".ts", ".jsx", ".tsx"):
+                for ext in (".py", ".js", ".ts", ".jsx", ".tsx", ".kt", ".kts"):
                     if imp_base.endswith(ext):
                         imp_base = imp_base[:-len(ext)]
                         break
@@ -41,7 +41,7 @@ class DependencyGraph:
                 for target_path in sym_map.files:
                     norm_target = target_path.replace("\\", "/").strip().lstrip("./")
                     target_base = norm_target
-                    for ext in (".py", ".js", ".ts", ".jsx", ".tsx"):
+                    for ext in (".py", ".js", ".ts", ".jsx", ".tsx", ".kt", ".kts"):
                         if target_base.endswith(ext):
                             target_base = target_base[:-len(ext)]
                             break

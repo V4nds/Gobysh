@@ -167,7 +167,7 @@ _INTENT_PATTERNS: List[Tuple[str, float, List[str]]] = [
 
 # File extension patterns for auto-detecting target files
 _FILE_PATTERNS = re.compile(
-    r'[\w/\\.-]+\.(?:py|js|jsx|ts|tsx|css|html|json|yaml|yml|toml|md|sql)\b',
+    r'[\w/\\.-]+\.(?:py|js|jsx|ts|tsx|kt|kts|css|html|json|yaml|yml|toml|md|sql)\b',
     re.IGNORECASE,
 )
 
@@ -186,7 +186,7 @@ _AMBIGUITY_MARKERS_EN = [
 
 # Language detection
 _INDONESIAN_MARKERS = [
-    "aku", "saya", "tolong", "buat", "bikin", "tambah", "hapus", "perbaiki",
+    "aku", "saya", "tolong", "buat", "bikin", "tambah", "tambahkan", "fitur", "baru", "hapus", "perbaiki", "kalibrasi", "cek", "jalankan", "simpan", "kembali",
     "gimana", "kenapa", "apa", "ini", "itu", "yang", "dan", "atau",
     "jadi", "sudah", "belum", "mau", "ingin", "coba", "dong", "deh",
     "nih", "lah", "kan", "aja", "banget", "sekali",
