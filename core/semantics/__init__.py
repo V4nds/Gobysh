@@ -4,5 +4,6 @@ Formal Intermediate Representation, Semantic Specification, and Constraint Model
 """
 
 from .specification import Requirement, SemanticSpecification
+from .constraints import Constraint, ConstraintModel
 
-__all__ = ["Requirement", "SemanticSpecification"]
+__all__ = ["Requirement", "SemanticSpecification", "Constraint", "ConstraintModel"]
