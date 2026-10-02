@@ -69,4 +69,6 @@ spatial_test_map.json
 test_*.json
 .kilo/
 .superpowers/
+docs/superpowers/
+GOBYSH_ARCHITECTURE_CALIBRATION_SPEC.md
 

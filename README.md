@@ -214,7 +214,6 @@ Gobysh/
 │   └── neurons/                # Neuron modular CCR (Semantik ID/EN, Syntax, Scope, Taste)
 ├── demo/                       # Showcase Web UI interaktif
 ├── docs/                       # Dokumentasi arsitektur & panduan
-│   ├── superpowers/plans/      # Rencana eksekusi subagent SDD (Stages 1-3)
 │   └── adapters/               # Panduan integrasi IDE/CLI pihak ketiga:
 │       ├── antigravity.md      # Google Antigravity & Gemini IDE
 │       ├── claude.md           # Anthropic Claude Code
@@ -222,7 +221,6 @@ Gobysh/
 │       └── openai_codex.md     # OpenAI GPT-4o / Codex
 ├── tests/                      # Rangkaian 234 unit test komprehensif
 ├── AGENTS.md                   # Protokol Operasional Wajib bagi AI Agent
-├── GOBYSH_ARCHITECTURE_CALIBRATION_SPEC.md # Dokumen Spesifikasi Target Kalibrasi
 ├── pyproject.toml              # Konfigurasi paket Python standar
 ├── README.md                   # Dokumentasi publik resmi
 └── SKILL.md                    # Antigravity Skill Definition
