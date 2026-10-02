@@ -27,5 +27,37 @@ class TestPreservationContract(unittest.TestCase):
         self.assertEqual(restored.protected_behaviors, pc.protected_behaviors)
 
 
+from core.semantics.scope import ScopeNormalizer
+
+
+class TestScopeNormalizer(unittest.TestCase):
+    """Test suite for ScopeNormalizer path normalization and glob boundaries."""
+
+    def test_normalize_path(self):
+        self.assertEqual(ScopeNormalizer.normalize_path("core\\cli.py"), "core/cli.py")
+        self.assertEqual(ScopeNormalizer.normalize_path("./src/auth/"), "src/auth")
+        self.assertEqual(ScopeNormalizer.normalize_path("  /app/index.js  "), "app/index.js")
+
+    def test_is_in_scope_exact_and_directory(self):
+        scopes = ["core/", "tests/test_cli.py"]
+        self.assertTrue(ScopeNormalizer.is_in_scope("core/intent_resolver.py", scopes))
+        self.assertTrue(ScopeNormalizer.is_in_scope("tests/test_cli.py", scopes))
+        self.assertFalse(ScopeNormalizer.is_in_scope("benchmarks/sim.py", scopes))
+
+    def test_is_in_scope_glob_patterns(self):
+        scopes = ["core/**/*.py", "*.md"]
+        self.assertTrue(ScopeNormalizer.is_in_scope("core/semantics/specification.py", scopes))
+        self.assertTrue(ScopeNormalizer.is_in_scope("README.md", scopes))
+        self.assertFalse(ScopeNormalizer.is_in_scope("core/semantics/data.json", scopes))
+
+    def test_validate_file_targets_returns_violations(self):
+        targets = ["core/cli.py", "secret/passwords.txt"]
+        scopes = ["core/"]
+        violations = ScopeNormalizer.validate_file_targets(targets, scopes)
+        self.assertEqual(len(violations), 1)
+        self.assertIn("secret/passwords.txt", violations[0])
+
+
 if __name__ == "__main__":
     unittest.main()
+

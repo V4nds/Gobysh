@@ -7,6 +7,7 @@ from .specification import Requirement, SemanticSpecification
 from .constraints import Constraint, ConstraintModel
 from .intermediate_representation import SemanticEntity, SemanticIR
 from .preservation import PreservationContract
+from .scope import ScopeNormalizer
 
 __all__ = [
     "Requirement",
@@ -16,4 +17,5 @@ __all__ = [
     "SemanticEntity",
     "SemanticIR",
     "PreservationContract",
+    "ScopeNormalizer",
 ]
