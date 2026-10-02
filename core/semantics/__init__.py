@@ -9,6 +9,7 @@ from .intermediate_representation import SemanticEntity, SemanticIR
 from .preservation import PreservationContract
 from .scope import ScopeNormalizer
 from .negation import NegationHandler, NegationResult
+from .contract_validator import ContractValidator, ValidationResult
 
 __all__ = [
     "Requirement",
@@ -21,4 +22,6 @@ __all__ = [
     "ScopeNormalizer",
     "NegationHandler",
     "NegationResult",
+    "ContractValidator",
+    "ValidationResult",
 ]

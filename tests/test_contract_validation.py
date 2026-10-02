@@ -83,7 +83,56 @@ class TestNegationHandler(unittest.TestCase):
         self.assertTrue(res.preserve_demanded)
 
 
+from core.semantics.contract_validator import ContractValidator, ValidationResult
+from core.semantics.intermediate_representation import SemanticIR
+from core.semantics.specification import SemanticSpecification, Requirement
+from core.semantics.constraints import ConstraintModel
+
+
+class TestContractValidator(unittest.TestCase):
+    """Test suite for ContractValidator."""
+
+    def test_valid_contract_passes(self):
+        spec = SemanticSpecification(id="S1", raw_prompt="add foo", requirements=[Requirement(id="R1", description="add foo")])
+        ir = SemanticIR(
+            specification=spec,
+            intent={"action": "create_feature", "target": "core/foo.py"},
+            constraints=ConstraintModel(),
+        )
+        validator = ContractValidator()
+        res = validator.validate(ir)
+        self.assertTrue(res.valid)
+        self.assertEqual(len(res.errors), 0)
+
+    def test_contradiction_fails_validation(self):
+        spec = SemanticSpecification(id="S1", raw_prompt="add foo", requirements=[Requirement(id="R1", description="add foo")])
+        ir = SemanticIR(
+            specification=spec,
+            intent={"action": "create_feature", "target": "config.py"},
+            constraints=ConstraintModel(forbidden_targets=["config.py"]),
+            contradictions=["File config.py is forbidden"],
+        )
+        validator = ContractValidator()
+        res = validator.validate(ir)
+        self.assertFalse(res.valid)
+        self.assertEqual(res.severity, "HARD")
+        self.assertGreater(len(res.errors), 0)
+
+    def test_strict_scope_violation_fails_validation(self):
+        spec = SemanticSpecification(id="S1", raw_prompt="add foo", requirements=[Requirement(id="R1", description="add foo", target_entities=["secret/key.pem"])])
+        ir = SemanticIR(
+            specification=spec,
+            intent={"action": "modify", "target": "secret/key.pem"},
+            constraints=ConstraintModel(strict_scope=["core/"]),
+        )
+        validator = ContractValidator()
+        res = validator.validate(ir)
+        self.assertFalse(res.valid)
+        self.assertTrue(any("SCOPE_VIOLATION" in err for err in res.errors))
+
+
 if __name__ == "__main__":
     unittest.main()
+
 
 
