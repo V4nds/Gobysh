@@ -42,5 +42,59 @@ class TestSymbolMapper(unittest.TestCase):
         self.assertEqual(len(auth_syms), 2)
 
 
+from core.translation.scanner import RepositoryScanner
+
+
+class TestRepositoryScanner(unittest.TestCase):
+    """Test suite for RepositoryScanner parsing Python and JS/TS code."""
+
+    def test_scan_python_content(self):
+        py_code = """
+import os
+from math import sqrt
+
+class Calculator:
+    \"\"\"Performs basic calculations.\"\"\"
+    def add(self, a, b):
+        return a + b
+
+def multiply(x, y):
+    \"\"\"Multiplies two numbers.\"\"\"
+    return x * y
+"""
+        fmap = RepositoryScanner.scan_file("calc.py", content=py_code)
+        self.assertEqual(fmap.file_path, "calc.py")
+        self.assertIn("os", fmap.imports)
+        self.assertIn("math.sqrt", fmap.imports)
+
+        names = [s.name for s in fmap.symbols]
+        self.assertIn("Calculator", names)
+        self.assertIn("Calculator.add", names)
+        self.assertIn("multiply", names)
+
+    def test_scan_javascript_content(self):
+        js_code = """
+import { useState } from 'react';
+const API_URL = "http://localhost:3000";
+
+function authenticateUser(username, password) {
+    return true;
+}
+
+class SessionManager {
+    logout() {
+        console.log("Logged out");
+    }
+}
+"""
+        fmap = RepositoryScanner.scan_file("auth.js", content=js_code)
+        self.assertEqual(fmap.file_path, "auth.js")
+        self.assertIn("react", fmap.imports)
+        names = [s.name for s in fmap.symbols]
+        self.assertIn("authenticateUser", names)
+        self.assertIn("SessionManager", names)
+
+
 if __name__ == "__main__":
     unittest.main()
+

@@ -4,5 +4,6 @@ Maps high-level semantic intent and constraints into concrete files, symbols, an
 """
 
 from .symbol_mapper import Symbol, FileSymbolMap, SymbolMap
+from .scanner import RepositoryScanner
 
-__all__ = ["Symbol", "FileSymbolMap", "SymbolMap"]
+__all__ = ["Symbol", "FileSymbolMap", "SymbolMap", "RepositoryScanner"]
