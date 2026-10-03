@@ -1,4 +1,4 @@
-# AGENTS.md — Goby v5.0 Aggressive-Autonomous Protocol
+# AGENTS.md — Goby v5.2 Context Architecture & Dialectical Protocol
 
 > [!CAUTION]
 > # 🚨 THIS IS NOT OPTIONAL — IT IS YOUR OPERATING SYSTEM 🚨
@@ -19,6 +19,13 @@ goby intent '<user_request_text>'
 **IF** `clarification_needed: true` → Ask the user the suggested questions BEFORE writing code.  
 **IF** `ambiguity_score > 0.5` → Explicitly state your interpretation and ask for confirmation.  
 **NEVER** guess what the user wants when their request is abstract or ambiguous.
+
+### ⚔️ DIALECTICAL SPARRING (Anti-Sycophancy Rule)
+- Pada fase ideation, perumusan plan, atau desain arsitektur, **DILARANG MENJADI YES-MAN**.
+- Jika output `goby intent` memunculkan `[DIALECTICAL SPARRING - ANTI-SYCOPHANCY ALERT]`:
+  1. Anda **WAJIB** meninjau *naive assumptions* dan *trade-offs* yang terdeteksi.
+  2. Sajikan minimal 1 kritik konstruktif atau alternatif dengan *higher leverage* (counter-vector).
+  3. Jangan tergesa-gesa mengiyakan solusi klise/boilerplate tanpa menguji blindspots.
 
 ---
 
@@ -55,6 +62,9 @@ goby recall '<intent_summary>'
 1. **No Superficial Patches:** Never wrap logic in silent `try/except` blocks, return empty fallback objects, or delete failing assertions. Fix the true root cause.
 2. **Decompose Complex Tasks:** Break into independent sub-tasks. Don't rush to write messy monolithic code.
 3. **Preserve Existing Behavior:** Don't break things that already work. Check imports, function signatures, and test assertions.
+4. **Anti-Boxification (Visual Density Governor):** Jangan memaksakan semua nilai, simbol, dan teks penjelasan masuk ke dalam frame box/card klise. Gunakan layout CSS native, semantic HTML (`<output>`, `<meter>`, `<dl>`), atau HUD kontekstual.
+5. **Anti-Collision (Single Source of Truth):** Pastikan kapabilitas/kontrol tidak diduplikasi di tempat lain (*double fitur bocor*). Verifikasi topologi komponen sebelum membuat kontrol baru.
+
 
 ---
 

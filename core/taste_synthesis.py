@@ -80,3 +80,71 @@ class ModernCSSKeywordHeuristic:
             detected_keywords=detected_keywords,
             bypass_suggestion=bypass_suggestion
         )
+
+
+@dataclasses.dataclass
+class DensityEvaluation:
+    """Evaluation result of the Visual Density & Anti-Boxification Governor."""
+    is_over_encapsulated: bool
+    boxification_score: int
+    wrapper_depth: int
+    detected_anti_patterns: List[str]
+    suggestion: str
+
+
+class VisualDensityGovernor:
+    """
+    Evaluates UI markup for over-encapsulation (boxification) and information density.
+    Prevents AI models from forcing all telemetry, symbols, and explanatory text into
+    rigid nested card/box components instead of clean, contextual layouts.
+    """
+
+    BOX_CONTAINER_PATTERNS = [
+        r'class(?:name)?=["\'][^"\']*\b(?:card|box|frame|panel|widget|bento-card|tile)\b[^"\']*["\']',
+        r'class(?:name)?=["\'][^"\']*\b(?:p-[0-9]+|rounded-[a-z0-9]+|shadow-[a-z0-9]+|border)\b[^"\']*["\']',
+    ]
+
+    @classmethod
+    def evaluate(cls, code: str) -> DensityEvaluation:
+        import re
+        code_lower = code.lower()
+        anti_patterns = []
+        boxification_score = 0
+
+        # Check for generic container nesting
+        div_openings = len(re.findall(r'<div\b', code_lower))
+        semantic_tags = len(re.findall(r'<(?:header|main|nav|aside|footer|output|meter|canvas|svg|table|ul|ol|li)\b', code_lower))
+
+        if div_openings >= 5 and semantic_tags == 0:
+            anti_patterns.append("Excessive generic div containers without semantic layout elements.")
+            boxification_score += 2
+
+        # Check for isolated single-value cards
+        single_val_card_pat = r'<div[^>]*class(?:name)?=["\'][^"\']*\bcard\b[^"\']*["\'][^>]*>\s*<p[^>]*>[^<]+</p>\s*<(?:span|h[1-6]|p)[^>]*>[^<]+</(?:span|h[1-6]|p)>\s*</div>'
+        single_val_cards = len(re.findall(single_val_card_pat, code_lower))
+        if single_val_cards >= 3:
+            anti_patterns.append(f"Detected {single_val_cards} isolated single-value cards. Use an integrated telemetry HUD or clean data-list.")
+            boxification_score += 3
+
+        # Deeply nested container wrappers without content
+        nested_div_pat = r'<div[^>]*>\s*<div[^>]*>\s*<div[^>]*>\s*<div[^>]*>'
+        if re.search(nested_div_pat, code_lower):
+            anti_patterns.append("Deeply nested container wrappers (> 3 levels) detected.")
+            boxification_score += 3
+
+        is_over_encapsulated = boxification_score >= 3
+        suggestion = ""
+        if is_over_encapsulated:
+            suggestion = (
+                "Anti-Boxification Guardrail: Avoid wrapping every individual symbol or label into nested card/frame boxes. "
+                "Use contextual inline HUDs, direct CSS Grid/Flex layouts, and semantic HTML elements (<output>, <meter>, <dl>)."
+            )
+
+        return DensityEvaluation(
+            is_over_encapsulated=is_over_encapsulated,
+            boxification_score=boxification_score,
+            wrapper_depth=div_openings,
+            detected_anti_patterns=anti_patterns,
+            suggestion=suggestion,
+        )
+

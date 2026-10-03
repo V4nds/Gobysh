@@ -14,7 +14,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-from core.semantics.specification import Requirement, SemanticSpecification
+from core.semantics.specification import Requirement, SemanticSpecification, DialecticalContract
 from core.semantics.constraints import ConstraintModel
 from core.semantics.intermediate_representation import SemanticEntity, SemanticIR
 from core.semantics.preservation import PreservationContract
@@ -75,6 +75,7 @@ class IntentTree:
     semantic_contract: SemanticContract = field(default_factory=SemanticContract)
     semantic_ir: Optional[SemanticIR] = None
     code_mapping: Optional[MappingReport] = None
+    dialectical_contract: Optional[DialecticalContract] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -101,7 +102,9 @@ class IntentTree:
             "semantic_contract": self.semantic_contract.to_dict(),
             "semantic_ir": self.semantic_ir.to_dict() if self.semantic_ir else None,
             "code_mapping": self.code_mapping.to_dict() if self.code_mapping else None,
+            "dialectical_contract": self.dialectical_contract.to_dict() if self.dialectical_contract else None,
         }
+
 
 
 
@@ -306,11 +309,20 @@ class IntentResolver:
                 )
             )
 
+        # Step 6.5: Dialectical evaluation (Anti-Sycophancy)
+        dialectical_contract = self._evaluate_dialectical_sparring(
+            text=text,
+            text_lower=text_lower,
+            primary=primary,
+            lang=detected_lang,
+        )
+
         spec = SemanticSpecification(
             id=f"SPEC-{abs(hash(text)) % 1000000:06d}",
             language=detected_lang,
             raw_prompt=text,
             requirements=spec_reqs,
+            dialectical_contract=dialectical_contract,
         )
 
         entities = [
@@ -402,6 +414,7 @@ class IntentResolver:
             semantic_contract=semantic_contract,
             semantic_ir=semantic_ir,
             code_mapping=code_mapping,
+            dialectical_contract=dialectical_contract,
         )
 
     # -------------------------------------------------------------------
@@ -658,3 +671,74 @@ class IntentResolver:
             )
 
         return questions[:3]  # Max 3 questions
+
+    def _evaluate_dialectical_sparring(
+        self, text: str, text_lower: str, primary: IntentNode, lang: str
+    ) -> DialecticalContract:
+        """
+        Anti-Sycophancy & Dialectical Sparring Engine.
+        Critically evaluates planning/architecture intents to prevent premature agreement,
+        blindspot omissions, and deterministic boilerplate traps.
+        """
+        is_id = lang in ("id", "mixed")
+        naive_assumptions: List[str] = []
+        tradeoffs: List[str] = []
+        counter_vector: str = ""
+        anti_template = False
+        is_sycophantic = False
+
+        task = primary.task_type
+        if task in ("create_feature", "design_ui", "refactor"):
+            # Check for sycophancy risk: blindly executing without considering trade-offs
+            if not any(w in text_lower for w in ["tradeoff", "risiko", "risk", "alternatif", "alternative", "evaluasi"]):
+                is_sycophantic = True
+                naive_assumptions.append(
+                    "Diasumsikan pendekatan yang diminta langsung dieksekusi tanpa menguji kompromi arsitektural atau blindspots."
+                    if is_id else
+                    "Assumes requested approach is immediately executed without stress-testing architectural trade-offs or blindspots."
+                )
+
+            # UI-specific anti-boxification & anti-template checks
+            if task == "design_ui":
+                anti_template = True
+                tradeoffs.append(
+                    "Risiko over-encapsulation (boxification) di mana teks dan simbol dipaksa masuk ke card containers klise."
+                    if is_id else
+                    "Risk of over-encapsulation (boxification) where symbols/text are forced into generic card containers."
+                )
+                counter_vector = (
+                    "Gunakan integrasi HUD kontekstual, arsitektur slot terarah, atau layout CSS native daripada membungkus semua nilai dalam box/card."
+                    if is_id else
+                    "Use contextual inline HUDs, slot-based layouts, or native CSS rather than wrapping every value into cards."
+                )
+            elif task == "create_feature":
+                tradeoffs.append(
+                    "Risiko duplikasi fitur (double fitur bocor) pada komponen atau permukaan layout yang berbeda."
+                    if is_id else
+                    "Risk of feature duplication (leaked redundant controls) across disparate layout components."
+                )
+                counter_vector = (
+                    "Verifikasi ComponentCapabilityRegistry sebelum membuat kontrol baru untuk memastikan Single Source of Truth."
+                    if is_id else
+                    "Verify ComponentCapabilityRegistry before mounting new controls to ensure Single Source of Truth."
+                )
+            elif task == "refactor":
+                tradeoffs.append(
+                    "Risiko regresi fungsional atau breaking changes tersembunyi pada consumer API lama."
+                    if is_id else
+                    "Risk of hidden functional regressions or API contract breaking changes on existing consumers."
+                )
+                counter_vector = (
+                    "Terapkan PreservationContract ketat dan verifikasi AST signature sebelum refactoring."
+                    if is_id else
+                    "Enforce strict PreservationContract and AST signature verification prior to refactoring."
+                )
+
+        return DialecticalContract(
+            naive_assumptions=naive_assumptions,
+            tradeoffs_identified=tradeoffs,
+            counter_vector=counter_vector,
+            anti_template_flag=anti_template,
+            is_sycophantic=is_sycophantic,
+        )
+

@@ -575,6 +575,14 @@ def main():
             print("\n[GOBY INTENT] [!] Contradictions detected:")
             for c in intent_tree.semantic_contract.contradictions:
                 print(f"  -> {c}")
+        if intent_tree.dialectical_contract and intent_tree.dialectical_contract.is_sycophantic:
+            print("\n[GOBY INTENT] [DIALECTICAL SPARRING - ANTI-SYCOPHANCY ALERT]:")
+            for a in intent_tree.dialectical_contract.naive_assumptions:
+                print(f"  [Naive Assumption] {a}")
+            for t in intent_tree.dialectical_contract.tradeoffs_identified:
+                print(f"  [Trade-off/Risk]   {t}")
+            if intent_tree.dialectical_contract.counter_vector:
+                print(f"  [Counter-Vector]   {intent_tree.dialectical_contract.counter_vector}")
         if intent_tree.clarification_needed:
             print("\n[GOBY INTENT] [!] Clarification needed:")
             for q in intent_tree.clarification_questions:

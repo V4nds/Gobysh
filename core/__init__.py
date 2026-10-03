@@ -117,9 +117,16 @@ def __getattr__(name: str):
         "SynthesisResult":       (".omni_synthesis", "SynthesisResult"),
         "SelfEvolutionEngine":   (".evolution_loop", "SelfEvolutionEngine"),
         
-        # Taste Synthesis (Right Brain)
+        # Taste Synthesis & Anti-Boxification Governor
         "ModernCSSKeywordHeuristic":  (".taste_synthesis", "ModernCSSKeywordHeuristic"),
         "HeuristicEvaluation":       (".taste_synthesis", "HeuristicEvaluation"),
+        "VisualDensityGovernor":     (".taste_synthesis", "VisualDensityGovernor"),
+        "DensityEvaluation":         (".taste_synthesis", "DensityEvaluation"),
+
+        # v5.2.0 Dialectical Contract & Capability Registry
+        "ComponentCapabilityRegistry": (".semantics.capability_registry", "ComponentCapabilityRegistry"),
+        "CapabilityEntry":             (".semantics.capability_registry", "CapabilityEntry"),
+        "DialecticalContract":         (".semantics.specification", "DialecticalContract"),
 
         # v5.0.0 Intent Resolver & Conversation Memory
         "IntentResolver":          (".intent_resolver", "IntentResolver"),

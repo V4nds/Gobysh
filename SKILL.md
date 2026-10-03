@@ -44,18 +44,13 @@ User Request → Intent Resolver (+ Code Map) → Memory Recall → Code → Aut
 
 ---
 
-## 🎨 Design DNA (Auto-Enforced for UI Tasks)
+## 🎨 Design Guardrails & Visual Density (v5.2)
 
-When the task involves UI/UX, Goby's `neuron_taste_design_check` HARD GATE auto-enforces:
+Goby bertindak sebagai **Pengaman (Guardrail) & Manajemen Konteks**, bukan mandor gaya preskriptif:
+- **Anti-Boxification (Visual Density Governor):** Mencegah over-encapsulation di mana teks, angka telemetri, dan simbol dipaksa masuk ke nested card boxes. Mendukung layout CSS native yang bersih, semantic HTML (`<output>`, `<meter>`, `<dl>`), dan HUD contextual.
+- **Anti-Collision Engine (ComponentCapabilityRegistry):** Mencegah duplikasi fitur (*double fitur bocor*) di mana kontrol yang sama dibuat berulang di permukaan layout berbeda.
+- **Respect User Design Tokens:** Mengutamakan konsistensi token/gaya proyek pengguna, bukan memaksakan keyword template klise.
 
-- **Modern typography** (Inter/Roboto, not browser defaults)
-- **Premium color palettes** (HSL-curated, not plain red/blue/green)
-- **Glassmorphism, gradients, layered shadows**
-- **Micro-animations** (hover, click, transitions — not static)
-- **GSAP/scroll-driven animations** over basic CSS
-- **Fluid typography** (`clamp()`), Bento grid layouts
-
-If UI code looks static/outdated → HARD GATE BLOCKS output.
 
 ---
 

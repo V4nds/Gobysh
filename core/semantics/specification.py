@@ -44,6 +44,35 @@ class Requirement:
 
 
 @dataclass
+class DialecticalContract:
+    """First-class formal contract to combat sycophancy & deterministic ruts during ideation/planning."""
+    naive_assumptions: List[str] = field(default_factory=list)
+    tradeoffs_identified: List[str] = field(default_factory=list)
+    counter_vector: str = ""
+    anti_template_flag: bool = False
+    is_sycophantic: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "naive_assumptions": list(self.naive_assumptions),
+            "tradeoffs_identified": list(self.tradeoffs_identified),
+            "counter_vector": self.counter_vector,
+            "anti_template_flag": self.anti_template_flag,
+            "is_sycophantic": self.is_sycophantic,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DialecticalContract":
+        return cls(
+            naive_assumptions=list(data.get("naive_assumptions", [])),
+            tradeoffs_identified=list(data.get("tradeoffs_identified", [])),
+            counter_vector=data.get("counter_vector", ""),
+            anti_template_flag=bool(data.get("anti_template_flag", False)),
+            is_sycophantic=bool(data.get("is_sycophantic", False)),
+        )
+
+
+@dataclass
 class SemanticSpecification:
     """Formal semantic specification encapsulating all atomic requirements."""
     id: str
@@ -51,6 +80,7 @@ class SemanticSpecification:
     raw_prompt: str = ""
     requirements: List[Requirement] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    dialectical_contract: "DialecticalContract" = field(default_factory=DialecticalContract)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -59,6 +89,7 @@ class SemanticSpecification:
             "raw_prompt": self.raw_prompt,
             "requirements": [req.to_dict() for req in self.requirements],
             "metadata": self.metadata,
+            "dialectical_contract": self.dialectical_contract.to_dict() if self.dialectical_contract else None,
         }
 
     @classmethod
@@ -67,10 +98,14 @@ class SemanticSpecification:
             Requirement.from_dict(r) if isinstance(r, dict) else r
             for r in data.get("requirements", [])
         ]
+        dia = data.get("dialectical_contract")
+        dia_contract = DialecticalContract.from_dict(dia) if isinstance(dia, dict) else DialecticalContract()
         return cls(
             id=data.get("id", str(uuid.uuid4())[:8]),
             language=data.get("language", "unknown"),
             raw_prompt=data.get("raw_prompt", ""),
             requirements=reqs,
             metadata=data.get("metadata", {}),
+            dialectical_contract=dia_contract,
         )
+
