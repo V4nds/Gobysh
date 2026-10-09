@@ -70,7 +70,8 @@ def _report_signals(ccr, signals, verbose: bool = False) -> bool:
 
     def render(sig):
         status = "PASS" if sig.passed else "FAIL"
-        print(f"  [{sig.neuron_name}] {status}{_neuron_location(sig)} - {sig.message}")
+        gate_badge = f" [{sig.gate_type.value} GATE]" if not sig.passed else ""
+        print(f"  [{sig.neuron_name}]{gate_badge} {status}{_neuron_location(sig)} - {sig.message}")
         if not sig.passed and sig.suggestion:
             print(f"     Hint: {sig.suggestion}")
 
@@ -269,6 +270,7 @@ def validate_filepath(target_path: str, ccr: CognitiveControlRoom, memory: State
         if syn.passed:
             signals.append(ccr.neuron_scope_check(code))
             signals.append(ccr.neuron_taste_design_check(code))
+            signals.append(ccr.neuron_architectural_depth(code, target_path, escalate_hard_gate=True))
     elif target_path.endswith((".kt", ".kts")):
         syn = ccr.neuron_kotlin_syntax_check(code)
         signals.append(syn)
@@ -300,6 +302,177 @@ def validate_filepath(target_path: str, ccr: CognitiveControlRoom, memory: State
         )
 
     return passed
+
+
+def generate_architecture_report(
+    metrics_list: List[Any],
+    output_path: Optional[str] = None
+) -> str:
+    """
+    Generates a self-contained visual HTML report of codebase architectural depth
+    and deepening opportunities, honoring Matt Pocock's improve-codebase-architecture design.
+    """
+    import tempfile
+    if not output_path:
+        ts = time.strftime("%Y%m%d-%H%M%S")
+        output_path = os.path.join(tempfile.gettempdir(), f"architecture-review-{ts}.html")
+
+    deep_count = sum(1 for m in metrics_list if m.classification == "DEEP")
+    balanced_count = sum(1 for m in metrics_list if m.classification == "BALANCED")
+    shallow_count = sum(1 for m in metrics_list if m.classification == "SHALLOW")
+    avg_mdi = round(sum(m.mdi_score for m in metrics_list) / max(1, len(metrics_list)), 2)
+
+    cards_html = []
+    for m in metrics_list:
+        badge_color = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" if m.classification == "DEEP" else (
+            "bg-amber-500/10 text-amber-400 border-amber-500/20" if m.classification == "BALANCED" else
+            "bg-rose-500/10 text-rose-400 border-rose-500/20"
+        )
+        recommendation_badge = "Deep / Optimal" if m.classification == "DEEP" else (
+            "Worth Exploring" if m.classification == "BALANCED" else "Strong Refactoring Opportunity"
+        )
+
+        anti_patterns_html = ""
+        if m.anti_patterns:
+            items = "".join(f"<li class='text-xs text-rose-300 font-mono'>• [{ap.get('type')}] {ap.get('details')}</li>" for ap in m.anti_patterns)
+            anti_patterns_html = f"""
+            <div class="mt-3 p-3 rounded bg-rose-950/20 border border-rose-900/30">
+                <span class="text-xs font-semibold text-rose-400 uppercase tracking-wider">Detected Architectural Friction:</span>
+                <ul class="mt-1 space-y-1">{items}</ul>
+            </div>
+            """
+
+        clean_mod = re.sub(r'[^a-zA-Z0-9_]', '_', m.module_name)
+        before_diagram = f"""graph TD
+    Client["Caller / Client"] -->|Surface: {m.surface_area}| {clean_mod}["{m.module_name}"]
+    {clean_mod} -.->|Pass-through| Inner["Dependencies"]
+"""
+        after_diagram = f"""graph TD
+    Client["Caller / Client"] -->|Compact Interface| {clean_mod}["{m.module_name} (Deep Seam)"]
+    subgraph Encapsulated ["Hidden Domain Logic"]
+        Logic["Rich Business Invariants"]
+        Storage["Private Cache / State"]
+    end
+    {clean_mod} --> Logic
+    Logic --> Storage
+"""
+
+        card = f"""
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-6 shadow-xl backdrop-blur-sm">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-100 font-mono">{m.file_path}</h3>
+                    <span class="text-xs text-slate-400">Module: {m.module_name}</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold border {badge_color}">
+                        {m.classification} (MDI: {m.mdi_score})
+                    </span>
+                    <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                        {recommendation_badge}
+                    </span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div class="bg-slate-950/60 p-4 rounded-lg border border-slate-800/80">
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Metrics Anatomy</h4>
+                    <div class="space-y-1.5 text-xs text-slate-300">
+                        <div class="flex justify-between"><span>Interface Surface (S_int):</span><span class="font-mono text-cyan-400">{m.surface_area}</span></div>
+                        <div class="flex justify-between"><span>Implementation Volume (V_impl):</span><span class="font-mono text-indigo-400">{m.implementation_volume}</span></div>
+                        <div class="flex justify-between"><span>Public Methods:</span><span class="font-mono">{m.details.get('public_methods', 0)}</span></div>
+                        <div class="flex justify-between"><span>Internal Statements:</span><span class="font-mono">{m.details.get('total_statements', 0)}</span></div>
+                        <div class="flex justify-between"><span>Cyclomatic Complexity:</span><span class="font-mono">{m.details.get('cyclomatic_complexity', 1)}</span></div>
+                    </div>
+                    {anti_patterns_html}
+                </div>
+
+                <div class="bg-slate-950/60 p-4 rounded-lg border border-slate-800/80">
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Seam Visualization (Before / After)</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
+                        <div>
+                            <span class="text-slate-400 block mb-1 text-center font-semibold">Current State</span>
+                            <pre class="mermaid">{before_diagram}</pre>
+                        </div>
+                        <div>
+                            <span class="text-emerald-400 block mb-1 text-center font-semibold">Deepened Target</span>
+                            <pre class="mermaid">{after_diagram}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """
+        cards_html.append(card)
+
+    cards_joined = "\n".join(cards_html)
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goby Architecture Review — Deep Modules Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({{ startOnLoad: true, theme: 'dark' }});
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen py-10 px-4 sm:px-8 font-sans">
+    <div class="max-w-6xl mx-auto space-y-8">
+        <header class="border-b border-slate-800 pb-6">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">GOBY v5.3</span>
+                <span class="text-xs text-slate-400">Dialectical Synthesis Engine</span>
+            </div>
+            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400">
+                Goby Architecture Review — Deep Modules Report
+            </h1>
+            <p class="text-sm text-slate-400 mt-2">
+                Mechanical architectural telemetry based on John Ousterhout's <em>A Philosophy of Software Design</em>.
+                Measures leverage (V_impl / S_int), seam clarity, and anti-patterns.
+            </p>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6">
+                <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center">
+                    <div class="text-xl font-bold text-slate-100 font-mono">{len(metrics_list)}</div>
+                    <div class="text-xs text-slate-400">Modules Scanned</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center">
+                    <div class="text-xl font-bold text-cyan-400 font-mono">{avg_mdi}</div>
+                    <div class="text-xs text-slate-400">Average MDI</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center">
+                    <div class="text-xl font-bold text-emerald-400 font-mono">{deep_count}</div>
+                    <div class="text-xs text-slate-400">Deep Modules</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center">
+                    <div class="text-xl font-bold text-amber-400 font-mono">{balanced_count}</div>
+                    <div class="text-xs text-slate-400">Balanced</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center">
+                    <div class="text-xl font-bold text-rose-400 font-mono">{shallow_count}</div>
+                    <div class="text-xs text-slate-400">Shallow (Friction)</div>
+                </div>
+            </div>
+        </header>
+
+        <main class="space-y-6">
+            <h2 class="text-lg font-bold text-slate-200">Module Deepening Telemetry</h2>
+            {cards_joined}
+        </main>
+
+        <footer class="pt-8 border-t border-slate-900 text-center text-xs text-slate-500">
+            Generated autonomously by Goby Meta-Cognitive Quality Framework • Ground of Being Preserved
+        </footer>
+    </div>
+</body>
+</html>
+"""
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+    return output_path
 
 
 def show_status():
@@ -367,7 +540,9 @@ def main():
         print("  goby status        Show framework installation & memory status")
         print("  goby gate          Check Unresolved Error Ledger (must exit 0 before claiming done)")
         print("  goby intent <text> [--repo <path>] Parse user intent -> structured JSON (bilingual)")
+        print("  goby spar '<ai_proposal>' [--intent '<text>'] Audit AI cognitive thinking/proposal against dialectical mandate")
         print("  goby map <query> [--repo <path>]   Map intent/query to repository symbols and blast radius")
+        print("  goby deepen [file|dir] [--report] [--verbose] Analyze architectural depth & leverage (Ousterhout's Deep Modules)")
         print("  goby recall <text> Recall similar past conversations from memory")
         print("  goby save '<summary>' <type> Save current session context to conversation memory")
         print("  goby briefing      Show auto-generated session briefing from memory")
@@ -576,9 +751,9 @@ def main():
             for c in intent_tree.semantic_contract.contradictions:
                 print(f"  -> {c}")
         if intent_tree.dialectical_contract and intent_tree.dialectical_contract.is_sycophantic:
-            print("\n[GOBY INTENT] [DIALECTICAL SPARRING - ANTI-SYCOPHANCY ALERT]:")
+            print("\n[GOBY INTENT] [DIALECTICAL MANDATE - COGNITIVE GUARDRAILS FOR AI]:")
             for a in intent_tree.dialectical_contract.naive_assumptions:
-                print(f"  [Naive Assumption] {a}")
+                print(f"  [AI Mandate]       {a}")
             for t in intent_tree.dialectical_contract.tradeoffs_identified:
                 print(f"  [Trade-off/Risk]   {t}")
             if intent_tree.dialectical_contract.counter_vector:
@@ -589,6 +764,40 @@ def main():
                 print(f"  -> {q}")
             sys.exit(1)
         sys.exit(0)
+
+    elif cmd == "spar":
+        if len(args) < 2:
+            print("Error: Usage: goby spar '<ai_proposal_text>' [--intent '<user_intent_text>']")
+            sys.exit(1)
+        intent_text = None
+        proposal_words = []
+        i = 1
+        while i < len(args):
+            if args[i] == "--intent" and i + 1 < len(args):
+                intent_text = args[i + 1]
+                i += 2
+            else:
+                proposal_words.append(args[i])
+                i += 1
+        proposal_text = " ".join(proposal_words)
+        from .intent_resolver import IntentResolver
+        resolver = IntentResolver()
+        dia_contract = None
+        if intent_text:
+            tree = resolver.resolve(intent_text)
+            dia_contract = tree.dialectical_contract
+        audit_res = resolver.audit_ai_proposition(proposal_text, dialectical_contract=dia_contract)
+        print("==========================================================")
+        print("       GOBY COGNITIVE AUDIT — AI PROPOSITION EVALUATION")
+        print("==========================================================")
+        print(f"Status:         {'[PASSED]' if audit_res['passed'] else '[SYCOPHANTIC BLOCKED]'}")
+        print(f"Recommendation: {audit_res['recommendation']}")
+        if audit_res['violations']:
+            print("\nViolations:")
+            for v in audit_res['violations']:
+                print(f"  ! {v}")
+        print("==========================================================")
+        sys.exit(0 if audit_res['passed'] else 1)
 
     elif cmd == "map":
         if len(args) < 2:
@@ -675,6 +884,59 @@ def main():
                 print(f"  {status_icon} [{e.timestamp}] {e.user_intent_summary}")
                 if e.files_modified:
                     print(f"     Files: {', '.join(e.files_modified[:3])}")
+        print("==========================================================")
+        sys.exit(0)
+
+    elif cmd == "deepen":
+        from .semantics.depth_engine import DepthEngine
+        engine = DepthEngine()
+        is_report = "--report" in args
+        verbose = "-v" in args or "--verbose" in args
+        target_path = "."
+        for a in args[1:]:
+            if a not in ("--report", "-v", "--verbose"):
+                target_path = a
+                break
+
+        if os.path.isfile(target_path):
+            metrics_list = [engine.analyze_file(target_path)]
+        elif os.path.isdir(target_path):
+            metrics_list = engine.analyze_directory(target_path)
+        else:
+            print(f"Error: Target path not found: {target_path}")
+            sys.exit(1)
+
+        if not metrics_list:
+            print(f"[GOBY ARCHITECTURE] No Python files found in: {target_path}")
+            sys.exit(0)
+
+        if is_report:
+            report_file = generate_architecture_report(metrics_list)
+            print("==========================================================")
+            print("       GOBY ARCHITECTURAL DEPTH — VISUAL REPORT")
+            print("==========================================================")
+            print(f"HTML Report generated: {report_file}")
+            print(f"Total modules analyzed: {len(metrics_list)}")
+            deep_n = sum(1 for m in metrics_list if m.classification == "DEEP")
+            balanced_n = sum(1 for m in metrics_list if m.classification == "BALANCED")
+            shallow_n = sum(1 for m in metrics_list if m.classification == "SHALLOW")
+            print(f"Classification: {deep_n} DEEP, {balanced_n} BALANCED, {shallow_n} SHALLOW")
+            print("Opening report in browser...")
+            import webbrowser
+            webbrowser.open(f"file://{os.path.abspath(report_file)}")
+            print("==========================================================")
+            sys.exit(0)
+
+        print("==========================================================")
+        print("       GOBY ARCHITECTURAL DEPTH TELEMETRY (v5.3)")
+        print("==========================================================")
+        print(f"Target: {target_path} ({len(metrics_list)} module(s))\n")
+        for m in metrics_list:
+            badge = "[DEEP]" if m.classification == "DEEP" else ("[BALANCED]" if m.classification == "BALANCED" else "[SHALLOW]")
+            print(f"  {badge:<10} MDI: {m.mdi_score:<5.2f} (S_int: {m.surface_area:<4.1f} | V_impl: {m.implementation_volume:<5.1f}) -> {m.file_path}")
+            if verbose or m.classification == "SHALLOW":
+                for ap in m.anti_patterns:
+                    print(f"     ! [{ap.get('type')}] {ap.get('details')}")
         print("==========================================================")
         sys.exit(0)
 

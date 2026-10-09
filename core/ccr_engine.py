@@ -509,6 +509,82 @@ class CognitiveControlRoom:
         return neuron_semantic_alignment(self, *args, **kwargs)
 
     # -----------------------------------------------------------------------
+    # Neuron 10: Architectural Depth Check (Ousterhout's Deep Modules - CONDITIONAL HARD GATE)
+    # -----------------------------------------------------------------------
+
+    def neuron_architectural_depth(
+        self,
+        code: str,
+        filename: str = "<memory>",
+        escalate_hard_gate: bool = False
+    ) -> NeuronSignal:
+        """
+        Evaluates architectural depth (leverage vs surface area) via DepthEngine.
+        Conditionally escalates to HARD GATE when module exhibits extreme shallow delegation
+        (MDI < 1.0 with >= 2 pass-through delegators), blocking completion mechanically.
+        """
+        try:
+            from .semantics.depth_engine import DepthEngine
+            engine = DepthEngine()
+            metrics = engine.analyze_source(code, filename)
+
+            pass_throughs = [ap for ap in metrics.anti_patterns if ap["type"] == "PASS_THROUGH_DELEGATION"]
+            is_extreme_shallow = (
+                metrics.classification == "SHALLOW"
+                and metrics.mdi_score < 1.0
+                and len(pass_throughs) >= 2
+                and metrics.surface_area >= 2.0
+            )
+
+            if is_extreme_shallow:
+                gate = GateType.HARD if escalate_hard_gate else GateType.SOFT
+                prefix = "[ESCALATED HARD GATE] " if (gate == GateType.HARD) else ""
+                return NeuronSignal(
+                    neuron_name="ARCHITECTURAL_DEPTH",
+                    gate_type=gate,
+                    passed=False,
+                    confidence=0.95,
+                    message=f"{prefix}Module '{metrics.module_name}' is an extreme shallow wrapper (MDI: {metrics.mdi_score} < 1.0) with {len(pass_throughs)} pass-through delegators. Leaks internal complexity without leverage.",
+                    suggestion="Collapse redundant wrapper layers into deep modules or inline direct implementations (Ousterhout's Law).",
+                    evidence={
+                        "mdi_score": metrics.mdi_score,
+                        "classification": metrics.classification,
+                        "surface_area": metrics.surface_area,
+                        "implementation_volume": metrics.implementation_volume,
+                        "anti_patterns": metrics.anti_patterns,
+                        "escalated_to_hard": (gate == GateType.HARD)
+                    }
+                )
+
+            if metrics.classification == "SHALLOW" and (metrics.surface_area >= 3.0 or len(pass_throughs) >= 1):
+                return NeuronSignal(
+                    neuron_name="ARCHITECTURAL_DEPTH",
+                    gate_type=GateType.SOFT,
+                    passed=False,
+                    confidence=0.80,
+                    message=f"Module '{metrics.module_name}' is shallow (MDI: {metrics.mdi_score}). Suggestion: increase implementation volume or collapse abstractions.",
+                    suggestion="Consider collapsing abstractions or hiding internal helpers to increase leverage.",
+                    evidence={"mdi_score": metrics.mdi_score, "classification": metrics.classification, "anti_patterns": metrics.anti_patterns}
+                )
+
+            return NeuronSignal(
+                neuron_name="ARCHITECTURAL_DEPTH",
+                gate_type=GateType.SOFT,
+                passed=True,
+                confidence=1.0,
+                message=f"Architectural depth verified (MDI: {metrics.mdi_score}, {metrics.classification}).",
+                evidence={"mdi_score": metrics.mdi_score, "classification": metrics.classification}
+            )
+        except Exception as e:
+            return NeuronSignal(
+                neuron_name="ARCHITECTURAL_DEPTH",
+                gate_type=GateType.SOFT,
+                passed=True,
+                confidence=0.5,
+                message=f"Architectural depth check skipped: {e}"
+            )
+
+    # -----------------------------------------------------------------------
     # Signal Evaluator — Hard Gate blocker
     # -----------------------------------------------------------------------
 
@@ -699,7 +775,9 @@ class CognitiveControlRoom:
         language: str = "python",
         context: Optional[Dict[str, Any]] = None,
         contract: Optional[Any] = None,
-        original_code: Optional[str] = None
+        original_code: Optional[str] = None,
+        check_depth: bool = False,
+        escalate_depth: bool = False
     ) -> Dict[str, Any]:
         """
         Genuine Pre-Output In-Memory Verification API.
@@ -726,6 +804,8 @@ class CognitiveControlRoom:
             if syn.passed:
                 signals.append(self.neuron_scope_check(code))
                 signals.append(self.neuron_taste_design_check(code))
+                if check_depth:
+                    signals.append(self.neuron_architectural_depth(code, escalate_hard_gate=escalate_depth))
 
         if contract is not None:
             signals.append(self.neuron_semantic_alignment(code, contract=contract, original_code=original_code))
@@ -735,6 +815,7 @@ class CognitiveControlRoom:
             "verified": not eval_result["blocked"],
             "blocked": eval_result["blocked"],
             "summary": eval_result["summary"],
+            "hard_failures": eval_result.get("hard_failures", []),
             "signals": [
                 {
                     "neuron": s.neuron_name,
@@ -880,3 +961,7 @@ class CognitiveControlRoom:
                 "dynamic_execution": dynamic_res or {"status": "NOT_EXECUTED"}
             }
         }
+
+
+# Convenient alias
+CCREngine = CognitiveControlRoom

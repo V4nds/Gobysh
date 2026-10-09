@@ -63,6 +63,27 @@ class TestDialecticalContract(unittest.TestCase):
         self.assertTrue(tree.dialectical_contract.is_sycophantic)
         self.assertTrue(any("duplikasi" in t.lower() or "duplication" in t.lower() for t in tree.dialectical_contract.tradeoffs_identified))
 
+    def test_audit_ai_proposition_sycophantic_blocked(self):
+        resolver = IntentResolver()
+        tree = resolver.resolve("buat fitur pengukuran sudut baru di canvas")
+        sycophantic_proposal = "Siap saya buatkan langsung fitur pengukuran sudut ini sekarang juga."
+        res = resolver.audit_ai_proposition(sycophantic_proposal, tree.dialectical_contract)
+        self.assertFalse(res["passed"])
+        self.assertTrue(res["sycophantic"])
+        self.assertGreater(len(res["violations"]), 0)
+
+    def test_audit_ai_proposition_grounded_passes(self):
+        resolver = IntentResolver()
+        tree = resolver.resolve("buat fitur pengukuran sudut baru di canvas")
+        grounded_proposal = (
+            "Kita evaluasi arsitektur dan trade-off duplikasi kontrol pada canvas. "
+            "Sebagai alternatif counter-vector dengan leverage tinggi, kita periksa "
+            "ComponentCapabilityRegistry terlebih dahulu agar tidak terjadi fitur bocor."
+        )
+        res = resolver.audit_ai_proposition(grounded_proposal, tree.dialectical_contract)
+        self.assertTrue(res["passed"])
+        self.assertFalse(res["sycophantic"])
+        self.assertEqual(len(res["violations"]), 0)
 
 if __name__ == "__main__":
     unittest.main()

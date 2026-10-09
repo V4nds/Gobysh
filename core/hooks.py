@@ -117,7 +117,8 @@ def extract_modified_files(payload: Dict[str, Any]) -> List[str]:
 def handle_post_tool_use(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     PostToolUse hook handler.
-    Validates any modified code files via CCR and updates cognitive_map.json ledger.
+    Validates any modified code files via CCR, injects aggressive telemetry to stderr,
+    and updates cognitive_map.json ledger.
     Returns {} as required by Antigravity PostToolUse spec.
     """
     from .ccr_engine import CognitiveControlRoom
@@ -135,10 +136,32 @@ def handle_post_tool_use(payload: Dict[str, Any]) -> Dict[str, Any]:
 
         files = extract_modified_files(payload)
         for filepath in files:
+            rel = os.path.relpath(filepath, workspace)
             try:
-                validate_filepath(filepath, ccr, memory=memory, verbose=False)
+                passed = validate_filepath(filepath, ccr, memory=memory, verbose=False)
+
+                # Extract Architectural Depth Telemetry for Python files
+                mdi_telemetry = ""
+                if filepath.endswith((".py", ".pyw")):
+                    try:
+                        from .semantics.depth_engine import DepthEngine
+                        with open(filepath, "r", encoding="utf-8") as f:
+                            code_str = f.read()
+                        m = DepthEngine().analyze_source(code_str, filepath)
+                        mdi_telemetry = f" | MDI: {m.mdi_score:.2f} [{m.classification}]"
+                    except Exception:
+                        pass
+
+                if passed:
+                    sys.stderr.write(f"[GOBY TELEMETRY ✅] {rel}{mdi_telemetry} passed all CCR Gates.\n")
+                else:
+                    unresolved = memory.get_unresolved_errors()
+                    err = next((e for e in unresolved if os.path.abspath(e.get("file", "")) == os.path.abspath(filepath)), None)
+                    gate_name = err.get("gate", "CCR") if err else "CCR"
+                    msg = err.get("message", "Validation failed") if err else "Validation failed"
+                    sys.stderr.write(f"[GOBY 🚨 HARD GATE BLOCKED] {rel}{mdi_telemetry} failed [{gate_name}]: {msg}\n")
             except Exception as e:
-                sys.stderr.write(f"[Goby Hook] Validation error for {filepath}: {e}\n")
+                sys.stderr.write(f"[GOBY TELEMETRY ERROR] Validation error for {rel}: {e}\n")
     finally:
         os.chdir(old_cwd)
 
@@ -148,7 +171,7 @@ def handle_post_tool_use(payload: Dict[str, Any]) -> Dict[str, Any]:
 def handle_pre_invocation(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     PreInvocation hook handler.
-    Checks the Unresolved Error Ledger. If errors exist, injects an ephemeral
+    Checks the Unresolved Error Ledger. If errors exist, injects an aggressive
     warning message into the agent's context window.
     """
     from .state_memory import StateMemoryManager
@@ -174,9 +197,13 @@ def handle_pre_invocation(payload: Dict[str, Any]) -> Dict[str, Any]:
             items.append(f"  - {fname} [{gate}]: {msg}")
 
         warning_text = (
-            f"🚨 [GOBY ACTIVE LEDGER WARNING] {len(unresolved)} unresolved code error(s) in workspace:\n"
-            + "\n".join(items) + "\n"
-            "You MUST fix these errors before declaring the task complete."
+            f"🚨 [GOBY AGGRESSIVE TELEMETRY & HARD GATE ALERT]\n"
+            f"There are {len(unresolved)} unresolved CCR error(s) in active workspace:\n"
+            + "\n".join(items) + "\n\n"
+            "⚡ MANDATORY DIALECTICAL ACTION:\n"
+            "1. You CANNOT declare completion (goby gate & Antigravity Stop hook are mechanically ARMED).\n"
+            "2. If caused by [ARCHITECTURAL_DEPTH]: Collapse shallow wrappers into deep modules (Ousterhout's Law).\n"
+            "3. Fix all files and ensure `goby check <file>` passes before proceeding."
         )
 
         return {

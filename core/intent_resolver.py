@@ -689,14 +689,13 @@ class IntentResolver:
 
         task = primary.task_type
         if task in ("create_feature", "design_ui", "refactor"):
-            # Check for sycophancy risk: blindly executing without considering trade-offs
-            if not any(w in text_lower for w in ["tradeoff", "risiko", "risk", "alternatif", "alternative", "evaluasi"]):
-                is_sycophantic = True
-                naive_assumptions.append(
-                    "Diasumsikan pendekatan yang diminta langsung dieksekusi tanpa menguji kompromi arsitektural atau blindspots."
-                    if is_id else
-                    "Assumes requested approach is immediately executed without stress-testing architectural trade-offs or blindspots."
-                )
+            # Mark sycophancy risk: AI is strictly barred from executing naively without considering trade-offs
+            is_sycophantic = True
+            naive_assumptions.append(
+                "Mandat AI: Dilarang mengeksekusi secara naif/yes-man tanpa menguji kompromi arsitektural atau blindspots."
+                if is_id else
+                "AI Mandate: Forbidden from executing naively as a yes-man without stress-testing architectural trade-offs or blindspots."
+            )
 
             # UI-specific anti-boxification & anti-template checks
             if task == "design_ui":
@@ -741,4 +740,49 @@ class IntentResolver:
             anti_template_flag=anti_template,
             is_sycophantic=is_sycophantic,
         )
+
+    def audit_ai_proposition(
+        self,
+        ai_proposal: str,
+        dialectical_contract: Optional[DialecticalContract] = None
+    ) -> Dict[str, Any]:
+        """
+        Evaluates the AI's formulated thinking/plan proposition against the dialectical mandate.
+        Detects if the AI is acting as a sycophantic 'yes-man' by blindly echoing the prompt
+        without addressing trade-offs or considering the counter-vector.
+        """
+        if not dialectical_contract or not dialectical_contract.is_sycophantic:
+            return {"passed": True, "sycophantic": False, "violations": []}
+
+        prop_lower = ai_proposal.lower()
+        violations: List[str] = []
+
+        # 1. Check if AI blindly accepted with superficial affirmations without substantive analysis
+        sycophantic_openers = [
+            "siap saya buatkan", "baik saya langsung buat", "tentu saya akan langsung",
+            "sure i will directly create", "i will simply add", "as requested i will directly"
+        ]
+        if any(opener in prop_lower for opener in sycophantic_openers):
+            violations.append("AI proposal begins with unconditional sycophantic agreement without architectural reasoning.")
+
+        # 2. Check if AI addressed any tradeoffs
+        tradeoff_tokens = ["tradeoff", "trade-off", "kompromi", "risiko", "risk", "alternatif", "alternative", "dampak", "impact", "leverage"]
+        if not any(token in prop_lower for token in tradeoff_tokens):
+            violations.append("AI proposal failed to analyze architectural trade-offs or blindspots.")
+
+        # 3. Check if anti-template flag is set and AI used cards/boxes without native UI
+        if dialectical_contract.anti_template_flag:
+            if "card" in prop_lower and not any(k in prop_lower for k in ["hud", "native", "semantic", "meter", "dl", "output"]):
+                violations.append("AI proposal regressed into naive boxification/cards without contextual layout integration.")
+
+        is_passed = len(violations) == 0
+        return {
+            "passed": is_passed,
+            "sycophantic": not is_passed,
+            "violations": violations,
+            "recommendation": (
+                "Reject sycophantic compliance. AI must present at least one constructive critique or higher-leverage alternative before writing code."
+                if not is_passed else "Proposal is dialectically sound and grounded."
+            )
+        }
 

@@ -11,6 +11,7 @@ from .scope import ScopeNormalizer
 from .negation import NegationHandler, NegationResult
 from .contract_validator import ContractValidator, ValidationResult
 from .dependency_graph import DependencyGraph
+from .depth_engine import DepthEngine, ModuleDepthMetrics
 
 __all__ = [
     "Requirement",
@@ -26,4 +27,6 @@ __all__ = [
     "ContractValidator",
     "ValidationResult",
     "DependencyGraph",
+    "DepthEngine",
+    "ModuleDepthMetrics",
 ]
