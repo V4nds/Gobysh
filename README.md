@@ -5,7 +5,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://python.org)
-[![Unit Tests](https://img.shields.io/badge/Unit%20Tests-257%2F257%20Passed-success.svg)](#-pengujian)
+[![Unit Tests](https://img.shields.io/badge/Unit%20Tests-266%2F266%20Passed-success.svg)](#-pengujian)
 [![Antigravity Hooks](https://img.shields.io/badge/Antigravity%20Hooks-Active-darkgreen.svg)](#-perintah-cli)
 
 <p align="center">
@@ -20,6 +20,8 @@
 
 - **Prompt Spider & Tripartite Semantic Bridge (`goby spider`)**  
   Merayapi instruksi pengguna, menandai elemen ke dalam 5 kategori empiris (`claim`, `owner`, `file`, `approval`, `vague`), memetakan semantik dwibahasa ID-EN ke AST kode nyata, dan menyusun 7-Pilar Empirical Blueprint (`ROLE`, `OBJEKTIF`, `CONTEXT`, `RULE`, `REVIEW`, `START`, `SHIP`).
+  - **Taksonomi 5-Tag:** `claim` (klaim/hipotesis), `owner` (domain/layer), `file` (file riil di AST), `approval` (titik gate kritis), `vague` (deteksi kata abstrak yang memicu pertanyaan klarifikasi aktif).
+  - **Mechanical Contract Binding:** Mengunci file proteksi dan aturan ke `cognitive_map.json` sehingga gerbang CCR `PostToolUse` langsung memblokir jika terjadi pelanggaran.
 - **3D Technical Flaw & Anomaly Detector (`goby diagnose`)**  
   Mendeteksi potensi celah teknis pada 3 dimensi: kontradiksi prompt user, topologi proyek (tombol ganda / *capability collision*), dan logika/layout UI (teks tumpah keluar dari kotak berukuran tetap).
 - **Architectural Depth Engine (`goby deepen`)**  
@@ -135,7 +137,7 @@ Jalankan seluruh test suite bawaan:
 python -m unittest discover tests/
 ```
 
-- **Status**: 257/257 unit tests passed (100% OK).
+- **Status**: 266/266 unit tests passed (100% OK).
 
 ---
 
