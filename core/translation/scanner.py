@@ -5,8 +5,11 @@ and lightweight regex tokenizers for JavaScript/TypeScript and Kotlin.
 """
 
 import ast
+import json
 import os
 import re
+import shutil
+import subprocess
 from typing import List, Optional
 
 from .symbol_mapper import FileSymbolMap, Symbol, SymbolMap
@@ -16,9 +19,45 @@ class RepositoryScanner:
     """Scanner for turning source code into structured FileSymbolMap and SymbolMap."""
 
     @classmethod
-    def scan_file(cls, file_path: str, content: Optional[str] = None) -> FileSymbolMap:
+    def _get_native_binary(cls) -> Optional[str]:
+        """Locates the compiled goby_core native accelerator binary if present."""
+        env_bin = os.getenv("GOBY_CORE_BIN")
+        if env_bin and os.path.isfile(env_bin):
+            return env_bin
+
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        candidates = [
+            os.path.join(repo_root, "crates", "goby_core", "target", "release", "goby_core.exe"),
+            os.path.join(repo_root, "crates", "goby_core", "target", "release", "goby_core"),
+            os.path.join(repo_root, "crates", "goby_core", "target", "debug", "goby_core.exe"),
+            os.path.join(repo_root, "crates", "goby_core", "target", "debug", "goby_core"),
+        ]
+        for c in candidates:
+            if os.path.isfile(c):
+                return c
+
+        return shutil.which("goby-core") or shutil.which("goby_core")
+
+    @classmethod
+    def scan_file(cls, file_path: str, content: Optional[str] = None, use_native: bool = True) -> FileSymbolMap:
         """Scan a single file from path or provided string content."""
         norm_path = file_path.replace("\\", "/")
+        if content is None and use_native and os.path.isfile(file_path):
+            native_bin = cls._get_native_binary()
+            if native_bin:
+                try:
+                    proc = subprocess.run(
+                        [native_bin, "scan-file", file_path],
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                        timeout=5,
+                    )
+                    data = json.loads(proc.stdout)
+                    return FileSymbolMap.from_dict(data)
+                except Exception:
+                    pass
+
         if content is None:
             try:
                 with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -26,12 +65,14 @@ class RepositoryScanner:
             except Exception:
                 return FileSymbolMap(file_path=norm_path)
 
-        if norm_path.endswith(".py"):
+        if norm_path.endswith((".py", ".pyw")):
             return cls._scan_python(norm_path, content)
-        elif norm_path.endswith((".js", ".jsx", ".ts", ".tsx")):
+        elif norm_path.endswith((".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs")):
             return cls._scan_javascript(norm_path, content)
         elif norm_path.endswith((".kt", ".kts")):
             return cls._scan_kotlin(norm_path, content)
+        elif norm_path.endswith(".rs"):
+            return cls._scan_rust(norm_path, content)
         else:
             return FileSymbolMap(file_path=norm_path)
 
@@ -164,14 +205,57 @@ class RepositoryScanner:
         return FileSymbolMap(file_path=file_path, symbols=symbols, imports=imports)
 
     @classmethod
-    def scan_directory(cls, dir_path: str, max_files: int = 500) -> SymbolMap:
-        """Scan a directory for supported source files."""
+    def _scan_rust(cls, file_path: str, code: str) -> FileSymbolMap:
+        symbols: List[Symbol] = []
+        imports: List[str] = []
+
+        import_matches = re.finditer(r"(?m)^\s*use\s+([^;]+);", code)
+        for m in import_matches:
+            imports.append(m.group(1).strip())
+
+        type_matches = re.finditer(r"\b(?:pub\s+)?(?:struct|enum|trait|type)\s+([a-zA-Z0-9_]+)", code)
+        for m in type_matches:
+            cname = m.group(1)
+            lineno = code[:m.start()].count("\n") + 1
+            symbols.append(Symbol(name=cname, kind="class", file_path=file_path, line_start=lineno))
+
+        fn_matches = re.finditer(r"\b(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?fn\s+([a-zA-Z0-9_]+)\s*(?:<[^>]*>)?\s*\(", code)
+        for m in fn_matches:
+            fname = m.group(1)
+            lineno = code[:m.start()].count("\n") + 1
+            symbols.append(Symbol(name=fname, kind="function", file_path=file_path, line_start=lineno))
+
+        return FileSymbolMap(file_path=file_path, symbols=symbols, imports=imports)
+
+    @classmethod
+    def scan_directory(cls, dir_path: str, max_files: int = 500, use_native: bool = True) -> SymbolMap:
+        """Scan a directory for supported source files with optional native Rust acceleration."""
+        if use_native:
+            native_bin = cls._get_native_binary()
+            if native_bin:
+                try:
+                    proc = subprocess.run(
+                        [native_bin, "scan", dir_path, "--max-files", str(max_files)],
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                        timeout=10,
+                    )
+                    data = json.loads(proc.stdout)
+                    sym_map = SymbolMap()
+                    for fp, f_dict in data.get("files", {}).items():
+                        sym_map.add_file(FileSymbolMap.from_dict(f_dict))
+                    return sym_map
+                except Exception:
+                    # Fallback to Python scanning
+                    pass
+
         sym_map = SymbolMap()
         count = 0
-        exts = (".py", ".js", ".jsx", ".ts", ".tsx", ".kt", ".kts")
+        exts = (".py", ".pyw", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".kt", ".kts", ".rs")
         ignored_dirs = {
             ".git", ".venv", "node_modules", "__pycache__", ".kilo",
-            "build", ".gradle", "gradle", ".idea", "dist", "out", "bin"
+            "build", ".gradle", "gradle", ".idea", "dist", "out", "bin", "target"
         }
 
         for root, dirs, files in os.walk(dir_path):
@@ -180,7 +264,7 @@ class RepositoryScanner:
                 if f.endswith(exts):
                     full_p = os.path.join(root, f)
                     rel_p = os.path.relpath(full_p, dir_path).replace("\\", "/")
-                    fmap = cls.scan_file(full_p)
+                    fmap = cls.scan_file(full_p, use_native=False)
                     fmap.file_path = rel_p
                     for s in fmap.symbols:
                         s.file_path = rel_p

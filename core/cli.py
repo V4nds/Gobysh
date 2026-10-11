@@ -543,6 +543,8 @@ def main():
         print("  goby watch         Run active workspace CCR watcher")
         print("  goby status        Show framework installation & memory status")
         print("  goby gate          Check Unresolved Error Ledger (must exit 0 before claiming done)")
+        print("  goby fast-gate <file> Fast native delimiter & structural gate check (<5ms)")
+        print("  goby native <cmd>  Direct interface to goby_core Rust native accelerator (scan|check|version)")
         print("  goby intent <text> [--repo <path>] Parse user intent -> structured JSON (bilingual)")
         print("  goby spider '<prompt>' [--repo <path>] [--save-plan] [--json] Crawl prompt, tag tokens, and synthesize 7-pillar empirical blueprint")
         print("  goby diagnose [file|prompt] [--repo <path>] Audit 3-dimensional technical flaws & anomalies")
@@ -655,6 +657,33 @@ def main():
             print(f"    Last checked: {entry.get('checked_at', 'N/A')} | Hash: {entry.get('code_hash', '')}")
         print("[GOBY GATE] BLOCKED. Fix each file, then run `goby check <file>` until it passes.")
         sys.exit(1)
+
+    elif cmd == "fast-gate":
+        if len(args) < 2:
+            print("Error: Please provide file path. Example: goby fast-gate app.py")
+            sys.exit(1)
+        target_file = args[1]
+        from .translation.scanner import RepositoryScanner
+        native_bin = RepositoryScanner._get_native_binary()
+        if native_bin:
+            import subprocess
+            proc = subprocess.run([native_bin, "check", target_file])
+            sys.exit(proc.returncode)
+        else:
+            print(f"[GOBY FAST-GATE] Native binary not found. Using python CCR check for {target_file}")
+            ccr = CognitiveControlRoom()
+            passed = validate_filepath(target_file, ccr, verbose=True)
+            sys.exit(0 if passed else 1)
+
+    elif cmd == "native":
+        from .translation.scanner import RepositoryScanner
+        native_bin = RepositoryScanner._get_native_binary()
+        if not native_bin:
+            print("Error: goby_core native binary not found in crates/goby_core/target or PATH.")
+            sys.exit(1)
+        import subprocess
+        proc = subprocess.run([native_bin] + args[1:])
+        sys.exit(proc.returncode)
 
     elif cmd == "evolve":
         print("[EVOLUTION] Running Goby v4.2.0 Omni-Synthesis Evolution Benchmark...")
