@@ -258,7 +258,11 @@ def validate_filepath(target_path: str, ccr: CognitiveControlRoom, memory: State
         return True
 
     signals = []
-    if target_path.endswith((".js", ".ts", ".jsx", ".tsx")):
+    if target_path.endswith((".ts", ".tsx")):
+        syn = ccr.neuron_ts_syntax_check(code)
+        signals.append(syn)
+        signals.append(ccr.neuron_taste_design_check(code))
+    elif target_path.endswith((".js", ".jsx", ".mjs", ".cjs")):
         syn = ccr.neuron_js_syntax_check(code)
         signals.append(syn)
         signals.append(ccr.neuron_taste_design_check(code))
@@ -540,7 +544,6 @@ def main():
         print("  goby status        Show framework installation & memory status")
         print("  goby gate          Check Unresolved Error Ledger (must exit 0 before claiming done)")
         print("  goby intent <text> [--repo <path>] Parse user intent -> structured JSON (bilingual)")
-        print("  goby spar '<ai_proposal>' [--intent '<text>'] Audit AI cognitive thinking/proposal against dialectical mandate")
         print("  goby map <query> [--repo <path>]   Map intent/query to repository symbols and blast radius")
         print("  goby deepen [file|dir] [--report] [--verbose] Analyze architectural depth & leverage (Ousterhout's Deep Modules)")
         print("  goby recall <text> Recall similar past conversations from memory")
@@ -750,54 +753,12 @@ def main():
             print("\n[GOBY INTENT] [!] Contradictions detected:")
             for c in intent_tree.semantic_contract.contradictions:
                 print(f"  -> {c}")
-        if intent_tree.dialectical_contract and intent_tree.dialectical_contract.is_sycophantic:
-            print("\n[GOBY INTENT] [DIALECTICAL MANDATE - COGNITIVE GUARDRAILS FOR AI]:")
-            for a in intent_tree.dialectical_contract.naive_assumptions:
-                print(f"  [AI Mandate]       {a}")
-            for t in intent_tree.dialectical_contract.tradeoffs_identified:
-                print(f"  [Trade-off/Risk]   {t}")
-            if intent_tree.dialectical_contract.counter_vector:
-                print(f"  [Counter-Vector]   {intent_tree.dialectical_contract.counter_vector}")
         if intent_tree.clarification_needed:
             print("\n[GOBY INTENT] [!] Clarification needed:")
             for q in intent_tree.clarification_questions:
                 print(f"  -> {q}")
             sys.exit(1)
         sys.exit(0)
-
-    elif cmd == "spar":
-        if len(args) < 2:
-            print("Error: Usage: goby spar '<ai_proposal_text>' [--intent '<user_intent_text>']")
-            sys.exit(1)
-        intent_text = None
-        proposal_words = []
-        i = 1
-        while i < len(args):
-            if args[i] == "--intent" and i + 1 < len(args):
-                intent_text = args[i + 1]
-                i += 2
-            else:
-                proposal_words.append(args[i])
-                i += 1
-        proposal_text = " ".join(proposal_words)
-        from .intent_resolver import IntentResolver
-        resolver = IntentResolver()
-        dia_contract = None
-        if intent_text:
-            tree = resolver.resolve(intent_text)
-            dia_contract = tree.dialectical_contract
-        audit_res = resolver.audit_ai_proposition(proposal_text, dialectical_contract=dia_contract)
-        print("==========================================================")
-        print("       GOBY COGNITIVE AUDIT — AI PROPOSITION EVALUATION")
-        print("==========================================================")
-        print(f"Status:         {'[PASSED]' if audit_res['passed'] else '[SYCOPHANTIC BLOCKED]'}")
-        print(f"Recommendation: {audit_res['recommendation']}")
-        if audit_res['violations']:
-            print("\nViolations:")
-            for v in audit_res['violations']:
-                print(f"  ! {v}")
-        print("==========================================================")
-        sys.exit(0 if audit_res['passed'] else 1)
 
     elif cmd == "map":
         if len(args) < 2:

@@ -14,7 +14,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-from core.semantics.specification import Requirement, SemanticSpecification, DialecticalContract
+from core.semantics.specification import Requirement, SemanticSpecification
 from core.semantics.constraints import ConstraintModel
 from core.semantics.intermediate_representation import SemanticEntity, SemanticIR
 from core.semantics.preservation import PreservationContract
@@ -75,7 +75,6 @@ class IntentTree:
     semantic_contract: SemanticContract = field(default_factory=SemanticContract)
     semantic_ir: Optional[SemanticIR] = None
     code_mapping: Optional[MappingReport] = None
-    dialectical_contract: Optional[DialecticalContract] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -102,7 +101,6 @@ class IntentTree:
             "semantic_contract": self.semantic_contract.to_dict(),
             "semantic_ir": self.semantic_ir.to_dict() if self.semantic_ir else None,
             "code_mapping": self.code_mapping.to_dict() if self.code_mapping else None,
-            "dialectical_contract": self.dialectical_contract.to_dict() if self.dialectical_contract else None,
         }
 
 
@@ -309,20 +307,11 @@ class IntentResolver:
                 )
             )
 
-        # Step 6.5: Dialectical evaluation (Anti-Sycophancy)
-        dialectical_contract = self._evaluate_dialectical_sparring(
-            text=text,
-            text_lower=text_lower,
-            primary=primary,
-            lang=detected_lang,
-        )
-
         spec = SemanticSpecification(
             id=f"SPEC-{abs(hash(text)) % 1000000:06d}",
             language=detected_lang,
             raw_prompt=text,
             requirements=spec_reqs,
-            dialectical_contract=dialectical_contract,
         )
 
         entities = [
@@ -414,7 +403,6 @@ class IntentResolver:
             semantic_contract=semantic_contract,
             semantic_ir=semantic_ir,
             code_mapping=code_mapping,
-            dialectical_contract=dialectical_contract,
         )
 
     # -------------------------------------------------------------------
@@ -672,117 +660,4 @@ class IntentResolver:
 
         return questions[:3]  # Max 3 questions
 
-    def _evaluate_dialectical_sparring(
-        self, text: str, text_lower: str, primary: IntentNode, lang: str
-    ) -> DialecticalContract:
-        """
-        Anti-Sycophancy & Dialectical Sparring Engine.
-        Critically evaluates planning/architecture intents to prevent premature agreement,
-        blindspot omissions, and deterministic boilerplate traps.
-        """
-        is_id = lang in ("id", "mixed")
-        naive_assumptions: List[str] = []
-        tradeoffs: List[str] = []
-        counter_vector: str = ""
-        anti_template = False
-        is_sycophantic = False
-
-        task = primary.task_type
-        if task in ("create_feature", "design_ui", "refactor"):
-            # Mark sycophancy risk: AI is strictly barred from executing naively without considering trade-offs
-            is_sycophantic = True
-            naive_assumptions.append(
-                "Mandat AI: Dilarang mengeksekusi secara naif/yes-man tanpa menguji kompromi arsitektural atau blindspots."
-                if is_id else
-                "AI Mandate: Forbidden from executing naively as a yes-man without stress-testing architectural trade-offs or blindspots."
-            )
-
-            # UI-specific anti-boxification & anti-template checks
-            if task == "design_ui":
-                anti_template = True
-                tradeoffs.append(
-                    "Risiko over-encapsulation (boxification) di mana teks dan simbol dipaksa masuk ke card containers klise."
-                    if is_id else
-                    "Risk of over-encapsulation (boxification) where symbols/text are forced into generic card containers."
-                )
-                counter_vector = (
-                    "Gunakan integrasi HUD kontekstual, arsitektur slot terarah, atau layout CSS native daripada membungkus semua nilai dalam box/card."
-                    if is_id else
-                    "Use contextual inline HUDs, slot-based layouts, or native CSS rather than wrapping every value into cards."
-                )
-            elif task == "create_feature":
-                tradeoffs.append(
-                    "Risiko duplikasi fitur (double fitur bocor) pada komponen atau permukaan layout yang berbeda."
-                    if is_id else
-                    "Risk of feature duplication (leaked redundant controls) across disparate layout components."
-                )
-                counter_vector = (
-                    "Verifikasi ComponentCapabilityRegistry sebelum membuat kontrol baru untuk memastikan Single Source of Truth."
-                    if is_id else
-                    "Verify ComponentCapabilityRegistry before mounting new controls to ensure Single Source of Truth."
-                )
-            elif task == "refactor":
-                tradeoffs.append(
-                    "Risiko regresi fungsional atau breaking changes tersembunyi pada consumer API lama."
-                    if is_id else
-                    "Risk of hidden functional regressions or API contract breaking changes on existing consumers."
-                )
-                counter_vector = (
-                    "Terapkan PreservationContract ketat dan verifikasi AST signature sebelum refactoring."
-                    if is_id else
-                    "Enforce strict PreservationContract and AST signature verification prior to refactoring."
-                )
-
-        return DialecticalContract(
-            naive_assumptions=naive_assumptions,
-            tradeoffs_identified=tradeoffs,
-            counter_vector=counter_vector,
-            anti_template_flag=anti_template,
-            is_sycophantic=is_sycophantic,
-        )
-
-    def audit_ai_proposition(
-        self,
-        ai_proposal: str,
-        dialectical_contract: Optional[DialecticalContract] = None
-    ) -> Dict[str, Any]:
-        """
-        Evaluates the AI's formulated thinking/plan proposition against the dialectical mandate.
-        Detects if the AI is acting as a sycophantic 'yes-man' by blindly echoing the prompt
-        without addressing trade-offs or considering the counter-vector.
-        """
-        if not dialectical_contract or not dialectical_contract.is_sycophantic:
-            return {"passed": True, "sycophantic": False, "violations": []}
-
-        prop_lower = ai_proposal.lower()
-        violations: List[str] = []
-
-        # 1. Check if AI blindly accepted with superficial affirmations without substantive analysis
-        sycophantic_openers = [
-            "siap saya buatkan", "baik saya langsung buat", "tentu saya akan langsung",
-            "sure i will directly create", "i will simply add", "as requested i will directly"
-        ]
-        if any(opener in prop_lower for opener in sycophantic_openers):
-            violations.append("AI proposal begins with unconditional sycophantic agreement without architectural reasoning.")
-
-        # 2. Check if AI addressed any tradeoffs
-        tradeoff_tokens = ["tradeoff", "trade-off", "kompromi", "risiko", "risk", "alternatif", "alternative", "dampak", "impact", "leverage"]
-        if not any(token in prop_lower for token in tradeoff_tokens):
-            violations.append("AI proposal failed to analyze architectural trade-offs or blindspots.")
-
-        # 3. Check if anti-template flag is set and AI used cards/boxes without native UI
-        if dialectical_contract.anti_template_flag:
-            if "card" in prop_lower and not any(k in prop_lower for k in ["hud", "native", "semantic", "meter", "dl", "output"]):
-                violations.append("AI proposal regressed into naive boxification/cards without contextual layout integration.")
-
-        is_passed = len(violations) == 0
-        return {
-            "passed": is_passed,
-            "sycophantic": not is_passed,
-            "violations": violations,
-            "recommendation": (
-                "Reject sycophantic compliance. AI must present at least one constructive critique or higher-leverage alternative before writing code."
-                if not is_passed else "Proposal is dialectically sound and grounded."
-            )
-        }
 
