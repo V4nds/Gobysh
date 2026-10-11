@@ -1,9 +1,9 @@
 ---
 name: goby-universal
-description: "Goby v5.1: Aggressive-autonomous AI quality framework. Auto-resolves ambiguous user intent, repository AST & dependency graph code mapping, persists conversation memory across sessions, validates every code output, and enforces modern UI/UX standards. Supports Python, JavaScript, TypeScript, Kotlin, HTML, CSS."
+description: "Goby v5.4: Aggressive-autonomous AI quality framework with Rust native acceleration. Auto-resolves ambiguous user intent, repository AST & dependency graph code mapping, persists conversation memory across sessions, validates every code output with ultra-fast delimiter gates (<5ms), and enforces modern UI/UX standards. Supports Python, JavaScript, TypeScript, Kotlin, Rust, HTML, CSS."
 ---
 
-# Goby v5.1 — Aggressive-Autonomous AI Quality Engine
+# Goby v5.4 — Aggressive-Autonomous AI Quality Engine
 
 ## 🚨 ACTIVATION: ALWAYS-ON (NOT OPTIONAL)
 
@@ -17,6 +17,7 @@ Goby activates **automatically** on every task. You do NOT wait for the user to 
 | Intent is ambiguous (vague tokens present) | Ask clarification questions using `ask_question` tool |
 | Diagnosing potential flaws / anomalies | Run `goby diagnose [file|prompt]` to audit 3D technical flaws |
 | Querying codebase symbols & blast radius | Run `goby map '<query>' [--repo .]` to map impact |
+| Fast file delimiter/bracket validation | Run `goby fast-gate <filepath>` for <5ms native check |
 | About to start coding | Run `goby recall '<intent>'` to check past context |
 | After writing/editing ANY code file | Run `goby check <filepath>` to validate |
 | Error persists after 2 attempts | Run `goby recall` to check known fixes, halt naive retries |
@@ -62,6 +63,8 @@ Goby bertindak sebagai **Pengaman (Guardrail) & Manajemen Konteks**, bukan mando
 # Core validation & Diagnostics
 goby check <code|filepath>  # CCR validation (add -v for verbose, --intent '<text>' for alignment)
 goby verify '<code_string>' # Genuine pre-output in-memory verification
+goby fast-gate <filepath>   # Ultra-fast native delimiter & structural gate (<5ms)
+goby native <subcommand>    # Direct interface to goby_core Rust native accelerator (scan|check|version)
 goby deepen [file|dir]      # Architectural depth & leverage analysis (Ousterhout's MDI)
 goby diagnose [file|prompt] # Audit 3D technical flaws (prompt contradictions, double buttons, text overflow)
 goby gate                   # Unresolved Error Ledger — must exit 0
