@@ -18,8 +18,10 @@
 
 ## ⚡ Fitur Utama
 
-- **Intent & Proposal Audit (`goby intent`, `goby spar`)**  
-  Menganalisis instruksi sebelum koding dimulai dan menguji rancangan AI terhadap risiko serta trade-off nyata agar AI tidak bersikap *yes-man*.
+- **Prompt Spider & Tripartite Semantic Bridge (`goby spider`)**  
+  Merayapi instruksi pengguna, menandai elemen ke dalam 5 kategori empiris (`claim`, `owner`, `file`, `approval`, `vague`), memetakan semantik dwibahasa ID-EN ke AST kode nyata, dan menyusun 7-Pilar Empirical Blueprint (`ROLE`, `OBJEKTIF`, `CONTEXT`, `RULE`, `REVIEW`, `START`, `SHIP`).
+- **3D Technical Flaw & Anomaly Detector (`goby diagnose`)**  
+  Mendeteksi potensi celah teknis pada 3 dimensi: kontradiksi prompt user, topologi proyek (tombol ganda / *capability collision*), dan logika/layout UI (teks tumpah keluar dari kotak berukuran tetap).
 - **Architectural Depth Engine (`goby deepen`)**  
   Menganalisis rasio implementasi terhadap antarmuka (Module Depth Index / MDI berdasarkan prinsip Ousterhout). Modul pembungkus dangkal (*shallow pass-through wrapper*) otomatis diblokir via *Conditional Hard Gate*.
 - **Anti-Collision & Visual Density**  
@@ -35,9 +37,8 @@
 
 ```mermaid
 flowchart TD
-    UserPrompt["Instruksi Pengguna"] --> Intent["goby intent\nAnalisis Maksud & Dialectical Mandate"]
-    Intent --> Spar["goby spar\nAudit Proposal AI"]
-    Spar --> Recall["goby recall\nCek Riwayat Solusi"]
+    UserPrompt["Instruksi Pengguna"] --> Spider["goby spider\nCrawl Intent, Audit Celah & 7 Pilar Blueprint"]
+    Spider --> Recall["goby recall\nCek Riwayat Solusi"]
     Recall --> Code["AI Menulis / Mengedit Kode"]
     
     Code --> Hook["PostToolUse Hook"]
@@ -69,11 +70,11 @@ goby install-hook
 # Cek status instalasi dan memori
 goby status
 
-# Analisis maksud instruksi pengguna
-goby intent "buat tombol pengukuran sudut di canvas"
+# Rayapi prompt user, deteksi celah, dan susun 7-pilar blueprint
+goby spider "buat tombol pengukuran sudut di canvas jangan ubah Toolbar.tsx" --save-plan
 
-# Uji proposal/rencana kerja AI
-goby spar "gunakan wrapper class sederhana" --intent "buat handler event"
+# Diagnosis potensi celah teknis (prompt, tombol dobel, atau teks tumpah)
+goby diagnose "tambahkan fitur ke canvas tapi jangan ubah file canvas sama sekali"
 
 # Cek kedalaman arsitektur kode (tambah --report untuk HTML visual)
 goby deepen core/
@@ -106,14 +107,19 @@ Gobysh/
 │   ├── cli.py                  # Antarmuka CLI goby
 │   ├── conversation_memory.py  # Penyimpanan & recall memori percakapan
 │   ├── hooks.py                # Handler lifecycle hooks IDE
-│   ├── intent_resolver.py      # Intent parsing & proposal audit
+│   ├── intent_resolver.py      # Intent parsing & keyword heuristics
+│   ├── spider/                 # Prompt Spider & Tripartite Semantic Bridge (v5.3)
+│   │   ├── prompt_spider.py    # Mesin perayap prompt & 7-pilar synthesizer
+│   │   └── semantic_bridge.py  # Jembatan dwibahasa ID-EN ke AST
+│   ├── diagnostics/            # Technical Flaw & Anomaly Detector (v5.3)
+│   │   └── flaw_detector.py    # Deteksi 3D: prompt, topologi (tombol dobel), layout
 │   ├── taste_synthesis.py      # Evaluator visual density & layout
 │   └── semantics/              # Analisis semantik & arsitektur
 │       ├── depth_engine.py     # Analisis kedalaman AST & MDI
 │       ├── capability_registry.py # Anti-collision kontrol
-│       ├── specification.py    # Kontrak spesifikasi & dialectical
+│       ├── specification.py    # Kontrak spesifikasi formal
 │       └── constraints.py      # Deteksi kontradiksi
-├── tests/                      # Rangkaian unit test (257 tests)
+├── tests/                      # Rangkaian unit test (260+ tests)
 ├── AGENTS.md                   # Panduan operasional AI agent
 ├── pyproject.toml              # Konfigurasi package Python
 └── README.md                   # Dokumentasi

@@ -13,13 +13,14 @@ Goby activates **automatically** on every task. You do NOT wait for the user to 
 
 | When this happens... | You MUST do this... |
 |---------------------|---------------------|
-| User sends ANY request | Run `goby intent '<request>' [--repo .]` to resolve intent FIRST |
-| Intent is ambiguous (ambiguity > 0.5) | Ask clarification questions from intent tree |
+| User sends ANY request | Run `goby spider '<request>' [--save-plan]` to crawl intent & synthesize blueprint |
+| Intent is ambiguous (vague tokens present) | Ask clarification questions using `ask_question` tool |
+| Diagnosing potential flaws / anomalies | Run `goby diagnose [file|prompt]` to audit 3D technical flaws |
 | Querying codebase symbols & blast radius | Run `goby map '<query>' [--repo .]` to map impact |
 | About to start coding | Run `goby recall '<intent>'` to check past context |
 | After writing/editing ANY code file | Run `goby check <filepath>` to validate |
 | Error persists after 2 attempts | Run `goby recall` to check known fixes, halt naive retries |
-| Task is complete | Run `goby gate` + `./gradlew.bat test` (or `python -m unittest discover tests/`) |
+| Task is complete | Run `goby gate` + `python -m unittest discover tests/` |
 | Both gates pass | Run `goby save '<summary>' <type> [files...]` |
 
 ---
@@ -27,49 +28,52 @@ Goby activates **automatically** on every task. You do NOT wait for the user to 
 ## 🧠 Core Pipeline (Deterministic & Linear)
 
 ```
-User Request → Intent Resolver (+ Code Map) → Memory Recall → Code → Auto-Check → Gates → Save
+User Request → Prompt Spider (Flaw Audit & 7-Pillars) → Memory Recall → Code → Auto-Check → Gates → Save
 ```
 
-1. **Intent Resolver & Semantic Core** (`goby intent`): Parses abstract/ambiguous requests into structured intents and formal `SemanticIR`. Bilingual (ID/EN). Auto-generates clarification questions when confidence is low.
+1. **Prompt Spider & Tripartite Semantic Bridge** (`goby spider`): Crawls raw user requests, tags tokens into 5 categories (`claim`, `owner`, `file`, `approval`, `vague`), resolves ID-EN-AST semantics, audits flaws across 3 dimensions, and synthesizes 7-Pillar Empirical Blueprints with mechanical contract binding.
 
-2. **Repository AST Scanner & Dependency Graph** (`goby map`): Scans Python, JS/TS, and Kotlin source files. Maps intent to concrete classes, functions, and files, and calculates upstream/downstream causal blast radius.
+2. **Technical Flaw & Anomaly Detector** (`goby diagnose`): Audits user prompt contradictions, project topology (double buttons / capability collision), and UI layout traps (text overflow outside container).
 
-3. **Conversation Memory** (`goby recall` / `goby save`): Persists context across sessions. Similar past problems are recalled instantly — no starting from zero.
+3. **Repository AST Scanner & Dependency Graph** (`goby map`): Scans Python, JS/TS, and Kotlin source files. Maps intent to concrete classes, functions, and files, and calculates upstream/downstream causal blast radius.
 
-4. **CCR Validation** (`goby check`): Deterministic AST, Bracket & Scope validation (syntax, scope, cross-reference). Hard Gates block bad code. Soft Signals advise. Supports Python, JavaScript, TypeScript, and Kotlin.
+4. **Conversation Memory** (`goby recall` / `goby save`): Persists context across sessions. Similar past problems are recalled instantly — no starting from zero.
 
-5. **LDE Loop Detection**: Detects repetitive failure cycles (>85% similarity) and forces strategy pivoting to prevent deadlocks.
+5. **CCR Validation & Depth Engine** (`goby check` / `goby deepen`): Deterministic AST, Scope, and Architectural Depth validation (Ousterhout's MDI). Hard Gates block bad code or shallow wrappers. Soft Signals advise.
 
-6. **Completion Gate & Persistence**: `goby gate` verifies zero unresolved errors, test runner validates logic, and `goby save` persists solution memory for future sessions.
+6. **LDE Loop Detection**: Detects repetitive failure cycles (>85% similarity) and forces strategy pivoting to prevent deadlocks.
+
+7. **Completion Gate & Persistence**: `goby gate` verifies zero unresolved errors, test runner validates logic, and `goby save` persists solution memory for future sessions.
 
 ---
 
-## 🎨 Design Guardrails & Visual Density (v5.2)
+## 🎨 Design Guardrails & Visual Density (v5.3)
 
 Goby bertindak sebagai **Pengaman (Guardrail) & Manajemen Konteks**, bukan mandor gaya preskriptif:
-- **Anti-Boxification (Visual Density Governor):** Mencegah over-encapsulation di mana teks, angka telemetri, dan simbol dipaksa masuk ke nested card boxes. Mendukung layout CSS native yang bersih, semantic HTML (`<output>`, `<meter>`, `<dl>`), dan HUD contextual.
-- **Anti-Collision Engine (ComponentCapabilityRegistry):** Mencegah duplikasi fitur (*double fitur bocor*) di mana kontrol yang sama dibuat berulang di permukaan layout berbeda.
+- **Anti-Boxification (Visual Density Governor):** Mencegah over-encapsulation di mana teks dan simbol dipaksa masuk ke nested card boxes. Mendukung layout CSS native yang elastis tanpa fixed height trap yang membuat teks tumpah keluar kotak.
+- **Anti-Collision Engine (ComponentCapabilityRegistry):** Mencegah duplikasi fitur (*double button / fitur bocor*) di mana kontrol yang sama dibuat berulang di permukaan layout berbeda.
 - **Respect User Design Tokens:** Mengutamakan konsistensi token/gaya proyek pengguna, bukan memaksakan keyword template klise.
-
 
 ---
 
 ## 🛠️ CLI Reference
 
 ```bash
-# Core validation
+# Core validation & Diagnostics
 goby check <code|filepath>  # CCR validation (add -v for verbose, --intent '<text>' for alignment)
 goby verify '<code_string>' # Genuine pre-output in-memory verification
-goby evidence '<claim>' '<file>' # Generate machine-verifiable evidence contract
+goby deepen [file|dir]      # Architectural depth & leverage analysis (Ousterhout's MDI)
+goby diagnose [file|prompt] # Audit 3D technical flaws (prompt contradictions, double buttons, text overflow)
 goby gate                   # Unresolved Error Ledger — must exit 0
 goby audit                  # Full test suite
 
-# Intent, Semantic IR & Repository Code Mapping (v5.1)
-goby intent '<text>' [--repo <path>]  # Parse user intent + repository code mapping
-goby map '<query>' [--repo <path>]    # Map intent/query to repository symbols & blast radius
-goby recall '<text>'                  # Recall similar past conversations
-goby save '<summary>' <type> [files...] # Save session context
-goby briefing                         # Show past session summary
+# Prompt Spider, Intent & Repository Mapping (v5.3)
+goby spider '<prompt>' [--save-plan] [--json] # Crawl prompt, tag tokens, and synthesize 7-pillar blueprint
+goby intent '<text>' [--repo <path>]          # Parse user intent + repository code mapping
+goby map '<query>' [--repo <path>]            # Map intent/query to repository symbols & blast radius
+goby recall '<text>'                          # Recall similar past conversations
+goby save '<summary>' <type> [files...]       # Save session context
+goby briefing                                 # Show past session summary
 
 # Tools & Infrastructure
 goby evolve                 # Self-evolution cycle (BFM metric)

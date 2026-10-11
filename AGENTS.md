@@ -1,4 +1,4 @@
-# AGENTS.md — Goby v5.3 Context Architecture, Dialectical Protocol & Architectural Depth
+# AGENTS.md — Goby v5.3 Context Architecture, Prompt Spider & Architectural Depth
 
 > [!CAUTION]
 > # 🚨 THIS IS NOT OPTIONAL — IT IS YOUR OPERATING SYSTEM 🚨
@@ -7,43 +7,39 @@
 
 ---
 
-## ⚡ STEP 1: HUMAN INTENT INGESTION & DIALECTICAL MANDATE (Before ANY work)
+## ⚡ STEP 1: PROMPT SPIDER INGESTION & GROUND TRUTH CRAWLING (Before ANY work)
 
 **WHEN:** You receive ANY user request  
-**DO:** Run intent resolution FIRST to perceive the human's projection. Never start coding before understanding intent.
+**DO:** Run Prompt Spider FIRST to crawl user intent, classify elements across 5 empirical categories (`claim`, `owner`, `file`, `approval`, `vague`), detect technical flaws across 3 dimensions, and synthesize the 7-Pillar Empirical Blueprint. Never start coding before understanding intent and ground-truth AST mapping.
 
 ```bash
-goby intent '<user_request_text>'
+goby spider '<user_request_text>' [--save-plan]
 ```
 
-**IF** `clarification_needed: true` → Ask the user the suggested questions BEFORE writing code.  
-**IF** `ambiguity_score > 0.5` → Explicitly state your interpretation and ask for confirmation.  
-**NEVER** guess what the user wants when their request is abstract or ambiguous.
-
-Output `goby intent` generates the **Dialectical Mandate for AI Cognition**: the architectural guardrails, tradeoffs, and blindspots that your upcoming thinking must rigorously address.
+**IF** `[!] CLARIFICATION NEEDED` (terdapat elemen `vague`) → Panggil tool `ask_question` untuk menanyakan opsi klarifikasi kepada user SEBELUM menulis kode.  
+**IF** `DETECTED FLAWS & BLINDSPOTS` → Periksa mitigasi celah teknis (tombol ganda, teks tumpah dari kotak, kontradiksi) dan patuhi guardrails yang dihasilkan.  
+**NEVER** menebak-nebak apa yang diinginkan user ketika permintaannya abstrak atau ambigu.
 
 ---
 
-## 🧠 STEP 2: BOUNDLESS REASONING & PROPOSAL AUDIT (Antigravity Thinking)
+## 🧠 STEP 2: EMPIRICAL BLUEPRINT INGESTION & REASONING (Antigravity Thinking)
 
-**WHEN:** Intent is resolved and clear  
-**DO:** Check past memory and formulate your solution proposal using the model's full reasoning, logic, and data processing power.
+**WHEN:** Prompt Spider telah menghasilkan cetak biru empiris  
+**DO:** Check past memory and formulate your implementation plan using the 7-Pillar Empirical Blueprint:
 
 ```bash
 goby recall '<intent_summary>'
 ```
 
-### ⚔️ DIALECTICAL AUDIT (Anti-Sycophancy Rule on AI Proposal)
-- Pada fase ideation, perumusan plan, atau desain arsitektur, **DILARANG MENJADI YES-MAN**.
-- Sycophancy adalah kesalahan AI ketika sekadar mengiyakan permintaan tanpa pertimbangan arsitektur.
-- Proposisi rencana Anda **WAJIB**:
-  1. Menjawab *trade-offs* dan *blindspots* yang tercantum pada Dialectical Mandate.
-  2. Menyajikan minimal 1 kritik konstruktif atau alternatif dengan *higher leverage* (counter-vector).
-  3. Jangan tergesa-gesa mengiyakan solusi klise/boilerplate tanpa menguji *Single Source of Truth* dan *Architectural Depth*.
-- Anda dapat menguji keabsahan rencana Anda sendiri via CLI:
-  ```bash
-  goby spar '<ai_proposal_summary>' --intent '<user_request_text>'
-  ```
+### 🏛️ 7-PILAR EMPIRICAL BLUEPRINT EXECUTION
+- **ROLE:** Adopsi spesialisasi teknis yang didefinisikan Spider.
+- **OBJEKTIF:** Fokus pada sasaran tunggal dan terukur.
+- **CONTEXT:** Gunakan path file nyata, simbol AST, dan blast radius yang dipetakan oleh Goby.
+- **RULE:** Patuhi guardrails CCR, PreservationContract, anti-collision kontrol ganda, dan anti-overflow teks.
+- **REVIEW:** Targetkan verifikasi pengujian yang diwajibkan.
+- **START:** Jalankan langkah awal konkret (`view_file`).
+- **SHIP:** Penuhi seluruh kriteria kelulusan gate 0.
+
 
 ---
 
