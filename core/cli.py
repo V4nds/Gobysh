@@ -544,6 +544,8 @@ def main():
         print("  goby status        Show framework installation & memory status")
         print("  goby gate          Check Unresolved Error Ledger (must exit 0 before claiming done)")
         print("  goby intent <text> [--repo <path>] Parse user intent -> structured JSON (bilingual)")
+        print("  goby spider '<prompt>' [--repo <path>] [--save-plan] [--json] Crawl prompt, tag tokens, and synthesize 7-pillar empirical blueprint")
+        print("  goby diagnose [file|prompt] [--repo <path>] Audit 3-dimensional technical flaws & anomalies")
         print("  goby map <query> [--repo <path>]   Map intent/query to repository symbols and blast radius")
         print("  goby deepen [file|dir] [--report] [--verbose] Analyze architectural depth & leverage (Ousterhout's Deep Modules)")
         print("  goby recall <text> Recall similar past conversations from memory")
@@ -759,6 +761,121 @@ def main():
                 print(f"  -> {q}")
             sys.exit(1)
         sys.exit(0)
+
+    elif cmd == "spider":
+        if len(args) < 2:
+            print("Error: Usage: goby spider '<prompt_text>' [--repo <path>] [--save-plan] [--json]")
+            sys.exit(1)
+        repo_arg = "."
+        is_json = False
+        save_plan = False
+        prompt_words = []
+        i = 1
+        while i < len(args):
+            if args[i] == "--repo" and i + 1 < len(args):
+                repo_arg = args[i + 1]
+                i += 2
+            elif args[i] == "--json":
+                is_json = True
+                i += 1
+            elif args[i] == "--save-plan":
+                save_plan = True
+                i += 1
+            else:
+                prompt_words.append(args[i])
+                i += 1
+        prompt_text = " ".join(prompt_words)
+
+        from core.spider.prompt_spider import PromptSpider
+        spider = PromptSpider(repo_root=repo_arg)
+        blueprint = spider.crawl_and_synthesize(prompt_text, enforce_contracts=True)
+
+        if save_plan:
+            import datetime
+            today_str = datetime.date.today().strftime("%Y-%m-%d")
+            slug = re.sub(r'[^a-zA-Z0-9]+', '-', prompt_text.strip()[:30].lower()).strip('-')
+            plans_dir = os.path.join(repo_arg, "docs", "superpowers", "plans")
+            os.makedirs(plans_dir, exist_ok=True)
+            plan_file = os.path.join(plans_dir, f"{today_str}-{slug}.md")
+            with open(plan_file, "w", encoding="utf-8") as f:
+                f.write(blueprint.to_markdown())
+            print(f"[GOBY SPIDER] Saved empirical plan to: {plan_file}")
+
+        if is_json:
+            import json
+            print(json.dumps(blueprint.to_dict(), indent=2, ensure_ascii=False))
+        else:
+            print("==========================================================")
+            print("            GOBY PROMPT SPIDER & EMPIRICAL BLUEPRINT")
+            print("==========================================================")
+            print(f"Prompt Hash:   {blueprint.prompt_hash}")
+            print(f"ROLE:          {blueprint.role}")
+            print(f"OBJEKTIF:      {blueprint.objective}")
+            print("\nTAGGED TOKENS:")
+            for t in blueprint.tokens:
+                res = f" -> {t.resolved_entity}" if t.resolved_entity else ""
+                print(f"  [{t.category.upper():<8}] {t.raw_text}{res}")
+
+            if blueprint.detected_flaws:
+                print("\nDETECTED FLAWS & BLINDSPOTS:")
+                for fl in blueprint.detected_flaws:
+                    print(f"  ! [{fl.dimension.upper()}] [{fl.severity}]: {fl.title} - {fl.description}")
+
+            print("\nRULES & GUARDRAILS:")
+            for r in blueprint.rules:
+                print(f"  - {r}")
+
+            print(f"\nSTART STEP:    {blueprint.start_step}")
+            print("==========================================================")
+
+            if blueprint.clarifications:
+                print("\n[!] CLARIFICATION NEEDED BEFORE WRITING CODE:")
+                for cl in blueprint.clarifications:
+                    opts = " | ".join(cl.options)
+                    print(f"  -> {cl.element}: {cl.question}")
+                    print(f"     Options: [{opts}]")
+                sys.exit(1)
+
+        sys.exit(0 if not blueprint.clarifications else 1)
+
+    elif cmd == "diagnose":
+        repo_arg = "."
+        i = 1
+        target_words = []
+        while i < len(args):
+            if args[i] == "--repo" and i + 1 < len(args):
+                repo_arg = args[i + 1]
+                i += 2
+            else:
+                target_words.append(args[i])
+                i += 1
+        target_str = " ".join(target_words)
+
+        from core.diagnostics.flaw_detector import TechnicalFlawDetector
+        detector = TechnicalFlawDetector()
+        flaws = []
+
+        if os.path.isfile(target_str):
+            with open(target_str, "r", encoding="utf-8", errors="replace") as f:
+                code_content = f.read()
+            flaws.extend(detector.audit_code_and_layout(code_content, file_path=target_str))
+        else:
+            flaws.extend(detector.audit_prompt(target_str, repo_root=repo_arg))
+
+        print("==========================================================")
+        print("          GOBY FLAW DIAGNOSTICS & ANOMALY AUDIT")
+        print("==========================================================")
+        if not flaws:
+            print("Status: [CLEAN] No architectural, intent, or layout flaws detected.")
+        else:
+            print(f"Status: [{len(flaws)} FLAW(S) DETECTED]")
+            for fl in flaws:
+                print(f"\n  [{fl.dimension.upper()}] [{fl.severity}]: {fl.title}")
+                print(f"  Deskripsi:   {fl.description}")
+                if fl.suggested_fix:
+                    print(f"  Mitigasi:    {fl.suggested_fix}")
+        print("==========================================================")
+        sys.exit(0 if not any(f.severity == "CRITICAL" for f in flaws) else 1)
 
     elif cmd == "map":
         if len(args) < 2:
