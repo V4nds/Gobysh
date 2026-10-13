@@ -264,13 +264,13 @@ def get_hooks_config() -> Dict[str, Any]:
     """Returns the standardized .agents/hooks.json configuration dictionary."""
     is_windows = os.name == "nt"
     if is_windows:
-        post_cmd = "set PYTHONPATH=..;.&& python -u -m core.hooks post-tool"
-        pre_cmd = "set PYTHONPATH=..;.&& python -u -m core.hooks pre-invocation"
-        stop_cmd = "set PYTHONPATH=..;.&& python -u -m core.hooks stop-gate"
+        post_cmd = "goby hooks post-tool"
+        pre_cmd = "goby hooks pre-invocation"
+        stop_cmd = "goby hooks stop-gate"
     else:
-        post_cmd = "export PYTHONPATH=..:. && python -u -m core.hooks post-tool"
-        pre_cmd = "export PYTHONPATH=..:. && python -u -m core.hooks pre-invocation"
-        stop_cmd = "export PYTHONPATH=..:. && python -u -m core.hooks stop-gate"
+        post_cmd = "goby hooks post-tool"
+        pre_cmd = "goby hooks pre-invocation"
+        stop_cmd = "goby hooks stop-gate"
 
     return {
         "goby-lifecycle": {
@@ -306,7 +306,7 @@ def get_hooks_config() -> Dict[str, Any]:
 
 def install_lifecycle_hooks(target_dir: Optional[str] = None) -> Dict[str, Any]:
     """Installs .agents/hooks.json in the target directory (default: workspace root)."""
-    base = Path(target_dir or _project_root).resolve()
+    base = Path(target_dir or os.getcwd()).resolve()
     agents_dir = base / ".agents"
     agents_dir.mkdir(parents=True, exist_ok=True)
     hooks_file = agents_dir / "hooks.json"
@@ -353,11 +353,13 @@ def cli_entry(action: Optional[str] = None, payload: Optional[Dict[str, Any]] = 
         res = install_lifecycle_hooks()
         sys.stdout.write(json.dumps(res, indent=2))
     elif action == "status":
-        hooks_file = _project_root / ".agents" / "hooks.json"
+        hooks_file = Path(os.getcwd()) / ".agents" / "hooks.json"
+        if not hooks_file.exists():
+            hooks_file = _project_root / ".agents" / "hooks.json"
         status = {
             "installed": hooks_file.exists(),
             "path": str(hooks_file) if hooks_file.exists() else None,
-            "version": "5.0.0"
+            "version": "5.4.0"
         }
         sys.stdout.write(json.dumps(status, indent=2))
     else:

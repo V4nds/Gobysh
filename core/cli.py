@@ -1,5 +1,5 @@
 """
-CLI Entrypoint for Goby Framework v5.0.0.
+CLI Entrypoint for Goby Framework v5.4.0.
 Run using: goby audit | goby benchmark | goby check <code|filepath> | goby install-hook | goby watch | goby status | goby intent | goby recall | goby save
 """
 
@@ -105,7 +105,7 @@ def install_git_hooks():
 # Goby Zero-Bypass Pre-Commit Quality Gate
 echo "[Goby Gate] Validating staged files..."
 
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py|js|ts)$')
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py|js|ts|jsx|tsx|kt|kts)$')
 
 if [ -z "$STAGED_FILES" ]; then
     echo "[Goby Gate] No Python/JS/TS files staged."
@@ -185,7 +185,7 @@ exit 0
 
 def run_watch_loop(memory: StateMemoryManager = None):
     print("[GOBY WATCH] Starting Active CCR Workspace Watcher...")
-    print("Monitoring .py, .js, .ts file modifications... (Press Ctrl+C to stop)")
+    print("Monitoring .py, .js, .ts, .kt, .kts file modifications... (Press Ctrl+C to stop)")
     ccr = CognitiveControlRoom()
 
     file_mtimes = {}
@@ -195,7 +195,7 @@ def run_watch_loop(memory: StateMemoryManager = None):
             if ".git" in root or ".venv" in root or "__pycache__" in root or ".kilo" in root:
                 continue
             for file in files:
-                if file.endswith((".py", ".js", ".ts")):
+                if file.endswith((".py", ".js", ".ts", ".jsx", ".tsx", ".kt", ".kts", ".css", ".html")):
                     filepath = os.path.join(root, file)
                     try:
                         mtime = os.path.getmtime(filepath)
@@ -481,7 +481,7 @@ def generate_architecture_report(
 
 def show_status():
     print("==========================================================")
-    print("       GOBY META-COGNITIVE FRAMEWORK STATUS (v5.0.0)")
+    print("       GOBY META-COGNITIVE FRAMEWORK STATUS (v5.4.0)")
     print("==========================================================")
     print(f"Working Directory: {os.getcwd()}")
 
@@ -530,7 +530,7 @@ def show_status():
 def main():
     args = sys.argv[1:]
     if not args or args[0] in ("-h", "--help"):
-        print("Goby Framework CLI v5.0.0 (Aggressive-Autonomous AI Quality Engine)")
+        print("Goby Framework CLI v5.4.0 (Aggressive-Autonomous AI Quality Engine)")
         print("Usage:")
         print("  goby audit         Run full test suite verification")
         print("  goby benchmark     Run empirical benchmark simulation")
