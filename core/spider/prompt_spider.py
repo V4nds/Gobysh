@@ -15,6 +15,15 @@ from core.spider.semantic_bridge import TripartiteSemanticBridge, NormalizedConc
 from core.diagnostics.flaw_detector import TechnicalFlawDetector, TechnicalFlaw
 from core.translation.scanner import RepositoryScanner
 from core.translation.symbol_mapper import SymbolMap
+from core.semantics import (
+    SemanticIR,
+    SemanticEntity,
+    SemanticSpecification,
+    Requirement,
+    ConstraintModel,
+    PreservationContract,
+    ContractValidator,
+)
 
 
 @dataclass
@@ -66,6 +75,7 @@ class EmpiricalBlueprint:
     detected_flaws: List[TechnicalFlaw] = field(default_factory=list)
     prompt_hash: str = ""
     visual_diagram: Optional[str] = None
+    semantic_ir: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -81,6 +91,7 @@ class EmpiricalBlueprint:
             "detected_flaws": [f.to_dict() for f in self.detected_flaws],
             "prompt_hash": self.prompt_hash,
             "visual_diagram": self.visual_diagram,
+            "semantic_ir": self.semantic_ir,
         }
 
     def to_markdown(self) -> str:
@@ -169,6 +180,7 @@ class PromptSpider:
             (r"\b(fungsi\s+[a-zA-Z0-9_\.-]+\s+lambat)\b", "performance_claim"),
             (r"\b([a-zA-Z0-9_\.-]+\s+(?:rusak|error|gagal|timeout|mati|crash))\b", "defect_claim"),
             (r"\b(tidak\s+jalan|tidak\s+respon|gak\s+respon|broken)\b", "unresponsive_claim"),
+            (r"\b((?:peran\s+)?[\w\s]{2,25}\s+(?:minim|terbatas|gimmick|tidak\s+memberikan\s+kontribusi|tanpa\s+kontribusi|dangkal))\b", "efficacy_claim"),
         ]
         for pat, norm in claim_patterns:
             for m in re.finditer(pat, text_lower):
@@ -182,7 +194,7 @@ class PromptSpider:
                 )
 
         # 2. 'file' extraction: explicit file paths or extensions
-        file_matches = re.findall(r"[\w/\.-]+\.(?:tsx|jsx|ts|js|py|css|html|json)", text)
+        file_matches = re.findall(r"[\w/\.-]+\.(?:tsx|jsx|ts|js|py|css|html|json|md)", text)
         for fm in file_matches:
             tokens.append(
                 SpiderToken(
@@ -208,16 +220,29 @@ class PromptSpider:
                     )
                 )
 
-        # Also detect common architectural owners
-        for domain in ["canvas", "toolbar", "auth", "session", "database", "spider", "cli"]:
-            if domain in text_lower:
+        # Architectural owner mappings across core Goby domains
+        owner_mappings = [
+            (r"\b(?:semantik|semantic|ontology|ir)\b", "semantics", "core/semantics"),
+            (r"\b(?:skill|skills|panduan)\b", "skills", "skills/goby/SKILL.md"),
+            (r"\b(?:spider|crawler)\b", "spider", "core/spider"),
+            (r"\b(?:ccr|gate|kontrol)\b", "ccr_engine", "core/ccr_engine.py"),
+            (r"\b(?:memory|ingatan)\b", "state_memory", "core/state_memory.py"),
+            (r"\b(?:anchor|pondasi)\b", "project_anchor", "core/semantics/project_anchor.py"),
+            (r"\b(?:canvas)\b", "canvas", "canvas"),
+            (r"\b(?:toolbar)\b", "toolbar", "toolbar"),
+            (r"\b(?:auth|session)\b", "auth", "auth"),
+            (r"\b(?:cli)\b", "cli", "core/cli.py"),
+        ]
+        for pat, dom, target_ent in owner_mappings:
+            m = re.search(pat, text_lower)
+            if m:
                 tokens.append(
                     SpiderToken(
                         category="owner",
-                        raw_text=domain,
-                        normalized_concept=f"{domain}_domain",
-                        resolved_entity=domain,
-                        confidence=0.85,
+                        raw_text=m.group(0),
+                        normalized_concept=f"{dom}_domain",
+                        resolved_entity=target_ent,
+                        confidence=0.9,
                     )
                 )
 
@@ -445,6 +470,10 @@ class PromptSpider:
             role = "Principal Software Architect & Modular Refactoring Specialist (Ousterhout's Deep Modules)"
         elif action == "fix_bug":
             role = "Core Systems Reliability Engineer & Defect Resolution Specialist"
+        elif action == "audit_review":
+            role = "Principal Cognitive Systems Architect & Deep Semantic Audit Specialist"
+        elif action == "calibrate":
+            role = "Lead Systems Integrator & Semantic Alignment Specialist"
         else:
             role = "Autonomous Systems Engineer & Goby Quality Orchestrator"
 
@@ -554,6 +583,52 @@ class PromptSpider:
             except Exception:
                 pass
 
+        # 4b. Synthesize Formal SemanticIR & Validate Contract Constraints
+        reqs = []
+        for i, t in enumerate(tokens):
+            if t.category in ("claim", "approval", "owner", "file"):
+                reqs.append(Requirement(
+                    id=f"REQ-{i+1}",
+                    description=t.raw_text,
+                    source_text=t.raw_text,
+                    action="VERIFY" if t.category == "claim" else ("PRESERVE" if t.category == "approval" else "MAP"),
+                    target_entities=[t.resolved_entity] if t.resolved_entity else [t.raw_text],
+                ))
+
+        spec = SemanticSpecification(
+            id=f"SPEC-{p_hash}",
+            language="bilingual",
+            raw_prompt=prompt,
+            requirements=reqs,
+        )
+
+        entities = [
+            SemanticEntity(name=t.resolved_entity or t.raw_text, entity_type=t.category)
+            for t in tokens if t.category in ("file", "owner")
+        ]
+
+        preservation_contract = PreservationContract(
+            required=bool(protected_files),
+            protected_symbols=protected_files,
+            invariants=["preserve_project_identity", "preserve_existing_symbols"] if protected_files else [],
+        )
+
+        semantic_ir = SemanticIR(
+            specification=spec,
+            intent={"action": action, "summary": objective},
+            entities=entities,
+            constraints=ConstraintModel(
+                forbidden_targets=concept.preserved_targets,
+                preserve_existing=bool(protected_files),
+                invariants=["MDI >= 1.2", "Project Identity Preservation"],
+            ),
+            preservation=preservation_contract,
+        )
+
+        val_result = ContractValidator().validate(semantic_ir)
+        for err in val_result.errors:
+            rules.append(f"SEMANTIC CONTRACT VIOLATION: {err}")
+
         blueprint = EmpiricalBlueprint(
             role=role,
             objective=objective,
@@ -566,6 +641,7 @@ class PromptSpider:
             clarifications=clarifications,
             detected_flaws=prompt_flaws,
             prompt_hash=p_hash,
+            semantic_ir=semantic_ir.to_dict(),
         )
 
         if generate_visual:

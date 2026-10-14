@@ -12,6 +12,8 @@ from .negation import NegationHandler, NegationResult
 from .contract_validator import ContractValidator, ValidationResult
 from .dependency_graph import DependencyGraph
 from .depth_engine import DepthEngine, ModuleDepthMetrics
+from .capability_registry import ComponentCapabilityRegistry, CapabilityEntry
+from .project_anchor import ProjectIdentityAnchor, ProjectIdentity, ReferenceSynthesisResult
 
 __all__ = [
     "Requirement",
@@ -29,4 +31,9 @@ __all__ = [
     "DependencyGraph",
     "DepthEngine",
     "ModuleDepthMetrics",
+    "ComponentCapabilityRegistry",
+    "CapabilityEntry",
+    "ProjectIdentityAnchor",
+    "ProjectIdentity",
+    "ReferenceSynthesisResult",
 ]

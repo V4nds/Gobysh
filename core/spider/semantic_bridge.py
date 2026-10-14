@@ -71,6 +71,15 @@ class BilingualSemanticLexicon:
             r"\bdesain\b", r"\btampilan\b", r"\blayout\b", r"\bui\b", r"\bux\b",
             r"\btheme\b", r"\bhud\b", r"\bcanvas\b"
         ]),
+        ("audit_review", [
+            r"\bsisir\b", r"\bsisir kembali\b", r"\baudit\b", r"\btinjau\b", r"\bevaluasi\b",
+            r"\bperiksa\b", r"\bcek\b", r"\binspect\b", r"\breview\b", r"\banalisa\b",
+            r"\banalyze\b", r"\bbedah\b", r"\bselidiki\b"
+        ]),
+        ("calibrate", [
+            r"\bkalibrasi\b", r"\bselaraskan\b", r"\bsinkronkan\b", r"\balign\b",
+            r"\bsync\b", r"\bupdate\b", r"\bperbarui\b", r"\btingkatkan\b"
+        ]),
         ("delete", [
             r"\bhapus\b", r"\bdelete\b", r"\bremove\b", r"\bdrop\b", r"\bbuang\b"
         ]),
@@ -81,6 +90,11 @@ class BilingualSemanticLexicon:
         ("regression", [r"\brusak\b", r"\bhilang\b", r"\bregress\b", r"\bpecah\b"]),
         ("performance", [r"\blambat\b", r"\blemot\b", r"\blag\b", r"\bkenceng\b", r"\bslow\b", r"\btimeout\b"]),
         ("overflow", [r"\btumpah\b", r"\bkeluar kotak\b", r"\boverflow\b", r"\bclipping\b"]),
+        ("shallow_gimmick", [
+            r"\bgimmick\b", r"\bminim\b", r"\bterbatas\b", r"\bdangkal\b",
+            r"\bshallow\b", r"\bsuperficial\b", r"\btidak memberikan kontribusi\b",
+            r"\btanpa kontribusi\b", r"\btanpa dampak\b"
+        ]),
     ]
 
     NEGATION_PRESERVATION_PATTERNS = [
@@ -107,6 +121,15 @@ class BilingualSemanticLexicon:
         "layar": ["screen", "view", "window"],
         "reset": ["reset", "clear"],
         "auth": ["auth", "session", "login", "token"],
+        "semantik": ["semantics", "semantic", "semantic_bridge", "ontology", "intermediate_representation", "semantic_ir"],
+        "semantic": ["semantics", "semantic", "semantic_bridge", "ontology", "intermediate_representation", "semantic_ir"],
+        "skill": ["skill", "skills", "goby-universal", "panduan", "instructions"],
+        "skills": ["skill", "skills", "goby-universal", "panduan", "instructions"],
+        "kontrak": ["contract", "invariant", "obligation", "preservation"],
+        "anchor": ["project_anchor", "identity_anchor", "ground_of_being"],
+        "exemplar": ["exemplar_generalizer", "anti_parroting", "variation"],
+        "depth": ["depth_engine", "architectural_depth", "mdi"],
+        "collision": ["capability_registry", "anti_collision"],
     }
 
 

@@ -42,6 +42,18 @@ class TestTripartiteSemanticBridge(unittest.TestCase):
         matched_files = [m.file_path for m in matches]
         self.assertIn("src/canvas/Toolbar.tsx", matched_files)
 
+    def test_audit_review_and_shallow_gimmick_detection(self):
+        concept = self.bridge.normalize_phrase("sisir kembali peran semantik jangan sampai cuma gimmick")
+        self.assertEqual(concept.action, "audit_review")
+        self.assertIn("shallow_gimmick", concept.risk_flags)
+        self.assertTrue(any("semantic" in k for k in concept.keywords))
+
+    def test_semantic_synonyms_expansion(self):
+        concept = self.bridge.normalize_phrase("cek semantik skill")
+        self.assertEqual(concept.action, "audit_review")
+        self.assertIn("semantics", concept.keywords)
+        self.assertIn("skills", concept.keywords)
+
 
 if __name__ == "__main__":
     unittest.main()

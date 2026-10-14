@@ -120,6 +120,15 @@ class TestPromptSpider(unittest.TestCase):
         self.assertTrue(any("IDENTITY_PRESERVATION" in r for r in bp.rules))
         self.assertIn("https://github.com/morluto/rea", bp.context.get("external_references", []))
 
+    def test_blueprint_contains_formal_semantic_ir(self):
+        prompt = "sisir kembali semantik skill dan ccr_engine.py"
+        bp = self.spider.crawl_and_synthesize(prompt, enforce_contracts=False)
+        self.assertEqual(bp.context.get("action"), "audit_review")
+        self.assertIsNotNone(bp.semantic_ir)
+        self.assertIn("specification", bp.semantic_ir)
+        self.assertIn("constraints", bp.semantic_ir)
+        self.assertIn("entities", bp.semantic_ir)
+
 
 if __name__ == "__main__":
     unittest.main()
