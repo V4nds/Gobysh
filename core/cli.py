@@ -1,5 +1,5 @@
 """
-CLI Entrypoint for Goby Framework v5.4.0.
+CLI Entrypoint for Goby Framework v5.6.0.
 Run using: goby audit | goby benchmark | goby check <code|filepath> | goby install-hook | goby watch | goby status | goby intent | goby recall | goby save
 """
 
@@ -481,7 +481,7 @@ def generate_architecture_report(
 
 def show_status():
     print("==========================================================")
-    print("       GOBY META-COGNITIVE FRAMEWORK STATUS (v5.4.0)")
+    print("       GOBY META-COGNITIVE FRAMEWORK STATUS (v5.6.0)")
     print("==========================================================")
     print(f"Working Directory: {os.getcwd()}")
 
@@ -530,7 +530,7 @@ def show_status():
 def main():
     args = sys.argv[1:]
     if not args or args[0] in ("-h", "--help"):
-        print("Goby Framework CLI v5.4.0 (Aggressive-Autonomous AI Quality Engine)")
+        print("Goby Framework CLI v5.6.0 (Aggressive-Autonomous AI Quality Engine)")
         print("Usage:")
         print("  goby audit         Run full test suite verification")
         print("  goby benchmark     Run empirical benchmark simulation")
@@ -651,7 +651,7 @@ def main():
         verdict = memory.evaluate_exit_gate()
 
         print("==========================================================")
-        print("        GOBY 3-PILLAR EPISTEMIC EXIT GATE (v5.5)          ")
+        print("        GOBY 3-PILLAR EPISTEMIC EXIT GATE (v5.6)          ")
         print("==========================================================")
 
         # Pillar 1

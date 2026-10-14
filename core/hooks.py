@@ -392,7 +392,7 @@ def cli_entry(action: Optional[str] = None, payload: Optional[Dict[str, Any]] = 
         status = {
             "installed": hooks_file.exists(),
             "path": str(hooks_file) if hooks_file.exists() else None,
-            "version": "5.4.0"
+            "version": "5.6.0"
         }
         sys.stdout.write(json.dumps(status, indent=2))
     else:

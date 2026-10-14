@@ -1,59 +1,68 @@
 ---
 name: goby-universal
-description: "Goby v5.5: Aggressive-autonomous AI quality framework with Rust native acceleration and 3-Pillar Epistemic Exit Gate (Static Code Health, Dynamic Test Freshness, and Task Obligation Ledger). Auto-resolves ambiguous user intent, repository AST & dependency graph code mapping, persists conversation memory across sessions, validates every code output with ultra-fast delimiter gates (<5ms), and enforces modern UI/UX standards. Supports Python, JavaScript, TypeScript, Kotlin, Rust, HTML, CSS."
+description: "Goby v5.6: Aggressive-autonomous AI quality framework, cognitive semantics & epistemic verification engine. Bridges natural language intent to AST ground truth, prevents literal example parroting, anchors project identity against external reference drift, validates code with <5ms native gates and Ousterhout deep module depth, and enforces 3-pillar cryptographic verification."
 ---
 
-# Goby v5.5 — Aggressive-Autonomous AI Quality Engine
+# Goby v5.6 — Aggressive-Autonomous AI Quality & Cognitive Semantics Engine
 
-## 🚨 ACTIVATION: ALWAYS-ON (NOT OPTIONAL)
+## 🚨 ACTIVATION: ALWAYS-ON (MANDATORY OPERATING SYSTEM)
 
-Goby activates **automatically** on every task. You do NOT wait for the user to mention Goby.
+Goby activates **automatically** on every user prompt. You do NOT wait for the user to mention Goby.
 
-**TRIGGER CONDITIONS (execute the matching action IMMEDIATELY):**
-
-| When this happens... | You MUST do this... |
-|---------------------|---------------------|
-| User sends ANY request | Run `goby spider '<request>' [--save-plan]` to crawl intent, register obligations & synthesize blueprint |
-| Intent is ambiguous (vague tokens present) | Ask clarification questions using `ask_question` tool |
-| Diagnosing potential flaws / anomalies | Run `goby diagnose [file|prompt]` to audit 3D technical flaws |
-| Querying codebase symbols & blast radius | Run `goby map '<query>' [--repo .]` to map impact |
+| Trigger Event | Mandatory Action |
+|---------------|------------------|
+| User sends ANY request | Run `goby spider '<request>' [--save-plan]` to crawl intent, map AST, extract SemanticIR, and synthesize 7-pillar blueprint |
+| `[!] CLARIFICATION NEEDED` (vague tokens present) | Ask clarification questions using `ask_question` tool BEFORE writing code |
+| `[EXEMPLAR]` tokens detected | Apply `ANTI_PARROTING_EXEMPLAR_INDUCTION`: lift concept to domain abstraction, expand variations, never hardcode literal samples |
+| `[REFERENCE]` tokens detected | Apply `IDENTITY_PRESERVATION`: filter external reference via 3-Tier matrix (Adopt principles, Adapt to local modules, Reject foreign bloat) |
+| Diagnosing potential flaws / anomalies | Run `goby diagnose [file|prompt]` to audit 3D technical flaws (contradictions, double buttons, text overflow) |
+| Querying codebase symbols & blast radius | Run `goby map '<query>' [--repo .]` to map impact across AST |
+| Before modifying ANY file | Run `view_file` FIRST to observe ground-truth code state |
+| Writing or modifying code | Enforce Ousterhout's Deep Modules (MDI >= 1.2), Anti-Boxification, Anti-Collision, and Identity Invariants |
 | Fast file delimiter/bracket validation | Run `goby fast-gate <filepath>` for <5ms native check |
-| About to start coding | Run `goby recall '<intent>'` to check past context |
-| After writing/editing ANY code file | Run `goby check <filepath>` to validate |
-| Error persists after 2 attempts | Run `goby recall` to check known fixes, halt naive retries |
-| Task is complete | Run `goby audit` (dynamic verification) + `goby gate` (3-pillar exit check) |
-| Both gates pass | Run `goby save '<summary>' <type> [files...]` |
+| After writing/editing ANY file | Run `goby check <filepath>` (PostToolUse hook also checks automatically) |
+| Error persists after 2 attempts | Run `goby recall` to check known fixes, halt naive retries, trigger dialectical escalation |
+| Task completion claim | Run `goby audit` (dynamic tests + SHA-256 code hash) + `goby gate` (3-Pillar Epistemic Exit Gate must exit 0) |
+| Both gates pass | Run `goby save '<summary>' <type> [files...]` to persist session memory |
 
 ---
 
-## 🧠 Core Pipeline (Deterministic & Linear)
+## 🧠 Core Architecture: 4 Cognitive Semantic Pillars
 
-```
-User Request → Prompt Spider (Flaw Audit & 7-Pillars) → Memory Recall → Code → Auto-Check → Gates → Save
-```
+### 1. Tripartite Semantic Bridge & Formal SemanticIR
+- **Bidirectional Grounding:** Translates natural language (Indonesian, English, mixed colloquial) $\leftrightarrow$ Semantic Intent Ontologies $\leftrightarrow$ Ground-truth AST symbols & files.
+- **Formal SemanticIR:** Prompt Spider constructs a formal `SemanticIR` (`Specification`, `Requirements`, `Constraints`, `PreservationContract`) and verifies it using `ContractValidator` to catch multi-clause contradictions before coding starts.
+- **Action Ontologies:** Accurately classifies actions (`create_feature`, `fix_bug`, `refactor`, `design_ui`, `audit_review`, `calibrate`, `delete`).
 
-1. **Prompt Spider & Tripartite Semantic Bridge** (`goby spider`): Crawls raw user requests, tags tokens into 5 categories (`claim`, `owner`, `file`, `approval`, `vague`), resolves ID-EN-AST semantics, audits flaws across 3 dimensions, and synthesizes 7-Pillar Empirical Blueprints with mechanical contract binding.
+### 2. Exemplar Induction Engine (`ANTI_PARROTING_EXEMPLAR_INDUCTION`)
+- **Concept Lifting:** When a user mentions 2-3 examples (e.g. *"misal tombol sudut, penggaris, atau busur"*), Goby identifies the underlying domain concept (`geometric_measurement_tools`) rather than copying the exact samples.
+- **Variation Expansion:** Synthesizes rich contextual variations and injects a mandatory blueprint rule:
+  ```markdown
+  - RULE: ANTI_PARROTING_EXEMPLAR_INDUCTION: Token [A, B] adalah sampel ilustratif.
+    Wajib rancang abstraksi polimorfik/generik, dilarang meniru/hardcode 2-3 contoh secara harfiah.
+  ```
 
-2. **Technical Flaw & Anomaly Detector** (`goby diagnose`): Audits user prompt contradictions, project topology (double buttons / capability collision), and UI layout traps (text overflow outside container).
+### 3. Project Identity Anchor & 3-Tier Selective Synthesis (`IDENTITY_PRESERVATION`)
+- **Ground-of-Being Invariants:** Grounded in `pyproject.toml` and `README.md`. Prevents the AI from corrupting the repository orientation when external references or URLs are provided.
+- **3-Tier Reference Matrix (`goby anchor --ref <url|name>`):**
+  - **Tier 1 (Adopt):** Architectural principles, quality bars, and formal contract discipline.
+  - **Tier 2 (Adapt):** Translate and adapt into existing Goby idiomatic modules (`StateMemory`, `CCR`, `PromptSpider`).
+  - **Tier 3 (Reject):** Strictly reject foreign domain runtimes, alien binary dependencies, or off-topic bloat.
+- **CCR Guardrail (`neuron_identity_drift`):** HARD GATE blocking project renaming, deletion of core public API re-exports, or un-adapted foreign monolithic dumps.
 
-3. **Repository AST Scanner & Dependency Graph** (`goby map`): Scans Python, JS/TS, and Kotlin source files. Maps intent to concrete classes, functions, and files, and calculates upstream/downstream causal blast radius.
-
-4. **Conversation Memory** (`goby recall` / `goby save`): Persists context across sessions. Similar past problems are recalled instantly — no starting from zero.
-
-5. **CCR Validation & Depth Engine** (`goby check` / `goby deepen`): Deterministic AST, Scope, and Architectural Depth validation (Ousterhout's MDI). Hard Gates block bad code or shallow wrappers. Soft Signals advise.
-
-6. **LDE Loop Detection**: Detects repetitive failure cycles (>85% similarity) and forces strategy pivoting to prevent deadlocks.
-
-7. **Completion Gate & Persistence**: `goby gate` verifies zero unresolved errors, test runner validates logic, and `goby save` persists solution memory for future sessions.
+### 4. 3-Pillar Epistemic Verification & Antigravity Lifecycle Hard-Stops
+- **Pillar 1: Static Code Health:** 0 unresolved CCR errors on the cognitive map ledger.
+- **Pillar 2: Dynamic Test Freshness:** Cryptographic SHA-256 workspace fingerprint. Any file edits after the test pass mark evidence as `STALE`, blocking completion.
+- **Pillar 3: Task Obligation Ledger:** Prompt claims are tracked as formal obligations in `cognitive_map.json` and must be verified by test execution (`goby audit`).
+- **Antigravity Hard-Stop:** `.agents/hooks.json` mechanically rejects IDE stop requests if any pillar fails.
 
 ---
 
-## 🎨 Design Guardrails & Visual Density (v5.3)
+## 🎨 Design & Layout Governors
 
-Goby bertindak sebagai **Pengaman (Guardrail) & Manajemen Konteks**, bukan mandor gaya preskriptif:
-- **Anti-Boxification (Visual Density Governor):** Mencegah over-encapsulation di mana teks dan simbol dipaksa masuk ke nested card boxes. Mendukung layout CSS native yang elastis tanpa fixed height trap yang membuat teks tumpah keluar kotak.
-- **Anti-Collision Engine (ComponentCapabilityRegistry):** Mencegah duplikasi fitur (*double button / fitur bocor*) di mana kontrol yang sama dibuat berulang di permukaan layout berbeda.
-- **Respect User Design Tokens:** Mengutamakan konsistensi token/gaya proyek pengguna, bukan memaksakan keyword template klise.
+- **Anti-Boxification (Visual Density Governor):** Avoids cramping information into fixed-height, nested card boxes where text overflows or clips. Promotes native, fluid CSS layouts, semantic HTML (`<output>`, `<meter>`, `<dl>`), and contextual HUDs.
+- **Anti-Collision Engine (ComponentCapabilityRegistry):** Ensures controls and features are not accidentally duplicated across different surfaces (Toolbar vs Canvas vs Sidebar).
+- **Architectural Depth (DepthEngine):** Module Depth Index ($MDI \ge 1.2$). Shallow pass-through wrappers escalate automatically to HARD GATE failures.
 
 ---
 
@@ -66,13 +75,13 @@ goby verify '<code_string>' # Genuine pre-output in-memory verification
 goby fast-gate <filepath>   # Ultra-fast native delimiter & structural gate (<5ms)
 goby native <subcommand>    # Direct interface to goby_core Rust native accelerator (scan|check|version)
 goby deepen [file|dir]      # Architectural depth & leverage analysis (Ousterhout's MDI)
-goby diagnose [file|prompt] # Audit 3D technical flaws (prompt contradictions, double buttons, text overflow)
-goby gate                   # 3-Pillar Epistemic Exit Gate (Static, Freshness, Obligations) — must exit 0
-goby audit                  # Dynamic test verification & SHA-256 evidence provenance runner
-goby obligation [list|resolve|add] # Inspect and manage task obligations
+goby anchor [--ref <url>]   # Display Ground-of-Being project identity & 3-tier reference policy
+goby diagnose [file|prompt] # Audit 3D technical flaws (contradictions, double buttons, text overflow)
+goby gate                   # 3-Pillar Epistemic Exit Gate — must exit 0
+goby audit                  # Run full test suite, compute SHA-256 fingerprint, resolve obligations
 
-# Prompt Spider, Intent & Repository Mapping (v5.3)
-goby spider '<prompt>' [--save-plan] [--json] # Crawl prompt, tag tokens, and synthesize 7-pillar blueprint
+# Prompt Spider, Intent & Repository Mapping (v5.6)
+goby spider '<prompt>' [--save-plan] [--json] # Crawl prompt, tag tokens, construct SemanticIR, and synthesize blueprint
 goby intent '<text>' [--repo <path>]          # Parse user intent + repository code mapping
 goby map '<query>' [--repo <path>]            # Map intent/query to repository symbols & blast radius
 goby recall '<text>'                          # Recall similar past conversations
@@ -88,12 +97,11 @@ goby status                 # Framework status dashboard
 
 ---
 
-## ⚡ Operational Rules
+## ⚡ Non-Negotiable Engineering Rules
 
 1. **Evidence Over Assertion:** Never claim done without `goby gate` Exit Code 0.
-2. **Ask Before Guess:** If user intent is unclear, ask — don't hallucinate requirements.
-3. **Memory First:** Check past context before starting from scratch.
-4. **Auto-Check Always:** Every file write triggers `goby check`. No exceptions.
-5. **No Superficial Patches:** Fix root causes, not symptoms.
-6. **2-Strike Escalation:** 2 failed attempts → halt, escalate strategy (LDE/evolve).
-
+2. **View Before Write:** Always `view_file` real ground-truth code before editing.
+3. **Deep Modules Only:** Build small, expressive interfaces that hide rich internal logic.
+4. **Auto-Check Always:** Every file write triggers CCR validation.
+5. **No Superficial Patches:** Fix root causes; never silence errors with empty try/except.
+6. **2-Strike Escalation:** 2 failed attempts on the same issue $\rightarrow$ halt, run `goby evolve`, pivot fundamentally.

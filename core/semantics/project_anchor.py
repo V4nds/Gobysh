@@ -105,7 +105,7 @@ class ProjectIdentityAnchor:
             return self._identity
 
         name = "Gobysh"
-        version = "5.5.0"
+        version = "5.6.0"
         core_purpose = "Context Manager & Guardrail Framework untuk AI Coding Agent"
         foundational_modules = ["ccr_engine", "state_memory", "prompt_spider", "hooks", "taste_synthesis"]
         forbidden_drifts = [

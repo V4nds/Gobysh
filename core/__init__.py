@@ -13,7 +13,7 @@ from .lde_detector import LoopDetectionEngine, LoopAnalysisResult, similarity_ra
 from .gca_runner import GroundedCompilerArbitrage, ExecutionResult
 from .state_memory import StateMemoryManager
 
-__version__ = "5.4.0"
+__version__ = "5.6.0"
 
 
 def verify(code: str, language: str = "python", context: dict = None):
