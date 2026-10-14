@@ -171,8 +171,8 @@ def handle_post_tool_use(payload: Dict[str, Any]) -> Dict[str, Any]:
 def handle_pre_invocation(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     PreInvocation hook handler.
-    Checks the Unresolved Error Ledger. If errors exist, injects an aggressive
-    warning message into the agent's context window.
+    Checks the 3-Pillar Epistemic Exit Gate status in cognitive_map.json.
+    If any pillar is blocked, injects an aggressive warning message into the agent's context window.
     """
     from .state_memory import StateMemoryManager
 
@@ -185,25 +185,39 @@ def handle_pre_invocation(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         memory = StateMemoryManager(memory_path)
-        unresolved = memory.get_unresolved_errors()
-        if not unresolved:
+        verdict = memory.evaluate_exit_gate(workspace_dir=workspace)
+        if verdict["passed"]:
             return {}
 
+        p1 = verdict["pillars"]["static_integrity"]
+        p2 = verdict["pillars"]["dynamic_evidence"]
+        p3 = verdict["pillars"]["obligations"]
+
         items = []
-        for e in unresolved[:5]:
-            fname = os.path.basename(e.get("file", "unknown"))
-            gate = e.get("gate", "CCR")
-            msg = e.get("message", "Validation failed")
-            items.append(f"  - {fname} [{gate}]: {msg}")
+        if not p1["passed"]:
+            items.append(f"  [1/3] Static Code Health: [BLOCKED] ({len(p1['unresolved'])} unresolved errors):")
+            for e in p1["unresolved"][:5]:
+                fname = os.path.basename(e.get("file", "unknown"))
+                gate = e.get("gate", "CCR")
+                msg = e.get("message", "Validation failed")
+                items.append(f"        - {fname} [{gate}]: {msg}")
+
+        if not p2["passed"]:
+            items.append(f"  [2/3] Dynamic Test Freshness: [{p2['freshness']}]")
+
+        if not p3["passed"]:
+            items.append(f"  [3/3] Task Obligation Ledger: [BLOCKED] ({len(p3['open_obligations'])} open):")
+            for ob in p3["open_obligations"][:5]:
+                items.append(f"        - [{ob.get('status', 'PENDING')}] {ob.get('obligation_id', '')}: {ob.get('claim', '')}")
 
         warning_text = (
             f"🚨 [GOBY AGGRESSIVE TELEMETRY & HARD GATE ALERT]\n"
-            f"There are {len(unresolved)} unresolved CCR error(s) in active workspace:\n"
+            f"The Epistemic Exit Gate is currently [BLOCKED]:\n"
             + "\n".join(items) + "\n\n"
             "⚡ MANDATORY DIALECTICAL ACTION:\n"
             "1. You CANNOT declare completion (goby gate & Antigravity Stop hook are mechanically ARMED).\n"
             "2. If caused by [ARCHITECTURAL_DEPTH]: Collapse shallow wrappers into deep modules (Ousterhout's Law).\n"
-            "3. Fix all files and ensure `goby check <file>` passes before proceeding."
+            "3. Run `goby audit` or test suite to verify claims and prove dynamic freshness before ending turn."
         )
 
         return {
@@ -221,7 +235,8 @@ def handle_pre_invocation(payload: Dict[str, Any]) -> Dict[str, Any]:
 def handle_stop_gate(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     Stop hook handler.
-    Blocks the agent from stopping if there are unresolved errors in the ledger.
+    Blocks the agent from stopping if any of the 3 Epistemic Exit Gate pillars fail
+    (Static code errors, Stale/missing test freshness, or Unresolved task obligations).
     """
     from .state_memory import StateMemoryManager
 
@@ -234,22 +249,40 @@ def handle_stop_gate(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         memory = StateMemoryManager(memory_path)
-        unresolved = memory.get_unresolved_errors()
-        if not unresolved:
+        verdict = memory.evaluate_exit_gate(workspace_dir=workspace)
+        if verdict["passed"]:
             return {"decision": "allow"}
 
-        items = []
-        for e in unresolved[:5]:
+        p1 = verdict["pillars"]["static_integrity"]
+        p2 = verdict["pillars"]["dynamic_evidence"]
+        p3 = verdict["pillars"]["obligations"]
+
+        lines = [
+            "🚨 [GOBY 3-PILLAR EXIT GATE BLOCKED] Cannot finish session due to incomplete verification:",
+            f"  [1/3] Static Code Health:     {'[PASS]' if p1['passed'] else '[BLOCKED]'} ({len(p1['unresolved'])} unresolved errors)",
+        ]
+        for e in p1["unresolved"][:5]:
             fname = os.path.basename(e.get("file", "unknown"))
             gate = e.get("gate", "CCR")
             msg = e.get("message", "Validation failed")
-            items.append(f"  - {fname} [{gate}]: {msg}")
+            lines.append(f"        - {fname} [{gate}]: {msg}")
 
-        block_reason = (
-            f"🚨 [GOBY HARD GATE BLOCKED] Cannot finish session with {len(unresolved)} unresolved error(s):\n"
-            + "\n".join(items) + "\n"
-            "Fix the broken code or run `goby check <file>` until it passes."
-        )
+        last_ev = p2.get("last_test")
+        ev_id = f" ({last_ev.get('evidence_id')})" if last_ev else ""
+        lines.append(f"  [2/3] Dynamic Test Freshness: [{p2['freshness']}]{ev_id}")
+
+        lines.append(f"  [3/3] Task Obligation Ledger: {'[PASS]' if p3['passed'] else '[BLOCKED]'} ({len(p3['open_obligations'])} open)")
+        for ob in p3["open_obligations"][:5]:
+            lines.append(f"        - [{ob.get('status', 'PENDING')}] {ob.get('obligation_id', '')}: {ob.get('claim', '')}")
+
+        lines.append("\nBlock Reasons:")
+        for r in verdict["block_reasons"]:
+            lines.append(f"  - {r}")
+
+        lines.append("\n⚡ MANDATORY ACTION:")
+        lines.append("  -> Fix code issues and run `goby audit` (or your test suite) to establish fresh verification before completing.")
+
+        block_reason = "\n".join(lines)
 
         return {
             "decision": "continue",

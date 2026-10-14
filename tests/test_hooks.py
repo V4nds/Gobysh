@@ -181,6 +181,62 @@ class TestLifecycleHooks(unittest.TestCase):
         self.assertIn("PreInvocation", spec)
         self.assertIn("Stop", spec)
 
+    def test_handle_stop_gate_blocked_on_open_obligation(self):
+        self.memory.record_obligation("Must implement user logout feature", source="prompt")
+
+        payload = {"workspacePaths": [self.workspace]}
+        out = handle_stop_gate(payload)
+
+        self.assertEqual(out.get("decision"), "continue")
+        self.assertIn("reason", out)
+        self.assertIn("Must implement user logout feature", out["reason"])
+
+    def test_handle_stop_gate_blocked_on_stale_test_evidence(self):
+        # 1. Record test execution with a stale hash
+        self.memory.record_test_execution(
+            command="python -m unittest",
+            exit_code=0,
+            duration_seconds=1.2,
+            output_summary="Ran 5 tests: OK",
+            workspace_hash="stale_hash_123",
+        )
+        # Create an actual code file in workspace so workspace hash is different
+        test_file = os.path.join(self.workspace, "app.py")
+        with open(test_file, "w", encoding="utf-8") as f:
+            f.write("def run(): pass\n")
+
+        payload = {"workspacePaths": [self.workspace]}
+        out = handle_stop_gate(payload)
+
+        self.assertEqual(out.get("decision"), "continue")
+        self.assertIn("reason", out)
+        self.assertIn("STALE", out["reason"])
+
+    def test_handle_stop_gate_passes_when_audited_and_clean(self):
+        from core.state_memory import calculate_workspace_code_hash
+
+        # Add an obligation and then resolve it
+        ob_id = self.memory.record_obligation("Verify database migration")
+        
+        test_file = os.path.join(self.workspace, "app.py")
+        with open(test_file, "w", encoding="utf-8") as f:
+            f.write("def run(): pass\n")
+
+        whash = calculate_workspace_code_hash(self.workspace)
+        ev = self.memory.record_test_execution(
+            command="python -m unittest",
+            exit_code=0,
+            duration_seconds=0.8,
+            output_summary="Ran 10 tests: OK",
+            workspace_hash=whash,
+        )
+        self.memory.resolve_obligation(ob_id, evidence_id=ev["evidence_id"], status="VERIFIED")
+
+        payload = {"workspacePaths": [self.workspace]}
+        out = handle_stop_gate(payload)
+
+        self.assertEqual(out.get("decision"), "allow")
+
     def test_cli_entry_status_and_install(self):
         with patch("sys.stdout.write") as mock_stdout:
             cli_entry("status")
