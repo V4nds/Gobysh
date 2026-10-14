@@ -24,9 +24,16 @@
   - **Fast Gate (`goby fast-gate`)**: Validasi integritas pembatas (*delimiter/bracket balance*) dan struktur sintaks ultra-cepat (< 5 ms) untuk memangkas overhead hook IDE di Windows/Linux/macOS.
   - **Parallel AST & Symbol Indexer**: Pemindaian multi-threaded simbol kode, impor, kelas, dan fungsi untuk Python, JS/TS, Kotlin, dan Rust dengan *zero-drift fallback* otomatis ke implementasi Python jika binary belum dikompilasi.
 - **Prompt Spider & Tripartite Semantic Bridge (`goby spider`)**  
-  Merayapi instruksi pengguna, menandai elemen ke dalam 5 kategori empiris (`claim`, `owner`, `file`, `approval`, `vague`), memetakan semantik dwibahasa ID-EN ke AST kode nyata, dan menyusun 7-Pilar Empirical Blueprint (`ROLE`, `OBJEKTIF`, `CONTEXT`, `RULE`, `REVIEW`, `START`, `SHIP`).
-  - **Taksonomi 5-Tag:** `claim` (klaim/hipotesis), `owner` (domain/layer), `file` (file riil di AST), `approval` (titik gate kritis), `vague` (deteksi kata abstrak yang memicu pertanyaan klarifikasi aktif).
+  Merayapi instruksi pengguna, menandai elemen ke dalam kategori empiris (`claim`, `owner`, `file`, `approval`, `vague`, `exemplar`, `reference`), memetakan semantik dwibahasa ID-EN ke AST kode nyata, dan menyusun 7-Pilar Empirical Blueprint (`ROLE`, `OBJEKTIF`, `CONTEXT`, `RULE`, `REVIEW`, `START`, `SHIP`).
+  - **Taksonomi Tag Empiris:** `claim` (klaim/hipotesis), `owner` (domain/layer), `file` (file riil di AST), `approval` (titik gate kritis), `vague` (deteksi kata abstrak yang memicu pertanyaan klarifikasi aktif), `exemplar` (sampel ilustratif), `reference` (URL atau repo eksternal).
   - **Mechanical Contract Binding:** Mengunci file proteksi dan aturan ke `cognitive_map.json` sehingga gerbang CCR `PostToolUse` langsung memblokir jika terjadi pelanggaran.
+- **Exemplar Induction & Anti-Parroting Engine**  
+  Mendeteksi token ilustratif (`misal`, `contohnya`, `seperti`, `e.g.`, `such as`), melakukan *concept lifting* ke domain abstraksi yang lebih tinggi, dan menginjeksi aturan `ANTI_PARROTING_EXEMPLAR_INDUCTION` agar AI agent membangun arsitektur generik/polimorfik dengan variasi kontekstual yang kaya alih-alih meniru atau me-hardcode contoh secara harfiah.
+- **Project Identity Anchor & 3-Tier Selective Synthesis (`goby anchor`)**  
+  Menjaga Ground-of-Being repositori agar AI tidak merombak orientasi proyek saat menerima referensi luar (repo/URL eksternal). Menyaring referensi melalui matriks 3-Tier:
+  - **Tier 1 (Adopt)**: Prinsip filosofis & standar kualitas arsitektur.
+  - **Tier 2 (Adapt)**: Diadaptasi ke modul & idiom lokal Goby (`StateMemory`, `CCR`, `PromptSpider`).
+  - **Tier 3 (Reject)**: Menolak mentah-mentah runtime domain asing atau bloat dependensi yang tidak relevan.
 - **3D Technical Flaw & Anomaly Detector (`goby diagnose`)**  
   Mendeteksi potensi celah teknis pada 3 dimensi: kontradiksi prompt user, topologi proyek (tombol ganda / *capability collision*), dan logika/layout UI (teks tumpah keluar dari kotak berukuran tetap).
 - **Architectural Depth Engine (`goby deepen`)**  

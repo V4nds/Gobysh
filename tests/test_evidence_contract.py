@@ -17,7 +17,7 @@ class TestEvidenceEngine(unittest.TestCase):
         res = self.ccr.verify_candidate(code, language="python")
         self.assertTrue(res["verified"])
         self.assertFalse(res["blocked"])
-        self.assertEqual(len(res["signals"]), 3)
+        self.assertEqual(len(res["signals"]), 4)
 
     def test_in_memory_verify_candidate_undefined_scope(self):
         code = "def process():\n    return missing_price * 10\n"

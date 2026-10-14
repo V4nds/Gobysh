@@ -18,6 +18,8 @@ goby spider '<user_request_text>' [--save-plan]
 
 **IF** `[!] CLARIFICATION NEEDED` (terdapat elemen `vague`) → Panggil tool `ask_question` untuk menanyakan opsi klarifikasi kepada user SEBELUM menulis kode.  
 **IF** `DETECTED FLAWS & BLINDSPOTS` → Periksa mitigasi celah teknis (tombol ganda, teks tumpah dari kotak, kontradiksi) dan patuhi guardrails yang dihasilkan.  
+**IF** `[EXEMPLAR]` terdeteksi → Patuhi aturan `ANTI_PARROTING_EXEMPLAR_INDUCTION`: kembangkan domain konseptual dan variasinya, dilarang meniru/hardcode 2-3 contoh user secara harfiah.  
+**IF** `[REFERENCE]` terdeteksi → Patuhi aturan `IDENTITY_PRESERVATION`: gunakan 3-Tier Selective Synthesis (Adopt prinsip, Adapt ke modul lokal, Reject bloat asing), dilarang merombak identitas dasar repositori.  
 **NEVER** menebak-nebak apa yang diinginkan user ketika permintaannya abstrak atau ambigu.
 
 ---
@@ -68,6 +70,11 @@ goby recall '<intent_summary>'
    - Desain *Deep Modules* (antarmuka publik ringkas yang menyembunyikan logika kompleks internal). Hindari modul dangkal / *shallow pass-through wrappers*.
    - **Conditional Hard Gate Escalation:** Jika sebuah modul terdeteksi *extreme shallow* ($MDI < 1.0$ dan $\ge 2$ pass-through delegators), gate otomatis ter-eskalasi dari `SOFT` menjadi **`HARD GATE`**. `goby check` akan exit code 1 dan masuk ke Unresolved Error Ledger.
    - Verifikasi kedalaman kode Anda via `goby deepen <filepath>`.
+7. **Anti-Parroting (Exemplar Induction):** Jika user menyebut 2-3 contoh (misal: tombol sudut, penggaris, busur), dilarang meniru/hardcode secara harfiah semata. Lakukan *concept lifting* ke ranah domain yang lebih luas dan bangun kapabilitas polimorfik/ekstensibel dengan variasi fungsional yang kaya.
+8. **Project Identity Anchor & 3-Tier Selective Synthesis:** Dilarang merombak identitas dasar proyek atau membuang modul dasar ketika diberikan referensi luar. Terapkan matriks 3-Tier:
+   - **Tier 1 (Adopt):** Prinsip arsitektural dan filosofis.
+   - **Tier 2 (Adapt):** Terjemahkan ke dalam idiom modul Goby yang sudah ada (`StateMemory`, `CCR`, `PromptSpider`).
+   - **Tier 3 (Reject):** Tolak mentah-mentah runtime asing atau bloat domain di luar tujuan proyek.
 
 
 ---

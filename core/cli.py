@@ -550,6 +550,7 @@ def main():
         print("  goby diagnose [file|prompt] [--repo <path>] Audit 3-dimensional technical flaws & anomalies")
         print("  goby map <query> [--repo <path>]   Map intent/query to repository symbols and blast radius")
         print("  goby deepen [file|dir] [--report] [--verbose] Analyze architectural depth & leverage (Ousterhout's Deep Modules)")
+        print("  goby anchor [--repo <path>] [--ref <url|name>] Display Ground-of-Being project identity & reference policy")
         print("  goby recall <text> Recall similar past conversations from memory")
         print("  goby save '<summary>' <type> Save current session context to conversation memory")
         print("  goby briefing      Show auto-generated session briefing from memory")
@@ -1175,6 +1176,49 @@ def main():
             if verbose or m.classification == "SHALLOW":
                 for ap in m.anti_patterns:
                     print(f"     ! [{ap.get('type')}] {ap.get('details')}")
+        print("==========================================================")
+        sys.exit(0)
+
+    elif cmd == "anchor":
+        from .semantics.project_anchor import ProjectIdentityAnchor
+        repo_path = "."
+        ref_arg = None
+        for i, a in enumerate(args[1:], 1):
+            if a in ("--repo", "-r") and i < len(args) - 1:
+                repo_path = args[i + 1]
+            elif a in ("--ref", "-ref") and i < len(args) - 1:
+                ref_arg = args[i + 1]
+
+        anchor = ProjectIdentityAnchor(repo_root=repo_path)
+        ident = anchor.identity
+
+        print("==========================================================")
+        print("       GOBY PROJECT IDENTITY ANCHOR (v5.6)")
+        print("==========================================================")
+        print(f"Project Name   : {ident.name}")
+        print(f"Version        : {ident.version}")
+        print(f"Core Purpose   : {ident.core_purpose}")
+        print(f"Foundations    : {', '.join(ident.foundational_modules)}")
+        print("\nForbidden Identity Drifts:")
+        for fd in ident.forbidden_drifts:
+            print(f"  [X] {fd}")
+
+        if ref_arg:
+            synth = anchor.synthesize_reference(ref_arg)
+            print("\n----------------------------------------------------------")
+            print(f"  3-TIER SELECTIVE SYNTHESIS: {ref_arg}")
+            print("----------------------------------------------------------")
+            print("Tier 1 [ADOPT Principles]:")
+            for p in synth.adopt_principles:
+                print(f"  + {p}")
+            print("\nTier 2 [ADAPT to Local Idioms]:")
+            for t in synth.adapt_targets:
+                print(f"  ~ {t}")
+            print("\nTier 3 [REJECT Bloat / Foreign Runtimes]:")
+            for r in synth.reject_bloat:
+                print(f"  - {r}")
+            if synth.guardrail_rule:
+                print(f"\nGuardrail Blueprint Rule:\n  {synth.guardrail_rule}")
         print("==========================================================")
         sys.exit(0)
 
