@@ -142,6 +142,56 @@ class TestGobyGateCLI(unittest.TestCase):
                     cli.main()
                 self.assertEqual(cm.exception.code, 0)
 
+    def test_obligation_cli_workflow(self):
+        with tempfile.TemporaryDirectory() as td:
+            mem = StateMemoryManager(memory_file_path=os.path.join(td, "l.json"))
+
+            # 1. Add obligation
+            with self._patch_mem(mem), patch.object(sys, "argv", ["goby", "obligation", "add", "Implement", "feature", "X"]):
+                with self.assertRaises(SystemExit) as cm:
+                    cli.main()
+                self.assertEqual(cm.exception.code, 0)
+
+            obs = mem.get_unresolved_obligations()
+            self.assertEqual(len(obs), 1)
+            self.assertEqual(obs[0]["claim"], "Implement feature X")
+            ob_id = obs[0]["obligation_id"]
+
+            # 2. List obligations
+            with self._patch_mem(mem), patch.object(sys, "argv", ["goby", "obligation", "list"]):
+                with self.assertRaises(SystemExit) as cm:
+                    cli.main()
+                self.assertEqual(cm.exception.code, 0)
+
+            # 3. Resolve obligation
+            with self._patch_mem(mem), patch.object(sys, "argv", ["goby", "obligation", "resolve", ob_id]):
+                with self.assertRaises(SystemExit) as cm:
+                    cli.main()
+                self.assertEqual(cm.exception.code, 0)
+
+            self.assertEqual(len(mem.get_unresolved_obligations()), 0)
+
+    def test_audit_cli_success_and_gate_pass(self):
+        with tempfile.TemporaryDirectory() as td:
+            mem = StateMemoryManager(memory_file_path=os.path.join(td, "l.json"))
+            mem.record_obligation("Fix bug ABC", source="prompt")
+            self.assertEqual(len(mem.get_unresolved_obligations()), 1)
+
+            # Audit with python -c exit(0)
+            with self._patch_mem(mem), patch.object(sys, "argv", ["goby", "audit", "--command", "python -c \"import sys; sys.exit(0)\""]):
+                with self.assertRaises(SystemExit) as cm:
+                    cli.main()
+                self.assertEqual(cm.exception.code, 0)
+
+            # Obligation should now be auto-resolved
+            self.assertEqual(len(mem.get_unresolved_obligations()), 0)
+
+            # Exit gate should now pass
+            with self._patch_mem(mem), patch.object(sys, "argv", ["goby", "gate"]):
+                with self.assertRaises(SystemExit) as cm:
+                    cli.main()
+                self.assertEqual(cm.exception.code, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

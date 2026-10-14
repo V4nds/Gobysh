@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from .ccr_engine import CognitiveControlRoom
-from .state_memory import StateMemoryManager
+from .state_memory import StateMemoryManager, calculate_workspace_code_hash
 
 
 # ---------------------------------------------------------------------------
@@ -647,16 +647,137 @@ def main():
 
     elif cmd == "gate":
         memory = StateMemoryManager("cognitive_map.json")
-        unresolved = memory.get_unresolved_errors()
-        if not unresolved:
+        verdict = memory.evaluate_exit_gate()
+
+        print("==========================================================")
+        print("        GOBY 3-PILLAR EPISTEMIC EXIT GATE (v5.5)          ")
+        print("==========================================================")
+
+        # Pillar 1
+        p1 = verdict["pillars"]["static_integrity"]
+        p1_badge = "[PASS]" if p1["passed"] else "[BLOCKED]"
+        print(f"  [1/3] Static Code Health:     {p1_badge} ({len(p1['unresolved'])} unresolved errors)")
+        for err in p1["unresolved"][:5]:
+            print(f"        - {err['file']} [{err.get('gate', 'CCR')}]: {err.get('message', '')}")
+
+        # Pillar 2
+        p2 = verdict["pillars"]["dynamic_evidence"]
+        p2_badge = f"[{p2['freshness']}]"
+        last_ev = p2.get("last_test")
+        ev_info = f" (Evidence: {last_ev['evidence_id']})" if last_ev else ""
+        print(f"  [2/3] Dynamic Test Freshness: {p2_badge}{ev_info}")
+
+        # Pillar 3
+        p3 = verdict["pillars"]["obligations"]
+        p3_badge = "[PASS]" if p3["passed"] else "[BLOCKED]"
+        print(f"  [3/3] Task Obligation Ledger: {p3_badge} ({len(p3['open_obligations'])} open)")
+        for ob in p3["open_obligations"][:5]:
+            print(f"        - [{ob.get('status', 'PENDING')}] {ob.get('obligation_id', '')}: {ob.get('claim', '')}")
+
+        print("==========================================================")
+        if verdict["passed"]:
             print("[GOBY GATE] Ledger clean: 0 unresolved file errors. Workspace ready.")
+            print("[GOBY GATE OK] All 3 Epistemic Pillars Satisfied. Workspace ready to ship.")
             sys.exit(0)
-        print(f"[GOBY GATE] {len(unresolved)} unresolved file error(s):")
-        for entry in unresolved:
-            print(f"  - {entry['file']} [{entry['gate']}] {entry['message']}")
-            print(f"    Last checked: {entry.get('checked_at', 'N/A')} | Hash: {entry.get('code_hash', '')}")
-        print("[GOBY GATE] BLOCKED. Fix each file, then run `goby check <file>` until it passes.")
-        sys.exit(1)
+        else:
+            print("[GOBY GATE BLOCKED] Exit gate failed closed due to incomplete verification:")
+            for reason in verdict["block_reasons"]:
+                print(f"  - {reason}")
+            print("\n  -> Fix code or run `goby audit` to execute tests and establish fresh evidence.")
+            sys.exit(1)
+
+    elif cmd == "audit":
+        import subprocess
+        test_cmd = "python -m unittest discover tests/"
+        if "--command" in args:
+            idx = args.index("--command")
+            if idx + 1 < len(args):
+                test_cmd = args[idx + 1]
+        elif "-c" in args:
+            idx = args.index("-c")
+            if idx + 1 < len(args):
+                test_cmd = args[idx + 1]
+
+        print("[AUDIT] Running Goby Empirical Verification Audit...")
+        print(f"[AUDIT] Executing: {test_cmd}")
+        t0 = time.time()
+        res = subprocess.run(test_cmd, shell=True, capture_output=True, text=True)
+        duration = time.time() - t0
+
+        if res.stdout:
+            sys.stdout.write(res.stdout)
+        if res.stderr:
+            sys.stderr.write(res.stderr)
+
+        memory = StateMemoryManager("cognitive_map.json")
+        target_ws = os.path.dirname(os.path.abspath(memory.memory_file_path)) or "."
+        whash = calculate_workspace_code_hash(target_ws)
+        summary = (res.stdout + "\n" + res.stderr)[:500]
+
+        ev_rec = memory.record_test_execution(
+            command=test_cmd,
+            exit_code=res.returncode,
+            duration_seconds=duration,
+            output_summary=summary,
+            workspace_hash=whash,
+        )
+
+        if res.returncode == 0:
+            unresolved_obs = memory.get_unresolved_obligations()
+            for ob in unresolved_obs:
+                memory.resolve_obligation(ob["obligation_id"], evidence_id=ev_rec["evidence_id"], status="VERIFIED")
+
+            print(f"[GOBY AUDIT OK] Evidence Record: {ev_rec['evidence_id']} (Duration: {duration:.2f}s)")
+            print(f"[GOBY AUDIT OK] Workspace Fingerprint: {whash[:16]}... (Clean & Fresh)")
+            if unresolved_obs:
+                print(f"[GOBY AUDIT OK] Resolved {len(unresolved_obs)} task obligation(s).")
+            sys.exit(0)
+        else:
+            print(f"[GOBY AUDIT FAIL] Test suite failed with exit code {res.returncode}.")
+            print(f"[GOBY AUDIT] Evidence recorded: {ev_rec['evidence_id']}.")
+            sys.exit(res.returncode)
+
+    elif cmd == "obligation":
+        subaction = args[1] if len(args) > 1 else "list"
+        memory = StateMemoryManager("cognitive_map.json")
+
+        if subaction == "list":
+            obs = memory.get_all_obligations()
+            if not obs:
+                print("[GOBY OBLIGATION] No registered obligations in ledger.")
+            else:
+                print("==========================================================")
+                print("           GOBY TASK OBLIGATION LEDGER                    ")
+                print("==========================================================")
+                for ob in obs:
+                    status_badge = f"[{ob.get('status', 'PENDING')}]"
+                    print(f"  {ob.get('obligation_id', '')} {status_badge:12} {ob.get('claim', '')}")
+                    if ob.get("evidence_id"):
+                        print(f"    Evidence: {ob.get('evidence_id')}")
+                print("==========================================================")
+            sys.exit(0)
+
+        elif subaction == "resolve":
+            if len(args) < 3:
+                print("Error: Please provide obligation ID. Example: goby obligation resolve ob_12345678")
+                sys.exit(1)
+            ob_id = args[2]
+            ok = memory.resolve_obligation(ob_id, status="VERIFIED")
+            if ok:
+                print(f"[GOBY OBLIGATION OK] Obligation '{ob_id}' resolved as VERIFIED.")
+            else:
+                print(f"[GOBY OBLIGATION FAIL] Obligation '{ob_id}' not found.")
+                sys.exit(1)
+            sys.exit(0)
+
+        elif subaction == "add":
+            if len(args) < 3:
+                print("Error: Please provide claim text. Example: goby obligation add 'Fix login auth'")
+                sys.exit(1)
+            claim_text = " ".join(args[2:])
+            ob_id = memory.record_obligation(claim_text, source="manual_cli")
+            print(f"[GOBY OBLIGATION OK] Obligation registered: {ob_id} ('{claim_text}')")
+            sys.exit(0)
 
     elif cmd == "fast-gate":
         if len(args) < 2:

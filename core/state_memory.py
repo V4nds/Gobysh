@@ -402,20 +402,29 @@ class StateMemoryManager:
             unresolved_errors = self.get_unresolved_errors()
             static_passed = len(unresolved_errors) == 0
 
+            # Pillar 3: Task Obligations & Residual Unknowns (evaluated first to inform freshness)
+            open_obligations = self.get_unresolved_obligations()
+            obligations_passed = len(open_obligations) == 0
+
             # Pillar 2: Dynamic Test Freshness
-            target_ws = workspace_dir or os.path.dirname(self.memory_file_path) or "."
+            if workspace_dir:
+                target_ws = os.path.abspath(workspace_dir)
+            else:
+                target_ws = os.path.dirname(os.path.abspath(self.memory_file_path))
+                if not target_ws or target_ws == os.path.abspath("."):
+                    target_ws = os.getcwd()
+
             current_whash = calculate_workspace_code_hash(target_ws)
             last_test = self.get_last_test_execution()
 
             if not last_test:
-                # If no test has been recorded at all
-                empty_hash = hashlib.sha256(b"").hexdigest()
-                if current_whash == empty_hash:
-                    freshness = "NO_MODIFICATIONS"
-                    dynamic_passed = True
-                else:
+                # If no test has been recorded in this ledger
+                if open_obligations:
                     freshness = "MISSING"
                     dynamic_passed = False
+                else:
+                    freshness = "UNRECORDED"
+                    dynamic_passed = True
             else:
                 if last_test.get("workspace_hash") == current_whash:
                     if last_test.get("exit_code") == 0:
@@ -427,10 +436,6 @@ class StateMemoryManager:
                 else:
                     freshness = "STALE"
                     dynamic_passed = False
-
-            # Pillar 3: Task Obligations & Residual Unknowns
-            open_obligations = self.get_unresolved_obligations()
-            obligations_passed = len(open_obligations) == 0
 
             # Overall verdict
             overall_passed = static_passed and dynamic_passed and obligations_passed
@@ -449,7 +454,7 @@ class StateMemoryManager:
                     )
                 elif freshness == "MISSING":
                     block_reasons.append(
-                        "Dynamic Test Freshness: Code was modified but no test verification has been executed. "
+                        "Dynamic Test Freshness: Task obligations exist but no test verification has been executed. "
                         "Run `goby audit` or test suite before completing task."
                     )
                 elif freshness == "FAILED":
