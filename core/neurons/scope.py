@@ -1,4 +1,5 @@
 import ast
+import builtins
 import json
 import os
 import re
@@ -6,6 +7,11 @@ import time
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from core.ccr_engine import NeuronSignal, GateType
+
+# Complete Python builtins that are always available
+BUILTINS_SET = set(dir(builtins)) | {
+    "__name__", "__file__", "__doc__", "__all__", "__annotations__", "__debug__",
+}
 
 def neuron_scope_check(self, code: str) -> NeuronSignal:
     """
@@ -37,27 +43,7 @@ def neuron_scope_check(self, code: str) -> NeuronSignal:
     used: Set[str] = set()
     used_lines: Dict[str, int] = {}
 
-    # Python builtins that are always available
-    builtins_set = {
-        "print", "len", "range", "int", "str", "float", "bool", "list",
-        "dict", "set", "tuple", "type", "isinstance", "issubclass",
-        "hasattr", "getattr", "setattr", "delattr", "callable",
-        "iter", "next", "enumerate", "zip", "map", "filter", "sorted",
-        "reversed", "min", "max", "sum", "abs", "round", "pow",
-        "any", "all", "id", "hash", "repr", "format",
-        "open", "input", "super", "property", "classmethod", "staticmethod",
-        "True", "False", "None", "Exception", "BaseException", "ValueError", "TypeError",
-        "KeyError", "IndexError", "AttributeError", "ImportError", "ModuleNotFoundError",
-        "RuntimeError", "StopIteration", "OSError", "IOError", "PermissionError",
-        "FileNotFoundError", "NotImplementedError", "ZeroDivisionError",
-        "AssertionError", "NameError", "SyntaxError", "SystemExit", "KeyboardInterrupt",
-        "OverflowError", "MemoryError", "RecursionError", "UnicodeEncodeError", "UnicodeDecodeError",
-        "SyntaxWarning", "DeprecationWarning", "UserWarning", "Warning",
-        "object", "bytes", "bytearray", "memoryview", "complex",
-        "frozenset", "vars", "dir", "globals", "locals", "exec", "eval",
-        "compile", "breakpoint", "exit", "quit",
-        "__name__", "__file__", "__doc__", "__all__",
-    }
+    builtins_set = BUILTINS_SET
     defined.update(builtins_set)
 
     def extract_target_names(t_node):
