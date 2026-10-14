@@ -585,6 +585,24 @@ class CognitiveControlRoom:
             )
 
     # -----------------------------------------------------------------------
+    # Neuron 11: Identity Drift Check (Project Ground of Being & Boundary Protection - HARD GATE)
+    # -----------------------------------------------------------------------
+
+    def neuron_identity_drift(
+        self,
+        code: str,
+        filepath: Optional[str] = None,
+        repo_root: Optional[str] = None,
+    ) -> NeuronSignal:
+        """
+        Evaluates whether code violates the repository's Ground of Being invariants.
+        HARD GATE: Blocks accidental project re-orientation, foundational export wiping,
+        or alien monolithic code injection.
+        """
+        from .neurons.identity_drift import neuron_identity_drift_check
+        return neuron_identity_drift_check(self, code, filepath=filepath, repo_root=repo_root)
+
+    # -----------------------------------------------------------------------
     # Signal Evaluator — Hard Gate blocker
     # -----------------------------------------------------------------------
 
@@ -804,6 +822,8 @@ class CognitiveControlRoom:
             if syn.passed:
                 signals.append(self.neuron_scope_check(code))
                 signals.append(self.neuron_taste_design_check(code))
+                fp = context.get("filepath") if context else None
+                signals.append(self.neuron_identity_drift(code, filepath=fp))
                 if check_depth:
                     signals.append(self.neuron_architectural_depth(code, escalate_hard_gate=escalate_depth))
 

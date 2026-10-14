@@ -95,6 +95,10 @@ class ProjectIdentityAnchor:
         self.repo_root = os.path.abspath(repo_root)
         self._identity: Optional[ProjectIdentity] = None
 
+    @property
+    def identity(self) -> ProjectIdentity:
+        return self.get_identity()
+
     def get_identity(self) -> ProjectIdentity:
         """Loads and caches the project identity from repository manifests."""
         if self._identity:
