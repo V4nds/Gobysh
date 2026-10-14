@@ -6,7 +6,7 @@ import time
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from core.ccr_engine import NeuronSignal, GateType
-from core.taste_synthesis import ModernCSSKeywordHeuristic, VisualDensityGovernor
+from core.taste_synthesis import ModernCSSKeywordHeuristic, VisualDensityGovernor, EditorialDiagramHeuristic
 from core.semantics.capability_registry import ComponentCapabilityRegistry
 
 def neuron_taste_design_check(self, code: str, content_type: str = "CODE", file_path: str = "") -> NeuronSignal:
@@ -14,8 +14,9 @@ def neuron_taste_design_check(self, code: str, content_type: str = "CODE", file_
     Signal: Does this code conform to modern Taste Design, Anti-Boxification,
     and prevent feature collision across layout components?
     """
-    # Only strict check if code contains UI elements (html, css, jsx, tsx)
-    is_ui = any(tag in code.lower() for tag in ["<div", "classname=", "style=", "<style", "document.create"])
+    # Only strict check if code contains UI elements (html, css, jsx, tsx) or diagram syntax
+    is_diagram = any(kw in code.lower() for kw in ["graph td", "flowchart td", "subgraph", "<svg"])
+    is_ui = is_diagram or any(tag in code.lower() for tag in ["<div", "classname=", "style=", "<style", "document.create"])
 
     if not is_ui:
         return NeuronSignal(
@@ -28,11 +29,13 @@ def neuron_taste_design_check(self, code: str, content_type: str = "CODE", file_
 
     evaluation = ModernCSSKeywordHeuristic.evaluate(code)
     density_eval = VisualDensityGovernor.evaluate(code)
+    diagram_eval = EditorialDiagramHeuristic.evaluate(code)
     collisions = ComponentCapabilityRegistry.detect_collisions(file_path, code)
 
     evidence = {
         "scores": evaluation.__dict__,
         "density": density_eval.__dict__,
+        "diagram": diagram_eval.__dict__,
         "collisions": collisions,
     }
 
@@ -59,6 +62,18 @@ def neuron_taste_design_check(self, code: str, content_type: str = "CODE", file_
             message=f"OVER_ENCAPSULATION (Boxification): {density_eval.detected_anti_patterns[0]}",
             evidence=evidence,
             suggestion=density_eval.suggestion,
+        )
+
+    # Priority 3: Diagram Slop (Mermaid spaghetti / excessive clutter)
+    if diagram_eval.is_mermaid_slop:
+        return NeuronSignal(
+            neuron_name="TASTE_DESIGN",
+            gate_type=GateType.SOFT,
+            passed=False,
+            confidence=0.88,
+            message=f"EDITORIAL_DIAGRAM_SLOP: {diagram_eval.anti_patterns[0]}",
+            evidence=evidence,
+            suggestion=diagram_eval.editorial_suggestion,
         )
 
     # Legacy / Soft fallback check for slop

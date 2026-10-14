@@ -1,4 +1,5 @@
 import dataclasses
+import re
 from typing import List, Dict
 
 @dataclasses.dataclass
@@ -146,5 +147,108 @@ class VisualDensityGovernor:
             wrapper_depth=div_openings,
             detected_anti_patterns=anti_patterns,
             suggestion=suggestion,
+        )
+
+
+@dataclasses.dataclass
+class EditorialDiagramEvaluation:
+    """Evaluation result of editorial diagram design heuristics (cathrynlavery/diagram-design standard)."""
+    is_cluttered: bool
+    density_score: int  # 1 to 10 scale (target is 4/10)
+    focal_accent_count: int
+    has_rainbow_accents: bool
+    has_heavy_strokes: bool
+    is_mermaid_slop: bool
+    anti_patterns: List[str]
+    editorial_suggestion: str
+
+
+class EditorialDiagramHeuristic:
+    """
+    Editorial Visual Density & Anti-Slop Heuristic Engine.
+    Codifies Cathryn Lavery's editorial diagram philosophy:
+    - Target visual density: 4/10 (Above 9 nodes is cluttered; 2 nodes travelling together = 1 node).
+    - Hairline stroke standard: 1px crisp hairlines (no heavy thick borders > 2px).
+    - Focal accent discipline: 1-2 focal accents max (no rainbow slop with 5+ bright colors).
+    - Mermaid anti-slop: Flags flat, un-styled, spaghetti Mermaid charts.
+    """
+
+    ACCENT_HEX_PATTERN = re.compile(r'#(?:[0-9a-fA-F]{3}){1,2}\b')
+    NEUTRAL_HEXES = {
+        "#fff", "#ffffff", "#000", "#000000",
+        "#f5f5f5", "#f4f4f4", "#eeeeee", "#e5e5e5", "#e0e0e0", "#d4d4d4", "#cccccc",
+        "#2d3142", "#1e1e1e", "#1a1a1a", "#222222", "#333333", "#444444", "#555555",
+        "#666666", "#777777", "#888888", "#999999", "#aaaaaa", "#bbbbbb",
+        "#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#d1d5db", "#e5e7eb", "#f3f4f6", "#f9fafb"
+    }
+
+    @classmethod
+    def evaluate(cls, code: str) -> EditorialDiagramEvaluation:
+        code_lower = code.lower()
+        anti_patterns = []
+        is_mermaid_slop = False
+        has_heavy_strokes = False
+        has_rainbow_accents = False
+
+        # 1. Check for Mermaid diagrams
+        is_mermaid = any(kw in code_lower for kw in ["graph td", "graph lr", "graph tb", "graph rl", "flowchart td", "flowchart lr"])
+        node_count = 0
+        if is_mermaid:
+            arrows = len(re.findall(r'-->|==>|-.->|->', code))
+            node_defs = len(re.findall(r'\b[a-zA-Z0-9_-]+\[[^\]]+\]', code))
+            node_count = max(node_defs, arrows // 2)
+            has_subgraphs = "subgraph" in code_lower
+            has_styling = any(kw in code_lower for kw in ["classdef", "style ", ":::"])
+
+            # If > 8 nodes and flat spaghetti without subgraphs/styling
+            if node_count > 8 and not has_subgraphs and not has_styling:
+                is_mermaid_slop = True
+                anti_patterns.append(f"Mermaid chart contains {node_count} nodes without subgraphs or semantic styling (Mermaid Slop).")
+
+        # 2. Check for heavy strokes (> 2px) in SVG or CSS
+        heavy_stroke_matches = re.findall(r'stroke-width=["\']([3-9]|[1-9][0-9]+)(?:px)?["\']', code_lower)
+        heavy_border_matches = re.findall(r'border(?:-width)?:\s*([3-9]|[1-9][0-9]+)px', code_lower)
+        if heavy_stroke_matches or heavy_border_matches:
+            has_heavy_strokes = True
+            anti_patterns.append("Heavy strokes (> 2px) detected. Use 1px crisp hairlines for clean editorial diagrams.")
+
+        # 3. Check for accent color count (focal accents)
+        all_hexes = [h.lower() for h in cls.ACCENT_HEX_PATTERN.findall(code)]
+        accent_hexes = set(h for h in all_hexes if h not in cls.NEUTRAL_HEXES)
+        focal_accent_count = len(accent_hexes)
+        if focal_accent_count > 3:
+            has_rainbow_accents = True
+            anti_patterns.append(f"Found {focal_accent_count} distinct accent colors. Editorial discipline requires 1-2 focal accents; excess colors erase signal.")
+
+        # 4. Target Density Score (1 to 10 scale)
+        if node_count == 0:
+            svg_shapes = len(re.findall(r'<(?:rect|circle|ellipse|path|polygon)\b', code_lower))
+            if svg_shapes > 0:
+                density_raw = min(10, max(1, svg_shapes // 3))
+            else:
+                density_raw = 4
+        else:
+            density_raw = min(10, max(1, (node_count * 10) // 12))
+
+        density_score = density_raw
+        is_cluttered = density_score >= 8 or is_mermaid_slop or has_rainbow_accents
+
+        editorial_suggestion = ""
+        if is_cluttered or is_mermaid_slop or has_heavy_strokes:
+            editorial_suggestion = (
+                "Diagram Design Editorial Standard: Target visual density 4/10. "
+                "Use 1px crisp hairlines, 1-2 focal accents (Coral/Accent), and 4px grid spacing. "
+                "If nodes > 9, split into two diagrams or use self-contained HTML/SVG architectural diagrams."
+            )
+
+        return EditorialDiagramEvaluation(
+            is_cluttered=is_cluttered,
+            density_score=density_score,
+            focal_accent_count=focal_accent_count,
+            has_rainbow_accents=has_rainbow_accents,
+            has_heavy_strokes=has_heavy_strokes,
+            is_mermaid_slop=is_mermaid_slop,
+            anti_patterns=anti_patterns,
+            editorial_suggestion=editorial_suggestion,
         )
 

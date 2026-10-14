@@ -1,5 +1,5 @@
 import unittest
-from core.taste_synthesis import ModernCSSKeywordHeuristic
+from core.taste_synthesis import ModernCSSKeywordHeuristic, VisualDensityGovernor, EditorialDiagramHeuristic
 
 class TestModernCSSKeywordHeuristic(unittest.TestCase):
     
@@ -50,6 +50,72 @@ class TestModernCSSKeywordHeuristic(unittest.TestCase):
         # total_score = 3 (three, webgl, canvas, particles = 4)
         self.assertFalse(evaluation.is_slop)
         self.assertEqual(evaluation.genjutsu_score, 4)
+
+
+class TestEditorialDiagramHeuristic(unittest.TestCase):
+
+    def test_editorial_diagram_optimal_density(self):
+        # Crisp SVG schematic with 1px hairlines and 1 focal accent
+        svg = '''
+        <svg viewBox="0 0 800 400">
+            <rect x="50" y="50" width="120" height="60" stroke="#2d3142" stroke-width="1" fill="#f5f5f5" />
+            <rect x="250" y="50" width="120" height="60" stroke="#bf4520" stroke-width="1" fill="#ffffff" />
+            <line x1="170" y1="80" x2="250" y2="80" stroke="#2d3142" stroke-width="1" />
+        </svg>
+        '''
+        res = EditorialDiagramHeuristic.evaluate(svg)
+        self.assertFalse(res.is_cluttered)
+        self.assertFalse(res.is_mermaid_slop)
+        self.assertFalse(res.has_heavy_strokes)
+        self.assertFalse(res.has_rainbow_accents)
+        self.assertEqual(res.focal_accent_count, 1)  # #bf4520
+
+    def test_editorial_diagram_mermaid_slop(self):
+        # 12 flat unstyled nodes in flat spaghetti
+        mermaid = '''
+        graph TD
+            A[Start] --> B[Step 1]
+            B --> C[Step 2]
+            C --> D[Step 3]
+            D --> E[Step 4]
+            E --> F[Step 5]
+            F --> G[Step 6]
+            G --> H[Step 7]
+            H --> I[Step 8]
+            I --> J[Step 9]
+            J --> K[Step 10]
+        '''
+        res = EditorialDiagramHeuristic.evaluate(mermaid)
+        self.assertTrue(res.is_mermaid_slop)
+        self.assertTrue(res.is_cluttered)
+        self.assertIn("Mermaid Slop", res.anti_patterns[0])
+
+    def test_editorial_diagram_rainbow_accents(self):
+        # 5 distinct vibrant colors on nodes
+        svg = '''
+        <svg viewBox="0 0 800 400">
+            <rect fill="#ff0000" stroke-width="1" />
+            <rect fill="#00ff00" stroke-width="1" />
+            <rect fill="#0000ff" stroke-width="1" />
+            <rect fill="#ff00ff" stroke-width="1" />
+            <rect fill="#ffff00" stroke-width="1" />
+        </svg>
+        '''
+        res = EditorialDiagramHeuristic.evaluate(svg)
+        self.assertTrue(res.has_rainbow_accents)
+        self.assertTrue(res.is_cluttered)
+        self.assertGreater(res.focal_accent_count, 3)
+
+    def test_editorial_diagram_heavy_strokes(self):
+        # SVG with 4px heavy borders
+        svg = '''
+        <svg viewBox="0 0 800 400">
+            <rect x="10" y="10" width="100" height="50" stroke="#333" stroke-width="4px" />
+        </svg>
+        '''
+        res = EditorialDiagramHeuristic.evaluate(svg)
+        self.assertTrue(res.has_heavy_strokes)
+
 
 if __name__ == '__main__':
     unittest.main()
