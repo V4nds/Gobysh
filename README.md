@@ -33,8 +33,13 @@
   Menganalisis rasio implementasi terhadap antarmuka (Module Depth Index / MDI berdasarkan prinsip Ousterhout). Modul pembungkus dangkal (*shallow pass-through wrapper*) otomatis diblokir via *Conditional Hard Gate*.
 - **Anti-Collision & Visual Density**  
   Mendeteksi komponen agar kontrol tidak terduplikasi di tempat lain, serta mencegah pembungkusan tampilan secara berlebihan (*anti-boxification*).
-- **Lifecycle Hooks & Aggressive Telemetry**  
-  Tersambung langsung ke IDE via `.agents/hooks.json`. Memberikan telemetri MDI real-time pada setiap perubahan file dan memblokir agent keluar jika masih ada error di ledger.
+- **3-Pillar Epistemic Exit Gate & Dynamic Audit (`goby gate`, `goby audit`, `goby obligation`)**  
+  Mengadopsi prinsip verifikasi epistemik non-gimmick berbasis pembuktian empiris:
+  - **Pilar 1 (Static Code Health)**: 0 unresolved CCR file error pada ledger aktif.
+  - **Pilar 2 (Dynamic Test Freshness)**: Provenance bukti kriptografis berbasis SHA-256 workspace fingerprint. Bukti otomatis *STALE* dan memblokir penyelesaian jika file kode dimodifikasi setelah pengujian terakhir.
+  - **Pilar 3 (Task Obligation Ledger)**: Klaim teknis dari Prompt Spider dicatat sebagai obligasi yang wajib dibuktikan lolos pengujian secara empiris (*fail-closed*).
+- **Antigravity Mechanical Hard-Stop (`.agents/hooks.json`)**  
+  Tersambung langsung ke IDE via lifecycle hooks. Memberikan telemetri MDI real-time pada setiap perubahan file, menginjeksi status gerbang pada `PreInvocation`, dan secara mekanis memblokir agent keluar (*Stop hook rejection*) jika salah satu dari 3 pilar epistemik belum terpenuhi.
 - **Memory Lintas Sesi (`goby recall`, `goby save`)**  
   Menyimpan solusi yang berhasil agar sesi berikutnya dapat langsung melanjutkan tanpa mengulang eksplorasi dari awal.
 
@@ -44,7 +49,7 @@
 
 ```mermaid
 flowchart TD
-    UserPrompt["Instruksi Pengguna"] --> Spider["goby spider\nCrawl Intent, Audit Celah & 7 Pilar Blueprint"]
+    UserPrompt["Instruksi Pengguna"] --> Spider["goby spider\nCrawl Intent, Audit Celah, Daftar Obligasi & Blueprint"]
     Spider --> Recall["goby recall\nCek Riwayat Solusi"]
     Recall --> Code["AI Menulis / Mengedit Kode"]
     
@@ -55,10 +60,11 @@ flowchart TD
         Checks --> Telemetry["Injeksi Telemetry ke IDE & Update Ledger"]
     end
     
-    Code --> StopGate{"goby gate (Ledger Bersih?)"}
-    StopGate -- "Ada Error" --> Block["Stop Ditolak: Perbaiki Dulu"]
+    Code --> Audit["goby audit\nEksekusi Tes & Rekam SHA-256 Hash"]
+    Audit --> StopGate{"goby gate\n(3 Pilar Lolos?)"}
+    StopGate -- "Ada Error / Stale / Unverified Claim" --> Block["Stop Ditolak: Perbaiki & Audit Ulang"]
     Block --> Code
-    StopGate -- "Bersih (0 Error)" --> Finish["Selesai & goby save"]
+    StopGate -- "Semua Pilar Lolos (Exit 0)" --> Finish["Selesai & goby save"]
 ```
 
 ---
@@ -112,11 +118,14 @@ goby deepen core/
 # Validasi file kode sebelum commit
 goby check core/ccr_engine.py
 
-# Cek apakah masih ada error yang belum selesai (Gate 1)
+# Eksekusi audit verifikasi dinamis & rekam SHA-256 evidence provenance
+goby audit
+
+# Cek 3-Pilar Epistemic Exit Gate (Static Health, Freshness, Obligations)
 goby gate
 
-# Jalankan seluruh unit test (Gate 2)
-goby audit
+# Kelola dan tinjau status obligasi teknis
+goby obligation list
 
 # Cari solusi dari sesi sebelumnya
 goby recall "pengukuran sudut"

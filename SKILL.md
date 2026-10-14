@@ -1,9 +1,9 @@
 ---
 name: goby-universal
-description: "Goby v5.4: Aggressive-autonomous AI quality framework with Rust native acceleration. Auto-resolves ambiguous user intent, repository AST & dependency graph code mapping, persists conversation memory across sessions, validates every code output with ultra-fast delimiter gates (<5ms), and enforces modern UI/UX standards. Supports Python, JavaScript, TypeScript, Kotlin, Rust, HTML, CSS."
+description: "Goby v5.5: Aggressive-autonomous AI quality framework with Rust native acceleration and 3-Pillar Epistemic Exit Gate (Static Code Health, Dynamic Test Freshness, and Task Obligation Ledger). Auto-resolves ambiguous user intent, repository AST & dependency graph code mapping, persists conversation memory across sessions, validates every code output with ultra-fast delimiter gates (<5ms), and enforces modern UI/UX standards. Supports Python, JavaScript, TypeScript, Kotlin, Rust, HTML, CSS."
 ---
 
-# Goby v5.4 — Aggressive-Autonomous AI Quality Engine
+# Goby v5.5 — Aggressive-Autonomous AI Quality Engine
 
 ## 🚨 ACTIVATION: ALWAYS-ON (NOT OPTIONAL)
 
@@ -13,7 +13,7 @@ Goby activates **automatically** on every task. You do NOT wait for the user to 
 
 | When this happens... | You MUST do this... |
 |---------------------|---------------------|
-| User sends ANY request | Run `goby spider '<request>' [--save-plan]` to crawl intent & synthesize blueprint |
+| User sends ANY request | Run `goby spider '<request>' [--save-plan]` to crawl intent, register obligations & synthesize blueprint |
 | Intent is ambiguous (vague tokens present) | Ask clarification questions using `ask_question` tool |
 | Diagnosing potential flaws / anomalies | Run `goby diagnose [file|prompt]` to audit 3D technical flaws |
 | Querying codebase symbols & blast radius | Run `goby map '<query>' [--repo .]` to map impact |
@@ -21,7 +21,7 @@ Goby activates **automatically** on every task. You do NOT wait for the user to 
 | About to start coding | Run `goby recall '<intent>'` to check past context |
 | After writing/editing ANY code file | Run `goby check <filepath>` to validate |
 | Error persists after 2 attempts | Run `goby recall` to check known fixes, halt naive retries |
-| Task is complete | Run `goby gate` + `python -m unittest discover tests/` |
+| Task is complete | Run `goby audit` (dynamic verification) + `goby gate` (3-pillar exit check) |
 | Both gates pass | Run `goby save '<summary>' <type> [files...]` |
 
 ---
@@ -67,8 +67,9 @@ goby fast-gate <filepath>   # Ultra-fast native delimiter & structural gate (<5m
 goby native <subcommand>    # Direct interface to goby_core Rust native accelerator (scan|check|version)
 goby deepen [file|dir]      # Architectural depth & leverage analysis (Ousterhout's MDI)
 goby diagnose [file|prompt] # Audit 3D technical flaws (prompt contradictions, double buttons, text overflow)
-goby gate                   # Unresolved Error Ledger — must exit 0
-goby audit                  # Full test suite
+goby gate                   # 3-Pillar Epistemic Exit Gate (Static, Freshness, Obligations) — must exit 0
+goby audit                  # Dynamic test verification & SHA-256 evidence provenance runner
+goby obligation [list|resolve|add] # Inspect and manage task obligations
 
 # Prompt Spider, Intent & Repository Mapping (v5.3)
 goby spider '<prompt>' [--save-plan] [--json] # Crawl prompt, tag tokens, and synthesize 7-pillar blueprint

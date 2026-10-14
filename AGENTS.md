@@ -93,17 +93,22 @@ goby check <filepath>
 ## 🏁 STEP 6: COMPLETION GATES (Before declaring done)
 
 **WHEN:** You believe the task is complete  
-**DO:** Run BOTH gates. Both MUST return Exit Code 0.
+**DO:** Run the 3-Pillar Epistemic Verification suite. Both commands MUST return Exit Code 0.
 
 ```bash
-# Gate 1: Zero unresolved file errors
-goby gate
+# 1. Dynamic Verification Audit: Runs test suite, computes SHA-256 workspace code hash,
+#    records cryptographic evidence provenance, and auto-resolves task obligations.
+goby audit
 
-# Gate 2: All tests pass
-python -m unittest discover tests/
+# 2. 3-Pillar Epistemic Exit Gate: Evaluates static health (0 CCR errors), dynamic freshness
+#    (unmodified workspace hash since test pass), and task obligations (0 open claims).
+goby gate
 ```
 
-**IF** either gate fails → You are NOT done. Fix and retry.  
+> [!CAUTION]
+> **Antigravity Mechanical Hard-Stop:** The Antigravity IDE `Stop` lifecycle hook is mechanically hooked into the 3-Pillar Exit Gate. If you attempt to stop the agent turn with unverified code, stale test evidence, or unresolved obligations, the IDE will automatically reject the stop request and force you to continue fixing and verifying.
+
+**IF** either gate fails → You are NOT done. Fix root cause, re-run `goby audit`, and verify with `goby gate`.  
 **NEVER** claim completion without both gates passing.
 
 ---
