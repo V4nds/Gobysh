@@ -479,6 +479,17 @@ class PromptSpider:
         for fl in prompt_flaws:
             rules.append(f"FLAW MITIGATION [{fl.severity}]: {fl.suggested_fix}")
 
+        # Exemplar Induction & Anti-Parroting Synthesis
+        exemplar_tokens = [t.raw_text for t in tokens if t.category == "exemplar"]
+        if exemplar_tokens:
+            from core.spider.exemplar_generalizer import ExemplarGeneralizer
+            generalizer = ExemplarGeneralizer()
+            induction_res = generalizer.induce_and_expand(exemplar_tokens)
+            if induction_res.guardrail_rule:
+                rules.append(induction_res.guardrail_rule)
+            context["exemplar_domain"] = induction_res.inferred_domain
+            context["exemplar_variations"] = induction_res.variations
+
         # 5. Synthesize REVIEW
         review = [
             "Seluruh test suite repositori wajib lulus (python -m unittest discover tests/ -> OK).",

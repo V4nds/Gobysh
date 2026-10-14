@@ -107,6 +107,13 @@ class TestPromptSpider(unittest.TestCase):
         self.assertIn("### 8. VISUAL ARCHITECTURE SCHEMATIC", md)
         self.assertIn("<svg", md)
 
+    def test_blueprint_contains_anti_parroting_rule(self):
+        prompt = "tambahkan fitur canvas misal penggaris, busur derajat"
+        bp = self.spider.crawl_and_synthesize(prompt, enforce_contracts=False)
+        self.assertTrue(any("ANTI_PARROTING_EXEMPLAR_INDUCTION" in r for r in bp.rules))
+        self.assertEqual(bp.context.get("exemplar_domain"), "geometric_measurement_tools")
+        self.assertTrue(len(bp.context.get("exemplar_variations", [])) > 0)
+
 
 if __name__ == "__main__":
     unittest.main()
