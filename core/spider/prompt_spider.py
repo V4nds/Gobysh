@@ -490,6 +490,17 @@ class PromptSpider:
             context["exemplar_domain"] = induction_res.inferred_domain
             context["exemplar_variations"] = induction_res.variations
 
+        # Reference Synthesis & Identity Preservation
+        reference_tokens = [t.raw_text for t in tokens if t.category == "reference"]
+        if reference_tokens:
+            from core.semantics.project_anchor import ProjectIdentityAnchor
+            anchor = ProjectIdentityAnchor(self.repo_root)
+            for ref in reference_tokens:
+                ref_synth = anchor.synthesize_reference(ref)
+                if ref_synth.guardrail_rule:
+                    rules.append(ref_synth.guardrail_rule)
+            context["external_references"] = reference_tokens
+
         # 5. Synthesize REVIEW
         review = [
             "Seluruh test suite repositori wajib lulus (python -m unittest discover tests/ -> OK).",

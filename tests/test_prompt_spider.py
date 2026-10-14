@@ -114,6 +114,12 @@ class TestPromptSpider(unittest.TestCase):
         self.assertEqual(bp.context.get("exemplar_domain"), "geometric_measurement_tools")
         self.assertTrue(len(bp.context.get("exemplar_variations", [])) > 0)
 
+    def test_blueprint_contains_identity_preservation_rule(self):
+        prompt = "pelajari https://github.com/morluto/rea untuk referensi"
+        bp = self.spider.crawl_and_synthesize(prompt, enforce_contracts=False)
+        self.assertTrue(any("IDENTITY_PRESERVATION" in r for r in bp.rules))
+        self.assertIn("https://github.com/morluto/rea", bp.context.get("external_references", []))
+
 
 if __name__ == "__main__":
     unittest.main()
