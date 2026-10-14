@@ -74,4 +74,5 @@ target/
 crates/**/target/
 docs/superpowers/
 GOBYSH_ARCHITECTURE_CALIBRATION_SPEC.md
+blueprint_architecture.html
 

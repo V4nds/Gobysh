@@ -77,6 +77,19 @@ class TestPromptSpider(unittest.TestCase):
             claims = [o["claim"] for o in obs]
             self.assertTrue(any("broken" in c for c in claims))
 
+    def test_generate_visual_architecture_diagram(self):
+        prompt = "buat fitur export SVG di canvas src/export.ts"
+        bp = self.spider.crawl_and_synthesize(prompt, enforce_contracts=False, generate_visual=True)
+        self.assertIsNotNone(bp.visual_diagram)
+        self.assertIn("<svg", bp.visual_diagram)
+        self.assertIn('stroke-width="1"', bp.visual_diagram)
+        self.assertIn("#bf4520", bp.visual_diagram)
+        self.assertIn("Density: 4/10", bp.visual_diagram)
+
+        md = bp.to_markdown()
+        self.assertIn("### 8. VISUAL ARCHITECTURE SCHEMATIC", md)
+        self.assertIn("<svg", md)
+
 
 if __name__ == "__main__":
     unittest.main()

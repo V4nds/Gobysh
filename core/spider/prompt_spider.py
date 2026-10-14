@@ -65,6 +65,7 @@ class EmpiricalBlueprint:
     clarifications: List[ClarificationItem] = field(default_factory=list)
     detected_flaws: List[TechnicalFlaw] = field(default_factory=list)
     prompt_hash: str = ""
+    visual_diagram: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -79,6 +80,7 @@ class EmpiricalBlueprint:
             "clarifications": [c.to_dict() for c in self.clarifications],
             "detected_flaws": [f.to_dict() for f in self.detected_flaws],
             "prompt_hash": self.prompt_hash,
+            "visual_diagram": self.visual_diagram,
         }
 
     def to_markdown(self) -> str:
@@ -124,6 +126,13 @@ class EmpiricalBlueprint:
             for cl in self.clarifications:
                 opts = ", ".join([f"`{o}`" for o in cl.options])
                 lines.append(f"- **{cl.element}**: {cl.question} (Options: {opts})")
+
+        if self.visual_diagram:
+            lines.extend([
+                "",
+                "### 8. VISUAL ARCHITECTURE SCHEMATIC (diagram-design standard)",
+                self.visual_diagram,
+            ])
 
         return "\n".join(lines)
 
@@ -291,10 +300,87 @@ class PromptSpider:
                     )
         return clarifications
 
-    def crawl_and_synthesize(self, prompt: str, enforce_contracts: bool = True) -> EmpiricalBlueprint:
+    def generate_editorial_diagram(self, prompt: str, blueprint: EmpiricalBlueprint) -> str:
+        """
+        Synthesizes a self-contained HTML/SVG architectural diagram following
+        Cathryn Lavery's diagram-design editorial standards (4/10 density, 1px hairlines, 1 focal accent).
+        """
+        req_text = (prompt[:36] + "...") if len(prompt) > 36 else prompt
+        if not req_text:
+            req_text = "User Intent"
+
+        target_files = blueprint.context.get("target_files", [])
+        target_display = target_files[0] if target_files else "Workspace AST"
+        if len(target_display) > 24:
+            target_display = os.path.basename(target_display)
+
+        p_hash = blueprint.prompt_hash[:8]
+
+        return f'''<!-- GOBY EDITORIAL DIAGRAM (diagram-design standard: 4/10 density, 1px hairline, 1 focal accent) -->
+<div class="goby-diagram-editorial" style="background:#f5f5f5; border:1px solid #d4d4d4; border-radius:6px; padding:20px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#2d3142; max-width:880px; margin:16px 0;">
+  <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e0e0e0; padding-bottom:10px; margin-bottom:16px;">
+    <div>
+      <span style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:#777; font-weight:600;">System Schematic &bull; Type Architecture</span>
+      <h4 style="margin:4px 0 0 0; font-size:15px; font-weight:600; color:#2d3142;">Prompt Execution Blueprint [{p_hash}]</h4>
+    </div>
+    <div style="font-size:11px; color:#555; background:#fff; border:1px solid #e0e0e0; border-radius:4px; padding:3px 8px;">Density: 4/10</div>
+  </div>
+  <svg viewBox="0 0 820 160" width="100%" height="160" xmlns="http://www.w3.org/2000/svg" style="display:block; overflow:visible;">
+    <!-- Node 1: User Prompt -->
+    <g transform="translate(10, 35)">
+      <rect x="0" y="0" width="170" height="70" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1" />
+      <text x="14" y="24" font-size="10" font-weight="700" fill="#777" letter-spacing="0.05em">INPUT CLAIM</text>
+      <text x="14" y="46" font-size="12" font-weight="500" fill="#2d3142">{req_text}</text>
+    </g>
+
+    <!-- Connector 1 -> 2 -->
+    <path d="M 180 70 L 230 70" fill="none" stroke="#2d3142" stroke-width="1" />
+    <polygon points="230,70 224,66 224,74" fill="#2d3142" />
+
+    <!-- Node 2: Prompt Spider & CCR (FOCAL ACCENT: Coral #bf4520) -->
+    <g transform="translate(230, 25)">
+      <rect x="0" y="0" width="180" height="90" rx="4" fill="#ffffff" stroke="#bf4520" stroke-width="1" />
+      <rect x="0" y="0" width="180" height="4" fill="#bf4520" />
+      <text x="14" y="24" font-size="10" font-weight="700" fill="#bf4520" letter-spacing="0.05em">ORCHESTRATOR [FOCAL]</text>
+      <text x="14" y="46" font-size="13" font-weight="600" fill="#2d3142">Prompt Spider &amp; CCR</text>
+      <text x="14" y="66" font-size="11" fill="#666">7-Pillar Contract Binding</text>
+    </g>
+
+    <!-- Connector 2 -> 3 -->
+    <path d="M 410 70 L 460 70" fill="none" stroke="#2d3142" stroke-width="1" />
+    <polygon points="460,70 454,66 454,74" fill="#2d3142" />
+
+    <!-- Node 3: Ground Truth Target -->
+    <g transform="translate(460, 35)">
+      <rect x="0" y="0" width="170" height="70" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1" />
+      <text x="14" y="24" font-size="10" font-weight="700" fill="#777" letter-spacing="0.05em">TARGET ARTIFACT</text>
+      <text x="14" y="46" font-size="12" font-weight="500" fill="#2d3142">{target_display}</text>
+    </g>
+
+    <!-- Connector 3 -> 4 -->
+    <path d="M 630 70 L 670 70" fill="none" stroke="#2d3142" stroke-width="1" />
+    <polygon points="670,70 664,66 664,74" fill="#2d3142" />
+
+    <!-- Node 4: Dynamic Test & Exit Gate -->
+    <g transform="translate(670, 35)">
+      <rect x="0" y="0" width="140" height="70" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1" />
+      <text x="12" y="24" font-size="10" font-weight="700" fill="#777" letter-spacing="0.05em">EXIT GATE (3P)</text>
+      <text x="12" y="46" font-size="12" font-weight="600" fill="#2d3142">goby audit</text>
+      <text x="12" y="60" font-size="10" fill="#888">SHA-256 Provenance</text>
+    </g>
+  </svg>
+</div>'''
+
+    def crawl_and_synthesize(
+        self,
+        prompt: str,
+        enforce_contracts: bool = True,
+        generate_visual: bool = False
+    ) -> EmpiricalBlueprint:
         """
         Main pipeline: Crawls prompt, extracts 5 token categories, audits flaws,
-        synthesizes 7-Pillar Empirical Blueprint, and binds invariants to memory.
+        synthesizes 7-Pillar Empirical Blueprint, optionally generates visual diagram,
+        and binds invariants to memory.
         """
         p_hash = self._compute_hash(prompt)
         concept = self.bridge.normalize_phrase(prompt)
@@ -401,7 +487,7 @@ class PromptSpider:
             except Exception:
                 pass
 
-        return EmpiricalBlueprint(
+        blueprint = EmpiricalBlueprint(
             role=role,
             objective=objective,
             context=context,
@@ -414,3 +500,8 @@ class PromptSpider:
             detected_flaws=prompt_flaws,
             prompt_hash=p_hash,
         )
+
+        if generate_visual:
+            blueprint.visual_diagram = self.generate_editorial_diagram(prompt, blueprint)
+
+        return blueprint

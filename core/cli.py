@@ -914,11 +914,12 @@ def main():
 
     elif cmd == "spider":
         if len(args) < 2:
-            print("Error: Usage: goby spider '<prompt_text>' [--repo <path>] [--save-plan] [--json]")
+            print("Error: Usage: goby spider '<prompt_text>' [--repo <path>] [--save-plan] [--visual] [--json]")
             sys.exit(1)
         repo_arg = "."
         is_json = False
         save_plan = False
+        generate_visual = False
         prompt_words = []
         i = 1
         while i < len(args):
@@ -931,6 +932,9 @@ def main():
             elif args[i] == "--save-plan":
                 save_plan = True
                 i += 1
+            elif args[i] in ("--visual", "-v"):
+                generate_visual = True
+                i += 1
             else:
                 prompt_words.append(args[i])
                 i += 1
@@ -938,7 +942,13 @@ def main():
 
         from core.spider.prompt_spider import PromptSpider
         spider = PromptSpider(repo_root=repo_arg)
-        blueprint = spider.crawl_and_synthesize(prompt_text, enforce_contracts=True)
+        blueprint = spider.crawl_and_synthesize(prompt_text, enforce_contracts=True, generate_visual=generate_visual)
+
+        if generate_visual and blueprint.visual_diagram:
+            vis_file = os.path.join(repo_arg, "blueprint_architecture.html")
+            with open(vis_file, "w", encoding="utf-8") as f:
+                f.write(blueprint.visual_diagram)
+            print(f"[GOBY SPIDER] Visual Architecture Diagram generated: {vis_file}")
 
         if save_plan:
             import datetime
