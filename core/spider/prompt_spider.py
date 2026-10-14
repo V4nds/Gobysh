@@ -371,14 +371,28 @@ class PromptSpider:
             "Session context saved to conversation memory (`goby save`).",
         ]
 
-        # Mechanical Contract Binding: Register to cognitive_map.json if requested
-        if enforce_contracts and protected_files:
+        # Mechanical Contract & Obligation Binding: Register to cognitive_map.json if requested
+        if enforce_contracts:
             try:
                 from core.state_memory import StateMemoryManager
                 mem_path = os.path.join(self.repo_root, "cognitive_map.json")
-                if os.path.isfile(mem_path):
-                    memory = StateMemoryManager(mem_path)
-                    # Cache last blueprint
+                memory = StateMemoryManager(mem_path)
+
+                # 1. Register claims as formal task obligations
+                claim_tokens = [t.raw_text for t in tokens if t.category == "claim"]
+                if not claim_tokens and prompt.strip():
+                    claim_tokens = [prompt.strip()]
+
+                for c in claim_tokens:
+                    memory.record_obligation(
+                        claim=c,
+                        source="prompt_spider",
+                        target_files=target_files,
+                        required_authority="dynamic_test",
+                    )
+
+                # 2. Record protected files blueprint if present
+                if protected_files and hasattr(memory, "record_spider_blueprint"):
                     memory.record_spider_blueprint(p_hash, {
                         "prompt": prompt,
                         "protected_files": protected_files,

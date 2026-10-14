@@ -65,6 +65,18 @@ class TestPromptSpider(unittest.TestCase):
         self.assertIn("tokens", d)
         self.assertIn("prompt_hash", d)
 
+    def test_crawl_and_synthesize_registers_obligations(self):
+        import tempfile
+        from core.state_memory import StateMemoryManager
+        with tempfile.TemporaryDirectory() as td:
+            spider = PromptSpider(repo_root=td)
+            bp = spider.crawl_and_synthesize("fix broken login auth.py", enforce_contracts=True)
+            mem = StateMemoryManager(os.path.join(td, "cognitive_map.json"))
+            obs = mem.get_unresolved_obligations()
+            self.assertGreaterEqual(len(obs), 1)
+            claims = [o["claim"] for o in obs]
+            self.assertTrue(any("broken" in c for c in claims))
+
 
 if __name__ == "__main__":
     unittest.main()
