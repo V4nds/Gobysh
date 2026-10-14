@@ -28,6 +28,23 @@ class TestPromptSpider(unittest.TestCase):
         self.assertIn("approval", categories)    # jangan hapus
         self.assertIn("vague", categories)       # lebih kenceng
 
+    def test_exemplar_token_tagging(self):
+        prompt = "tambahkan fitur canvas misal penggaris, busur derajat, atau jangka"
+        blueprint = self.spider.crawl_and_synthesize(prompt, enforce_contracts=False)
+        categories = {t.category for t in blueprint.tokens}
+        self.assertIn("exemplar", categories)
+        exemplars = [t.raw_text for t in blueprint.tokens if t.category == "exemplar"]
+        self.assertTrue(any("penggaris" in e for e in exemplars))
+        self.assertTrue(any("busur" in e for e in exemplars))
+
+    def test_reference_token_tagging(self):
+        prompt = "pelajari dari repo https://github.com/morluto/rea dan adaptasi ke goby"
+        blueprint = self.spider.crawl_and_synthesize(prompt, enforce_contracts=False)
+        categories = {t.category for t in blueprint.tokens}
+        self.assertIn("reference", categories)
+        refs = [t.raw_text for t in blueprint.tokens if t.category == "reference"]
+        self.assertTrue(any("github.com/morluto/rea" in r for r in refs))
+
     def test_seven_pillar_synthesis(self):
         prompt = "buat fitur baru pengukur sudut di canvas jangan ubah Toolbar.tsx"
         blueprint = self.spider.crawl_and_synthesize(prompt, enforce_contracts=False)

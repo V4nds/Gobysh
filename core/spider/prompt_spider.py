@@ -259,6 +259,51 @@ class PromptSpider:
                     )
                 )
 
+        # 6. 'exemplar' extraction: illustrative samples that should NOT be parroted verbatim
+        exemplar_pattern = r"\b(?:misal(?:kan)?|contoh(?:nya)?|seperti|kayak|ibarat(?:nya)?|for example|for instance|e\.g\.,?|such as)\s+([^.;\n]+)"
+        for m in re.finditer(exemplar_pattern, text_lower):
+            raw_clause = m.group(1).strip()
+            # Split items separated by comma, 'atau', 'dan', 'or', 'and'
+            parts = re.split(r",\s*|\s+(?:atau|dan|or|and)\s+", raw_clause)
+            for part in parts:
+                clean_part = part.strip().strip("'\"")
+                if clean_part and len(clean_part) > 1 and clean_part not in ("dll", "etc", "dsb"):
+                    tokens.append(
+                        SpiderToken(
+                            category="exemplar",
+                            raw_text=clean_part,
+                            normalized_concept="illustrative_exemplar",
+                            confidence=0.95,
+                        )
+                    )
+
+        # 7. 'reference' extraction: external URLs, repositories, and learning references
+        # 7a. Direct URLs
+        url_matches = re.findall(r"https?://[^\s,;'\"]+", text)
+        for url in url_matches:
+            tokens.append(
+                SpiderToken(
+                    category="reference",
+                    raw_text=url,
+                    normalized_concept="external_reference_url",
+                    resolved_entity=url,
+                    confidence=1.0,
+                )
+            )
+
+        # 7b. GitHub repository shorthand (e.g. repo user/repo or github.com/user/repo)
+        repo_matches = re.findall(r"\b(?:repo|repository)\s+([a-zA-Z0-9_\.-]+/[a-zA-Z0-9_\.-]+)\b", text_lower)
+        for rm in repo_matches:
+            tokens.append(
+                SpiderToken(
+                    category="reference",
+                    raw_text=rm,
+                    normalized_concept="external_repository",
+                    resolved_entity=rm,
+                    confidence=0.95,
+                )
+            )
+
         return tokens
 
     def _generate_clarifications(self, tokens: List[SpiderToken]) -> List[ClarificationItem]:
